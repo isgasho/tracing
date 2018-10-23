@@ -80,9 +80,21 @@ func (t *TCPClient) Init() error {
 			g.L.Warn("Init:t.ReadPacket", zap.Error(err))
 			return err
 		}
-		g.L.Info("cmd", zap.Any("cmd", packet))
+
+		g.L.Info("Init:t.ReadPacket", zap.Any("packet", packet))
+
 		// 发给上层处理
-		gAgent.downloadC <- packet
+		switch packet.IsSync {
+		case util.TypeOfSyncYes:
+			if err := gAgent.syncCall.syncWrite(packet.ID, packet); err != nil {
+				g.L.Warn("Init:gAgent.syncCall.syncWrite", zap.Error(err))
+			}
+			break
+		default:
+			gAgent.downloadC <- packet
+			break
+		}
+
 	}
 }
 

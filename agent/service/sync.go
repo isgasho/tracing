@@ -24,6 +24,15 @@ func NewSyncCall() *SyncCall {
 	}
 }
 
+// newChan 创建新的chan
+func (sc *SyncCall) newChan(id uint32, length int) (chan *util.VgoPacket, bool) {
+	packC := make(chan *util.VgoPacket, length)
+	sc.Lock()
+	defer sc.Unlock()
+	sc.Chans[id] = packC
+	return packC, true
+}
+
 func (sc *SyncCall) addChan(id uint32, packetC chan *util.VgoPacket) {
 	sc.Lock()
 	defer sc.Unlock()
@@ -56,7 +65,7 @@ func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.VgoPack
 		}
 		break
 	}
-	return nil, nil
+	return nil, fmt.Errorf("syncRead time out,timeOut is %d ", timeOut)
 }
 
 // syncWrite 阻塞写

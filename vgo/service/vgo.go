@@ -179,6 +179,11 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 		log.Println("appRegister", appRegister.Name)
 		log.Println("packet.IsSync", packet.IsSync)
 		log.Println("packet.ID", packet.ID)
+
+		if _, err := conn.Write(packet.Encode()); err != nil {
+			g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
+			return err
+		}
 		break
 	}
 	return nil

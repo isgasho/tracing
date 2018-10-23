@@ -90,6 +90,7 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 	// AppRegister
 	registerPacker := &util.AppRegister{
 		Name: al.ApplicationCode,
+		Code: 1000,
 	}
 
 	buf, err := msgpack.Marshal(registerPacker)
@@ -109,12 +110,15 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 		return nil, err
 	}
 
+	// 获取ID
+	id := gAgent.ID()
+
 	packet := &util.VgoPacket{
 		Type:       util.TypeOfSkywalking,
 		Version:    util.VersionOf01,
 		IsSync:     util.TypeOfSyncYes,
 		IsCompress: util.TypeOfCompressNo,
-		ID:         gAgent.ID(),
+		ID:         id,
 		PayLoad:    payload,
 	}
 
@@ -122,6 +126,20 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 		g.L.Warn("ApplicationCodeRegister:gAgent.client.WritePacket", zap.String("error", err.Error()))
 		return nil, err
 	}
+
+	// 创建chan
+	if _, ok := gAgent.syncCall.newChan(id, 10); !ok {
+		g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.newChan", zap.String("error", "创建sync chan失败"))
+		return nil, err
+	}
+
+	// 阻塞同步等待，并关闭chan
+	responsePakcet, err := gAgent.syncCall.syncRead(id, 10, true)
+	if err != nil {
+		g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.syncRead", zap.String("error", err.Error()))
+		return nil, err
+	}
+	log.Println("获取服务端packet", responsePakcet)
 
 	// var id int32 = 1111
 	// kv := &protocol.KeyWithIntegerValue{

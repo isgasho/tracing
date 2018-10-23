@@ -14,6 +14,7 @@ type Agent struct {
 	quitC     chan bool
 	uploadC   chan *util.VgoPacket
 	downloadC chan *util.VgoPacket
+	syncCall  *SyncCall
 	client    *TCPClient
 	skyWalk   *SkyWalking
 	id        uint32
@@ -27,6 +28,7 @@ func New() *Agent {
 		quitC:     make(chan bool, 1),
 		uploadC:   make(chan *util.VgoPacket, 100),
 		downloadC: make(chan *util.VgoPacket, 100),
+		syncCall:  NewSyncCall(),
 		client:    NewTCPClient(),
 		skyWalk:   NewSkyWalking(),
 	}
