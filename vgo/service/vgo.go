@@ -2,7 +2,6 @@ package service
 
 import (
 	"bufio"
-	"log"
 	"net"
 	"time"
 
@@ -211,12 +210,28 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 			return err
 		}
 
-		v.apps.LoadAppCode(appRegister.Name)
+		code, err := v.apps.LoadAppCode(appRegister.Name)
+		if err != nil {
+			g.L.Warn("dealSkywalking:v.apps.LoadAppCode", zap.String("name", appRegister.Name), zap.String("error", err.Error()))
+			return err
+		}
 
-		log.Println("appRegister", appRegister.Name)
-		log.Println("packet.IsSync", packet.IsSync)
-		log.Println("packet.ID", packet.ID)
+		appRegister.Code = code
 
+		mbuf, err := msgpack.Marshal(appRegister)
+		if err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", appRegister.Name), zap.String("error", err.Error()))
+			return err
+		}
+		skypacker.Payload = mbuf
+
+		payload, err := msgpack.Marshal(skypacker)
+		if err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", appRegister.Name), zap.String("error", err.Error()))
+			return err
+		}
+
+		packet.Payload = payload
 		if _, err := conn.Write(packet.Encode()); err != nil {
 			g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
 			return err

@@ -91,7 +91,6 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 	// AppRegister
 	registerPacker := &util.AppRegister{
 		Name: gAgent.appInfo.Name,
-		Code: 1000,
 	}
 
 	buf, err := msgpack.Marshal(registerPacker)
