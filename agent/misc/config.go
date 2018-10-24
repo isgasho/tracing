@@ -17,6 +17,9 @@ type Config struct {
 	Agent struct {
 		VgoAddr          string
 		KeepLiveInterval int
+		UseEnv           bool
+		ENV              string
+		AppName          string
 	}
 	SkyWalking struct {
 		HTTPAddr string

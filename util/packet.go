@@ -17,7 +17,7 @@ type VgoPacket struct {
 	IsCompress byte   `msgp:"ic"` // 是否压缩
 	ID         uint32 `msgp:"i"`  // 报文ID
 	Len        uint32 `msgp:"l"`  // 长度
-	PayLoad    []byte `msgp:"p"`  // 数据
+	Payload    []byte `msgp:"p"`  // 数据
 }
 
 // // NewVgoPacket ...
@@ -41,13 +41,13 @@ func NewVgoPacket() *VgoPacket {
 func (v *VgoPacket) Encode() []byte {
 	// 压缩
 	if v.IsCompress == TypeOfCompressYes {
-		if len(v.PayLoad) > 0 {
-			compressBuf := snappy.Encode(nil, v.PayLoad)
-			v.PayLoad = compressBuf
+		if len(v.Payload) > 0 {
+			compressBuf := snappy.Encode(nil, v.Payload)
+			v.Payload = compressBuf
 		}
 	}
 
-	v.Len = uint32(len(v.PayLoad))
+	v.Len = uint32(len(v.Payload))
 	buf := make([]byte, v.Len+12)
 
 	buf[0] = v.Type
@@ -58,7 +58,7 @@ func (v *VgoPacket) Encode() []byte {
 	binary.BigEndian.PutUint32(buf[8:12], v.Len)
 
 	if v.Len > 0 {
-		copy(buf[12:], v.PayLoad)
+		copy(buf[12:], v.Payload)
 	}
 	return buf
 
@@ -79,24 +79,24 @@ func (v *VgoPacket) Decode(rdr io.Reader) error {
 	v.ID = binary.BigEndian.Uint32(buf[4:8])
 
 	length := binary.BigEndian.Uint32(buf[8:12])
-	payLoad := make([]byte, length)
+	payload := make([]byte, length)
 	if length > 0 {
-		_, err := io.ReadFull(rdr, payLoad)
+		_, err := io.ReadFull(rdr, payload)
 		if err != nil {
 			g.L.Warn("Decode:io.ReadFull", zap.String("err", err.Error()))
 			return err
 		}
 		// 解压
 		if v.IsCompress == TypeOfCompressYes {
-			v.PayLoad, err = snappy.Decode(nil, payLoad)
+			v.Payload, err = snappy.Decode(nil, payload)
 			if err != nil {
 				g.L.Warn("Decode:snappy.Decode", zap.String("error", err.Error()))
 				return err
 			}
 		} else {
-			v.PayLoad = payLoad
+			v.Payload = payload
 		}
-		v.Len = uint32(len(v.PayLoad))
+		v.Len = uint32(len(v.Payload))
 	}
 	return nil
 }

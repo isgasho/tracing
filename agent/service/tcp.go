@@ -81,7 +81,7 @@ func (t *TCPClient) Init() error {
 			return err
 		}
 
-		g.L.Info("Init:t.ReadPacket", zap.Any("packet", packet))
+		// g.L.Info("Init:t.ReadPacket", zap.Any("packet", packet))
 
 		// 发给上层处理
 		switch packet.IsSync {
@@ -110,7 +110,7 @@ func (t *TCPClient) KeepLive() error {
 
 	cmd := util.NewCMD()
 	cmd.Type = util.TypeOfPing
-	cmd.PayLoad = b
+	cmd.Payload = b
 
 	buf, err := msgpack.Marshal(cmd)
 	if err != nil {
@@ -125,7 +125,7 @@ func (t *TCPClient) KeepLive() error {
 		IsSync:     util.TypeOfSyncNo,
 		IsCompress: util.TypeOfCompressNo,
 		ID:         0,
-		PayLoad:    buf,
+		Payload:    buf,
 	}
 
 	if err := t.WritePacket(packet); err != nil {

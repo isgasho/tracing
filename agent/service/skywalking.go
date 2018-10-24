@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -89,7 +90,7 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 	g.L.Info("ApplicationCodeRegister", zap.String("ApplicationCode", al.ApplicationCode))
 	// AppRegister
 	registerPacker := &util.AppRegister{
-		Name: al.ApplicationCode,
+		Name: gAgent.appInfo.Name,
 		Code: 1000,
 	}
 
@@ -119,7 +120,7 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 		IsSync:     util.TypeOfSyncYes,
 		IsCompress: util.TypeOfCompressNo,
 		ID:         id,
-		PayLoad:    payload,
+		Payload:    payload,
 	}
 
 	if err := gAgent.client.WritePacket(packet); err != nil {
@@ -134,12 +135,38 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 	}
 
 	// 阻塞同步等待，并关闭chan
-	responsePakcet, err := gAgent.syncCall.syncRead(id, 10, true)
+	respPakcet, err := gAgent.syncCall.syncRead(id, 10, true)
 	if err != nil {
 		g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.syncRead", zap.String("error", err.Error()))
 		return nil, err
 	}
-	log.Println("获取服务端packet", responsePakcet)
+
+	// 非Skywalking返回错误
+	if respPakcet.Type != util.TypeOfSkywalking {
+		err := fmt.Errorf("unknow type %d", respPakcet.Type)
+		g.L.Warn("ApplicationCodeRegister:.", zap.Error(err))
+		return nil, err
+	}
+
+	skypacket := &util.SkywalkingPacket{}
+	if err := msgpack.Unmarshal(respPakcet.Payload, skypacket); err != nil {
+		g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	if skypacket.Type != util.TypeOfAppRegister {
+		err := fmt.Errorf("unknow type %d", respPakcet.Type)
+		g.L.Warn("ApplicationCodeRegister:.", zap.Error(err))
+		return nil, err
+	}
+
+	respRegister := &util.AppRegister{}
+	if err := msgpack.Unmarshal(skypacket.Payload, respRegister); err != nil {
+		g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	log.Println("获取服务端packet", respRegister)
 
 	// var id int32 = 1111
 	// kv := &protocol.KeyWithIntegerValue{

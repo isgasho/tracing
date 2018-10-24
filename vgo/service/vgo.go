@@ -8,6 +8,7 @@ import (
 
 	"github.com/vmihailenco/msgpack"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
@@ -17,18 +18,28 @@ import (
 
 // Vgo ...
 type Vgo struct {
-	stats *stats.Stats
+	stats   *stats.Stats
+	storage *Storage
+	apps    *AppStore
 }
 
 // New ...
 func New() *Vgo {
 	return &Vgo{
-		stats: stats.New(),
+		stats:   stats.New(),
+		storage: NewStorage(),
+		apps:    NewAppStore(),
 	}
 }
 
 // Start ...
 func (v *Vgo) Start() error {
+
+	if err := v.storage.Start(); err != nil {
+		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+		return err
+	}
+
 	if err := v.init(); err != nil {
 		g.L.Fatal("Start:v.init", zap.String("error", err.Error()))
 		return err
@@ -37,6 +48,18 @@ func (v *Vgo) Start() error {
 }
 
 func (v *Vgo) init() error {
+	// init mysql
+	if err := v.initMysql(); err != nil {
+		g.L.Warn("init:v.initMysql", zap.String("error", err.Error()))
+		return err
+	}
+
+	// load apps
+	if err := v.apps.LoadApps(); err != nil {
+		g.L.Warn("init:apps.LoadApps", zap.String("error", err.Error()))
+		return err
+	}
+
 	// start web ser
 
 	// start stats
@@ -48,6 +71,12 @@ func (v *Vgo) init() error {
 	// init service
 	v.acceptAgent()
 
+	return nil
+}
+
+func (v *Vgo) initMysql() error {
+	// init sql
+	g.InitMysql(misc.Conf.Mysql.Acc, misc.Conf.Mysql.Pw, misc.Conf.Mysql.Addr, misc.Conf.Mysql.Port, misc.Conf.Mysql.Database)
 	return nil
 }
 
@@ -117,19 +146,18 @@ func (v *Vgo) agentWork(conn net.Conn) {
 
 func (v *Vgo) dealCmd(conn net.Conn, packet *util.VgoPacket) error {
 	cmd := util.NewCMD()
-	if err := msgpack.Unmarshal(packet.PayLoad, cmd); err != nil {
+	if err := msgpack.Unmarshal(packet.Payload, cmd); err != nil {
 		g.L.Warn("dealCmd:msgpack.Unmarshal", zap.String("error", err.Error()))
 		return err
 	}
 	switch cmd.Type {
 	case util.TypeOfPing:
 		ping := util.NewPing()
-		if err := msgpack.Unmarshal(cmd.PayLoad, ping); err != nil {
+		if err := msgpack.Unmarshal(cmd.Payload, ping); err != nil {
 			g.L.Warn("dealCmd:msgpack.Unmarshal", zap.String("error", err.Error()))
 			return err
 		}
-		log.Println("ping", conn.RemoteAddr())
-		break
+		g.L.Debug("dealCmd:ping", zap.String("addr", conn.RemoteAddr().String()))
 	}
 	return nil
 }
@@ -159,13 +187,19 @@ func (v *Vgo) agentRead(conn net.Conn, packetC chan *util.VgoPacket, quitC chan 
 
 // Close ...
 func (v *Vgo) Close() error {
+
+	// 关闭存储
+	if err := v.storage.Close(); err != nil {
+		g.L.Warn("Close:v.storage.Close", zap.String("error", err.Error()))
+	}
+
 	return nil
 }
 
 // dealSkywalking skywlking报文处理
 func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 	skypacker := &util.SkywalkingPacket{}
-	if err := msgpack.Unmarshal(packet.PayLoad, skypacker); err != nil {
+	if err := msgpack.Unmarshal(packet.Payload, skypacker); err != nil {
 		g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
 		return err
 	}
@@ -176,6 +210,9 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 			g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
 			return err
 		}
+
+		v.apps.LoadAppCode(appRegister.Name)
+
 		log.Println("appRegister", appRegister.Name)
 		log.Println("packet.IsSync", packet.IsSync)
 		log.Println("packet.ID", packet.ID)

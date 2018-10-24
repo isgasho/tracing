@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config ...
 type Config struct {
 	Common struct {
 		Version    string
@@ -19,6 +20,12 @@ type Config struct {
 		AgentTimeout int
 	}
 
+	Storage struct {
+		Cluster  []string
+		Keyspace string
+		NumConns int
+	}
+
 	Mysql struct {
 		Addr     string
 		Port     string
@@ -28,8 +35,10 @@ type Config struct {
 	}
 }
 
+// Conf ...
 var Conf *Config
 
+// InitConfig ...
 func InitConfig(path string) {
 	conf := &Config{}
 	data, err := ioutil.ReadFile(path)
@@ -42,4 +51,5 @@ func InitConfig(path string) {
 		log.Fatal("yaml decode error :", err)
 	}
 	Conf = conf
+	log.Println(Conf)
 }

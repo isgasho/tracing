@@ -3,7 +3,7 @@ package util
 // CMD ...
 type CMD struct {
 	Type    uint16 `msg:"t"`
-	PayLoad []byte `msg:"p"`
+	Payload []byte `msg:"p"`
 }
 
 // NewCMD ...
