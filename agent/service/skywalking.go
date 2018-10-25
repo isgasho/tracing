@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -51,7 +52,7 @@ func (sky *SkyWalking) grpcSer() error {
 	// Creates a new gRPC server
 	s := grpc.NewServer()
 	protocol.RegisterApplicationRegisterServiceServer(s, &appRegister{})
-	// protocol.RegisterInstanceDiscoveryServiceServer(s, &InstanceDiscoveryService{})
+	protocol.RegisterInstanceDiscoveryServiceServer(s, &instanceDiscoveryService{})
 	// protocol.RegisterServiceNameDiscoveryServiceServer(s, &ServiceNameDiscoveryService{})
 	// protocol.RegisterNetworkAddressRegisterServiceServer(s, &NetworkAddressRegisterService{})
 	// protocol.RegisterJVMMetricsServiceServer(s, &JVMMetricsService{})
@@ -90,7 +91,7 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 	g.L.Info("ApplicationCodeRegister", zap.String("ApplicationCode", al.ApplicationCode))
 	// AppRegister
 	registerPacker := &util.AppRegister{
-		Name: gAgent.appInfo.Name,
+		Name: gAgent.appName,
 	}
 
 	buf, err := msgpack.Marshal(registerPacker)
@@ -111,7 +112,7 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 	}
 
 	// 获取ID
-	id := gAgent.ID()
+	id := gAgent.getSyncID()
 
 	packet := &util.VgoPacket{
 		Type:       util.TypeOfSkywalking,
@@ -149,7 +150,7 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 
 	skypacket := &util.SkywalkingPacket{}
 	if err := msgpack.Unmarshal(respPakcet.Payload, skypacket); err != nil {
-		g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+		g.L.Warn("ApplicationCodeRegister:msgpack.Unmarshal", zap.String("error", err.Error()))
 		return nil, err
 	}
 
@@ -161,22 +162,152 @@ func (a *appRegister) ApplicationCodeRegister(ctx context.Context, al *protocol.
 
 	respRegister := &util.AppRegister{}
 	if err := msgpack.Unmarshal(skypacket.Payload, respRegister); err != nil {
-		g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+		g.L.Warn("ApplicationCodeRegister:msgpack.Unmarshal", zap.String("error", err.Error()))
 		return nil, err
 	}
 
-	log.Println("获取服务端packet", respRegister)
+	// 保存AppCode
+	gAgent.appCode = respRegister.Code
+	gAgent.agentInfo.AppCode = gAgent.appCode
 
-	// var id int32 = 1111
-	// kv := &protocol.KeyWithIntegerValue{
-	// 	Key:   al.ApplicationCode,
-	// 	Value: id,
-	// }
+	log.Println("ApplicationCodeRegister 获取服务端packet", respRegister)
 
-	// appMapping := &protocol.ApplicationMapping{
-	// 	Application: kv,
-	// }
+	kv := &protocol.KeyWithIntegerValue{
+		Key:   gAgent.appName, // al.ApplicationCode,
+		Value: respRegister.Code,
+	}
 
-	// return appMapping, nil
+	appMapping := &protocol.ApplicationMapping{
+		Application: kv,
+	}
+
+	return appMapping, nil
+}
+
+// instanceDiscoveryService ...
+type instanceDiscoveryService struct {
+}
+
+// RegisterInstance ...
+func (i *instanceDiscoveryService) RegisterInstance(ctx context.Context, in *protocol.ApplicationInstance) (*protocol.ApplicationInstanceMapping, error) {
+	// agent重启需要保存app code
+	if gAgent.appCode == -1 {
+		gAgent.appCode = in.ApplicationId
+	}
+
+	gAgent.agentInfo.AppCode = gAgent.appCode
+	gAgent.agentInfo.AppName = gAgent.appName
+	gAgent.agentInfo.AgentUUID = in.AgentUUID
+	gAgent.agentInfo.RegisterTime = in.RegisterTime
+	gAgent.agentInfo.OsName = in.Osinfo.OsName
+	gAgent.agentInfo.HostName = in.Osinfo.Hostname
+	gAgent.agentInfo.ProcessID = in.Osinfo.ProcessNo
+
+	ips, err := json.Marshal(&in.Osinfo.Ipv4S)
+	if err != nil {
+		g.L.Warn("RegisterInstance:json.Marshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	gAgent.agentInfo.Ipv4S = string(ips)
+
+	buf, err := msgpack.Marshal(gAgent.agentInfo)
+	if err != nil {
+		g.L.Warn("RegisterInstance:msgpack.Marshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	skp := util.SkywalkingPacket{
+		Type:    util.TypeOfAppRegisterInstance,
+		Payload: buf,
+	}
+
+	payload, err := msgpack.Marshal(skp)
+	if err != nil {
+		g.L.Warn("RegisterInstance:msgpack.Marshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	// 获取ID
+	id := gAgent.getSyncID()
+
+	packet := &util.VgoPacket{
+		Type:       util.TypeOfSkywalking,
+		Version:    util.VersionOf01,
+		IsSync:     util.TypeOfSyncYes,
+		IsCompress: util.TypeOfCompressNo,
+		ID:         id,
+		Payload:    payload,
+	}
+
+	if err := gAgent.client.WritePacket(packet); err != nil {
+		g.L.Warn("RegisterInstance:gAgent.client.WritePacket", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	// 创建chan
+	if _, ok := gAgent.syncCall.newChan(id, 10); !ok {
+		g.L.Warn("RegisterInstance:gAgent.syncCall.newChan", zap.String("error", "创建sync chan失败"))
+		return nil, err
+	}
+
+	// 阻塞同步等待，并关闭chan
+	respPakcet, err := gAgent.syncCall.syncRead(id, 10, true)
+	if err != nil {
+		g.L.Warn("RegisterInstance:gAgent.syncCall.syncRead", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	// 非Skywalking返回错误
+	if respPakcet.Type != util.TypeOfSkywalking {
+		err := fmt.Errorf("unknow type %d", respPakcet.Type)
+		g.L.Warn("RegisterInstance:.", zap.Error(err))
+		return nil, err
+	}
+
+	skypacket := &util.SkywalkingPacket{}
+	if err := msgpack.Unmarshal(respPakcet.Payload, skypacket); err != nil {
+		g.L.Warn("RegisterInstance:msgpack.Unmarshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	if skypacket.Type != util.TypeOfAppRegisterInstance {
+		err := fmt.Errorf("unknow type %d", respPakcet.Type)
+		g.L.Warn("RegisterInstance:.", zap.Error(err))
+		return nil, err
+	}
+
+	respRegister := &util.KeyWithIntegerValue{}
+	if err := msgpack.Unmarshal(skypacket.Payload, respRegister); err != nil {
+		g.L.Warn("RegisterInstance:msgpack.Unmarshal", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	log.Println("RegisterInstance 获取服务端packet", respRegister)
+
+	gAgent.agentInfo.ID = respRegister.Value
+
+	am := &protocol.ApplicationInstanceMapping{
+		ApplicationId:         gAgent.appCode,
+		ApplicationInstanceId: gAgent.agentInfo.ID,
+	}
+	log.Println(am)
+
+	log.Println("appCode--->>>>>", gAgent.appCode)
+	log.Println("ID--->>>>>", gAgent.agentInfo.ID)
+	log.Println("AgentUUID--->>>>>", gAgent.agentInfo.AgentUUID)
+	log.Println("AppCode--->>>>>", gAgent.agentInfo.AppCode)
+	log.Println("OsName--->>>>>", gAgent.agentInfo.OsName)
+	log.Println("Ipv4S--->>>>>", gAgent.agentInfo.Ipv4S)
+	log.Println("RegisterTime--->>>>>", gAgent.agentInfo.RegisterTime)
+	log.Println("ProcessID--->>>>>", gAgent.agentInfo.ProcessID)
+	log.Println("HostName--->>>>>", gAgent.agentInfo.HostName)
 	return nil, nil
+}
+
+// Heartbeat ...
+func (i *instanceDiscoveryService) Heartbeat(ctx context.Context, in *protocol.ApplicationInstanceHeartbeat) (*protocol.Downstream, error) {
+	log.Println("Heartbeat", in)
+	dm := &protocol.Downstream{}
+	return dm, nil
 }

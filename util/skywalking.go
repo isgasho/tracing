@@ -6,6 +6,18 @@ type SkywalkingPacket struct {
 	Payload []byte `msg:"payload"`
 }
 
+// KeyWithIntegerValue ...
+type KeyWithIntegerValue struct {
+	Key   string `msg:"k"`
+	Value int32  `msg:"v"`
+}
+
+// KeyWithStringValue ...
+type KeyWithStringValue struct {
+	Key   string `msg:"k"`
+	Value string `msg:"v"`
+}
+
 // AppRegister ...
 type AppRegister struct {
 	Name string `msg:"n"`

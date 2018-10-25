@@ -81,7 +81,7 @@ func (t *TCPClient) Init() error {
 			return err
 		}
 
-		// g.L.Info("Init:t.ReadPacket", zap.Any("packet", packet))
+		g.L.Info("Init:t.ReadPacket", zap.Any("packet", packet))
 
 		// 发给上层处理
 		switch packet.IsSync {

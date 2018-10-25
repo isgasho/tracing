@@ -17,14 +17,16 @@ import (
 
 // Agent ...
 type Agent struct {
-	quitC     chan bool
-	uploadC   chan *util.VgoPacket
-	downloadC chan *util.VgoPacket
+	appName   string
+	appCode   int32
 	syncCall  *SyncCall
 	client    *TCPClient
 	skyWalk   *SkyWalking
-	id        uint32
-	appInfo   *AppInfo
+	syncID    uint32
+	agentInfo *util.AgentInfo
+	quitC     chan bool
+	uploadC   chan *util.VgoPacket
+	downloadC chan *util.VgoPacket
 }
 
 var gAgent *Agent
@@ -32,46 +34,47 @@ var gAgent *Agent
 // New ...
 func New() *Agent {
 	gAgent = &Agent{
-		quitC:     make(chan bool, 1),
-		uploadC:   make(chan *util.VgoPacket, 100),
-		downloadC: make(chan *util.VgoPacket, 100),
 		syncCall:  NewSyncCall(),
 		client:    NewTCPClient(),
 		skyWalk:   NewSkyWalking(),
-		appInfo:   NewAppInfo(),
+		agentInfo: util.NewAgentInfo(),
+		quitC:     make(chan bool, 1),
+		uploadC:   make(chan *util.VgoPacket, 100),
+		downloadC: make(chan *util.VgoPacket, 100),
+		appCode:   -1,
 	}
 	return gAgent
 }
 
-// ID ...
-func (a *Agent) ID() uint32 {
-	return atomic.AddUint32(&a.id, 1)
+// getSyncID ...
+func (a *Agent) getSyncID() uint32 {
+	return atomic.AddUint32(&a.syncID, 1)
 }
 
-// initAppInfo ...
-func (a *Agent) initAppInfo() error {
+// initAppName ...
+func (a *Agent) initAppName() error {
 	// 使用环境变量
 	if misc.Conf.Agent.UseEnv {
 		if misc.Conf.Agent.ENV == "" {
-			g.L.Fatal("initAppInfo:.", zap.Error(fmt.Errorf("env is nil")))
+			g.L.Fatal("initAppName:.", zap.Error(fmt.Errorf("env is nil")))
 		}
 		name := os.Getenv(misc.Conf.Agent.ENV)
 		if name == "" {
-			g.L.Fatal("initAppInfo:os.Getenv", zap.Error(fmt.Errorf("get env is nil")), zap.String("env", misc.Conf.Agent.ENV))
+			g.L.Fatal("initAppName:os.Getenv", zap.Error(fmt.Errorf("get env is nil")), zap.String("env", misc.Conf.Agent.ENV))
 		}
-		a.appInfo.Name = name
+		a.appName = name
 	} else {
 		// 从配置文件获取
 		if len(misc.Conf.Agent.AppName) > 0 {
-			a.appInfo.Name = misc.Conf.Agent.AppName
+			a.appName = misc.Conf.Agent.AppName
 		} else {
 			// 从主机名获取
 			_, agentName := getAgentIdAndName()
-			a.appInfo.Name = agentName
+			a.appName = agentName
 		}
 	}
 
-	g.L.Info("initAppInfo", zap.String("AppName", a.appInfo.Name))
+	g.L.Info("initAppName", zap.String("AppName", a.appName))
 
 	return nil
 }
@@ -79,8 +82,8 @@ func (a *Agent) initAppInfo() error {
 // Start ...
 func (a *Agent) Start() error {
 
-	//	获取App信息
-	if err := a.initAppInfo(); err != nil {
+	// 获取App name
+	if err := a.initAppName(); err != nil {
 		g.L.Fatal("Start:a.initAppInfo", zap.Error(err))
 	}
 

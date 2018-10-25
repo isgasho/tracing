@@ -2,9 +2,9 @@ package service
 
 // AppInfo ...
 type AppInfo struct {
-	ID   string
-	Name string
-	Host string
+	Code int    // appCode
+	ID   string // agentID
+	Name string // app name
 }
 
 // NewAppInfo ...

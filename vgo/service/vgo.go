@@ -237,6 +237,44 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 			return err
 		}
 		break
+	case util.TypeOfAppRegisterInstance:
+		agentInfo := &util.AgentInfo{}
+		if err := msgpack.Unmarshal(skypacker.Payload, agentInfo); err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+			return err
+		}
+
+		id, err := v.apps.LoadAgentID(agentInfo)
+		if err != nil {
+			g.L.Warn("dealSkywalking:v.apps.LoadAppCode", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
+			return err
+		}
+
+		appRegisterIns := &util.KeyWithIntegerValue{
+			Key:   "id",
+			Value: id,
+		}
+
+		mbuf, err := msgpack.Marshal(appRegisterIns)
+		if err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
+			return err
+		}
+		skypacker.Payload = mbuf
+
+		payload, err := msgpack.Marshal(skypacker)
+		if err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
+			return err
+		}
+
+		packet.Payload = payload
+
+		if _, err := conn.Write(packet.Encode()); err != nil {
+			g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
+			return err
+		}
+		break
 	}
 	return nil
 }
