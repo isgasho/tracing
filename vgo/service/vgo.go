@@ -2,6 +2,8 @@ package service
 
 import (
 	"bufio"
+	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -56,6 +58,12 @@ func (v *Vgo) init() error {
 	// load apps
 	if err := v.apps.LoadApps(); err != nil {
 		g.L.Warn("init:apps.LoadApps", zap.String("error", err.Error()))
+		return err
+	}
+
+	// load server name code
+	if err := v.apps.LoadSerCode(); err != nil {
+		g.L.Warn("init:apps.LoadSerCode", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -274,6 +282,51 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 			g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
 			return err
 		}
+		break
+	case util.TypeOfSerNameDiscoveryService:
+		serNames := &util.SerNameDiscoveryServices{}
+		if err := msgpack.Unmarshal(skypacker.Payload, serNames); err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+			return err
+		}
+
+		appName, ok := v.apps.LoadAppName(serNames.AppCode)
+		if !ok {
+			g.L.Warn("dealSkywalking:v.apps.LoadAppName", zap.String("error", "unfind app name"), zap.Int32("appCode", serNames.AppCode))
+			return fmt.Errorf("unfind app name, app code is %d", serNames.AppCode)
+		}
+
+		log.Println(appName)
+		// id, err := v.apps.LoadAgentID(agentInfo)
+		// if err != nil {
+		// 	g.L.Warn("dealSkywalking:v.apps.LoadAppCode", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
+		// 	return err
+		// }
+
+		// appRegisterIns := &util.KeyWithIntegerValue{
+		// 	Key:   "id",
+		// 	Value: id,
+		// }
+
+		// mbuf, err := msgpack.Marshal(appRegisterIns)
+		// if err != nil {
+		// 	g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
+		// 	return err
+		// }
+		// skypacker.Payload = mbuf
+
+		// payload, err := msgpack.Marshal(skypacker)
+		// if err != nil {
+		// 	g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
+		// 	return err
+		// }
+
+		// packet.Payload = payload
+
+		// if _, err := conn.Write(packet.Encode()); err != nil {
+		// 	g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
+		// 	return err
+		// }
 		break
 	}
 	return nil

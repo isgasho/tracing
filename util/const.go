@@ -15,8 +15,9 @@ const (
 
 // 监控报文类型SKYWalking
 const (
-	TypeOfAppRegister         uint16 = 1 // 注册app id
-	TypeOfAppRegisterInstance uint16 = 2 // 注册app实例ID
+	TypeOfAppRegister             uint16 = 1 // 注册app id
+	TypeOfAppRegisterInstance     uint16 = 2 // 注册app实例ID
+	TypeOfSerNameDiscoveryService uint16 = 3 // 注册Api
 )
 
 // 其他控制类型
