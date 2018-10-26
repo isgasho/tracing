@@ -17,16 +17,18 @@ import (
 
 // Agent ...
 type Agent struct {
-	appName   string
-	appCode   int32
-	syncCall  *SyncCall
-	client    *TCPClient
-	skyWalk   *SkyWalking
-	syncID    uint32
-	agentInfo *util.AgentInfo
-	quitC     chan bool
-	uploadC   chan *util.VgoPacket
-	downloadC chan *util.VgoPacket
+	appName       string // 应用名
+	appID         int32  //	应用ID
+	appInstanceID int32  // 应用实例ID
+	agentUUID     string
+	syncCall      *SyncCall
+	client        *TCPClient
+	skyWalk       *SkyWalking
+	syncID        uint32
+	agentInfo     *util.AgentInfo
+	quitC         chan bool
+	uploadC       chan *util.VgoPacket
+	downloadC     chan *util.VgoPacket
 }
 
 var gAgent *Agent
@@ -41,7 +43,6 @@ func New() *Agent {
 		quitC:     make(chan bool, 1),
 		uploadC:   make(chan *util.VgoPacket, 100),
 		downloadC: make(chan *util.VgoPacket, 100),
-		appCode:   -1,
 	}
 	return gAgent
 }
