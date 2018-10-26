@@ -18,21 +18,15 @@ type KeyWithStringValue struct {
 	Value string `msg:"v"`
 }
 
-// SerNameDiscoveryService ...
-type SerNameDiscoveryService struct {
-	SerName  string `msg:"sn"`
+// API ...
+type API struct {
+	AppID    int32  `msg:"aid"`
 	SerID    int32  `msg:"sid"`
+	SerName  string `msg:"sn"`
 	SpanType int32  `msg:"st"`
 }
 
-// SerNameDiscoveryServices ...
+// API ...
 type SerNameDiscoveryServices struct {
-	AppCode int32                      `msg:"ac"`
-	Sers    []*SerNameDiscoveryService `msg:"as"`
+	SerNames []*API `msg:"as"`
 }
-
-// // AppRegister ...
-// type AppRegister struct {
-// 	Name string `msg:"n"`
-// 	Code int32  `msg:"c"`
-// }

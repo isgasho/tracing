@@ -298,54 +298,110 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 		break
 		// 应用服务名/注册
 	case util.TypeOfSerNameDiscoveryService:
-		// serNames := &util.SerNameDiscoveryServices{}
-		// if err := msgpack.Unmarshal(skypacker.Payload, serNames); err != nil {
-		// 	g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
-		// 	return err
-		// }
+		repPacket := &util.SerNameDiscoveryServices{}
+		if err := msgpack.Unmarshal(skypacker.Payload, repPacket); err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+			return err
+		}
 
-		// appName, ok := v.apps.LoadAppName(serNames.AppCode)
-		// if !ok {
-		// 	g.L.Warn("dealSkywalking:v.apps.LoadAppName", zap.String("error", "unfind app name"), zap.Int32("appCode", serNames.AppCode))
-		// 	return fmt.Errorf("unfind app name, app code is %d", serNames.AppCode)
-		// }
+		for index, serName := range repPacket.SerNames {
+			app, err := v.loadApp(serName.AppID)
+			if err != nil {
+				continue
+			}
+			id, err := v.loadAPI(serName, app)
+			if err != nil {
+				continue
+			}
+			repPacket.SerNames[index].SerID = id
+		}
 
-		// ///////
+		mbuf, err := msgpack.Marshal(repPacket)
+		if err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("error", err.Error()))
+			return err
+		}
 
-		// log.Println(appName)
-		// id, err := v.apps.LoadAgentID(agentInfo)
-		// if err != nil {
-		// 	g.L.Warn("dealSkywalking:v.apps.LoadAppCode", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
-		// 	return err
-		// }
+		skypacker.Payload = mbuf
+		payload, err := msgpack.Marshal(skypacker)
+		if err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("error", err.Error()))
+			return err
+		}
 
-		// appRegisterIns := &util.KeyWithIntegerValue{
-		// 	Key:   "id",
-		// 	Value: id,
-		// }
+		packet.Payload = payload
 
-		// mbuf, err := msgpack.Marshal(appRegisterIns)
-		// if err != nil {
-		// 	g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
-		// 	return err
-		// }
-		// skypacker.Payload = mbuf
-
-		// payload, err := msgpack.Marshal(skypacker)
-		// if err != nil {
-		// 	g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("name", agentInfo.AppName), zap.String("error", err.Error()))
-		// 	return err
-		// }
-
-		// packet.Payload = payload
-
-		// if _, err := conn.Write(packet.Encode()); err != nil {
-		// 	g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
-		// 	return err
-		// }
+		if _, err := conn.Write(packet.Encode()); err != nil {
+			g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
+			return err
+		}
 		break
 	}
 	return nil
+}
+
+// loadAPI 通过Agentuuid到数据库中查找 agent info
+func (v *Vgo) loadAPI(ser *util.API, app *util.App) (int32, error) {
+
+	var apiID int32
+	isFind := false
+	// 查找缓存
+	app.Apis.Range(func(key, value interface{}) bool {
+		if strings.EqualFold(ser.SerName, value.(*util.API).SerName) {
+			apiID = value.(*util.API).SerID
+			isFind = true
+			return false
+		}
+		return true
+	})
+	// 缓存中有
+	if isFind {
+		return apiID, nil
+	}
+
+	// 缓存没有， 查询数据库
+	query := fmt.Sprintf("select `id`, `span_type` from  `server_name` where app_id='%d' and server_name='%s'", ser.AppID, ser.SerName)
+	rows, err := g.DB.Query(query)
+	if err != nil {
+		g.L.Warn("loadAPI:g.DB.Query", zap.Error(err), zap.Int32("AppID", ser.AppID), zap.String("api", ser.SerName), zap.String("query", query))
+		return 0, err
+	}
+	// 防止泄漏
+	defer rows.Close()
+
+	api := &util.API{}
+	for rows.Next() {
+		rows.Scan(&api.SerID, &api.SpanType)
+		isFind = true
+		break
+	}
+
+	// 数据库中可能不存在, 	直接插入
+	if !isFind {
+		query := fmt.Sprintf("insert into server_name (app_id, server_name, span_type) values ('%d', '%s', '%d')",
+			ser.AppID, ser.SerName, ser.SpanType)
+		result, err := g.DB.Exec(query)
+		if err != nil {
+			g.L.Warn("loadAPI:g.DB.Exec", zap.String("query", query), zap.Error(err))
+			return 0, err
+		}
+
+		id, err := result.LastInsertId()
+		if err != nil {
+			g.L.Warn("loadAPI:result.LastInsertId", zap.String("query", query), zap.Error(err))
+			return 0, err
+		}
+		api.SerID = int32(id)
+
+	}
+
+	api.AppID = ser.AppID
+	api.SerName = ser.SerName
+	api.SpanType = ser.SpanType
+
+	// 缓存到内存中
+	app.Apis.Store(api.SerID, api)
+	return api.SerID, nil
 }
 
 // LoadApps 加载数据库中的所有app
