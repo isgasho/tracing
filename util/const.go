@@ -18,6 +18,8 @@ const (
 	TypeOfAppRegister             uint16 = 1 // 注册app id
 	TypeOfAppRegisterInstance     uint16 = 2 // 注册app实例ID
 	TypeOfSerNameDiscoveryService uint16 = 3 // 注册Api
+	TypeOfNewworkAddrRegister     uint16 = 4 // 注册Addr
+	TypeOfJVMMetrics              uint16 = 5 // JVM信息
 )
 
 // 其他控制类型

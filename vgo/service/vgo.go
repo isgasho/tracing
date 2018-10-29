@@ -336,6 +336,59 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 			return err
 		}
 		break
+		// 注册Addr
+	case util.TypeOfNewworkAddrRegister:
+		// repPacket := &util.RegisterAddrs{}
+		// if err := msgpack.Unmarshal(skypacker.Payload, repPacket); err != nil {
+		// 	g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+		// 	return err
+		// }
+
+		// for index, serName := range repPacket.SerNames {
+		// 	app, err := v.loadApp(serName.AppID)
+		// 	if err != nil {
+		// 		continue
+		// 	}
+		// 	id, err := v.loadAPI(serName, app)
+		// 	if err != nil {
+		// 		continue
+		// 	}
+		// 	repPacket.SerNames[index].SerID = id
+		// }
+
+		// mbuf, err := msgpack.Marshal(repPacket)
+		// if err != nil {
+		// 	g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("error", err.Error()))
+		// 	return err
+		// }
+
+		// skypacker.Payload = mbuf
+		// payload, err := msgpack.Marshal(skypacker)
+		// if err != nil {
+		// 	g.L.Warn("dealSkywalking:msgpack.Marshal", zap.String("error", err.Error()))
+		// 	return err
+		// }
+
+		// packet.Payload = payload
+
+		// if _, err := conn.Write(packet.Encode()); err != nil {
+		// 	g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
+		// 	return err
+		// }
+		break
+		// jvm 数据
+	case util.TypeOfJVMMetrics:
+		repPacket := &util.JVMS{}
+		if err := msgpack.Unmarshal(skypacker.Payload, repPacket); err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+			return err
+		}
+
+		for _, jvm := range repPacket.JVMs {
+			g.L.Info("jvm", zap.Any("jvm", jvm), zap.String("name", repPacket.AppName), zap.Int32("id", repPacket.InstanceID))
+		}
+
+		break
 	}
 	return nil
 }

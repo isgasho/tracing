@@ -72,18 +72,40 @@
 			"revisionTime": "2018-09-04T21:04:06Z"
 		},
 		{
-			"checksumSHA1": "5BDC60/+fxUvvgUsHDdJAFrEVLI=",
-			"origin": "go.etcd.io/etcd/vendor/github.com/gogo/protobuf/proto",
+			"checksumSHA1": "J1Laz+S5hZEzljSbUsBOEHsp6GI=",
 			"path": "github.com/gogo/protobuf/proto",
-			"revision": "1df1ddff4361ed7f2c0f33571923511889a115ce",
-			"revisionTime": "2018-09-04T21:04:06Z"
+			"revision": "5669497fd64452f28d142899eeb1bfd7e8b26ac8",
+			"revisionTime": "2018-08-30T16:04:56Z"
 		},
 		{
-			"checksumSHA1": "F6EmumH3jT68TklhsqJrKOMJ7mM=",
-			"origin": "go.etcd.io/etcd/vendor/github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
+			"checksumSHA1": "dKRCdJjgWFmIiItRXJWXc7v5jng=",
+			"path": "github.com/gogo/protobuf/proto/proto3_proto",
+			"revision": "5669497fd64452f28d142899eeb1bfd7e8b26ac8",
+			"revisionTime": "2018-08-30T16:04:56Z"
+		},
+		{
+			"checksumSHA1": "+tLQxI4oh97eb22mjVVibc+4gpM=",
+			"path": "github.com/gogo/protobuf/proto/test_proto",
+			"revision": "5669497fd64452f28d142899eeb1bfd7e8b26ac8",
+			"revisionTime": "2018-08-30T16:04:56Z"
+		},
+		{
+			"checksumSHA1": "KWF8jRbe/bKNmwPPDZbJfSVKd9A=",
 			"path": "github.com/gogo/protobuf/protoc-gen-gogo/descriptor",
-			"revision": "1df1ddff4361ed7f2c0f33571923511889a115ce",
-			"revisionTime": "2018-09-04T21:04:06Z"
+			"revision": "5669497fd64452f28d142899eeb1bfd7e8b26ac8",
+			"revisionTime": "2018-08-30T16:04:56Z"
+		},
+		{
+			"checksumSHA1": "HPVQZu059/Rfw2bAWM538bVTcUc=",
+			"path": "github.com/gogo/protobuf/sortkeys",
+			"revision": "5669497fd64452f28d142899eeb1bfd7e8b26ac8",
+			"revisionTime": "2018-08-30T16:04:56Z"
+		},
+		{
+			"checksumSHA1": "8Q/7vHasnzcOQ56Dhe4C0mML8WU=",
+			"path": "github.com/gogo/protobuf/types",
+			"revision": "5669497fd64452f28d142899eeb1bfd7e8b26ac8",
+			"revisionTime": "2018-08-30T16:04:56Z"
 		},
 		{
 			"checksumSHA1": "yUc84k7cfnRi9AlPFuRo77Y18Og=",
@@ -290,10 +312,10 @@
 			"revisionTime": "2018-09-20T03:08:36Z"
 		},
 		{
-			"checksumSHA1": "LUnmVTwezbVT+NmgzkNWOPjAXxA=",
+			"checksumSHA1": "9pOEKJZLPu9FXtV/fJ5TORoII+I=",
 			"path": "github.com/mafanr/vgo/util",
-			"revision": "b334ca2306ba201e1e7e8db4d1e4c401c9ba4905",
-			"revisionTime": "2018-10-26T08:18:20Z"
+			"revision": "afc607f3c6414c5d77587b7976db9d78ad6b74e6",
+			"revisionTime": "2018-10-26T09:24:36Z"
 		},
 		{
 			"checksumSHA1": "lP2oAmh6mEONIorMM8tD8ntqO7c=",

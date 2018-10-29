@@ -26,7 +26,13 @@ type API struct {
 	SpanType int32  `msg:"st"`
 }
 
-// API ...
+// SerNameDiscoveryServices ...
 type SerNameDiscoveryServices struct {
 	SerNames []*API `msg:"as"`
+}
+
+// RegisterAddrs ...
+type RegisterAddrs struct {
+	AppID int32                  `msg:"aid"`
+	Addrs []*KeyWithIntegerValue `msg:"Addr"`
 }
