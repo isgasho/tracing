@@ -10,7 +10,7 @@ const (
 // Span ...
 type Span struct {
 	TraceID         string     `msg:"tid"`
-	SpanID          string     `msg:"sid"`
+	SpanID          int32      `msg:"sid"`
 	Refs            []*SpanRef `msg:"rfs"`
 	StartTime       int64      `msg:"st"`
 	EndTime         int64      `msg:"et"`

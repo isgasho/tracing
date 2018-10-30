@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"time"
 
 	"github.com/mafanr/g"
@@ -17,12 +18,14 @@ import (
 type Storage struct {
 	session *gocql.Session
 	jvmC    chan *util.JVMS
+	spansC  chan []*util.Span
 }
 
 // NewStorage ...
 func NewStorage() *Storage {
 	return &Storage{
-		jvmC: make(chan *util.JVMS, misc.Conf.Storage.JVMCacheLen),
+		jvmC:   make(chan *util.JVMS, misc.Conf.Storage.JVMCacheLen),
+		spansC: make(chan []*util.Span, misc.Conf.Storage.SpanCacheLen),
 	}
 }
 
@@ -43,6 +46,8 @@ func (storage *Storage) Start() error {
 	storage.session = session
 
 	go storage.jvmStore()
+
+	go storage.spanStore()
 
 	return nil
 }
@@ -100,6 +105,48 @@ func (storage *Storage) jvmStore() {
 				}
 				// 清空缓存
 				jvmsQueue = jvmsQueue[:0]
+			}
+			break
+		}
+	}
+}
+
+// spanStore ...
+func (storage *Storage) spanStore() {
+	ticker := time.NewTicker(time.Duration(misc.Conf.Storage.SpanStoreInterval) * time.Millisecond)
+	var spanQueue []*util.Span
+	for {
+		select {
+		case spans, ok := <-storage.spansC:
+			if ok {
+				spanQueue = append(spanQueue, spans...)
+				if len(spanQueue) > misc.Conf.Storage.SpanStoreLen {
+					// 插入
+					// batchInsert := storage.session.NewBatch(gocql.UnloggedBatch)
+					// for _, value := range spanQueue {
+					// 	body, err := msgpack.Marshal(value.JVMs)
+					// 	if err != nil {
+					// 		g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
+					// 		continue
+					// 	}
+
+					// 	batchInsert.Query(`INSERT INTO jvm (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
+					// }
+					// if err := storage.session.ExecuteBatch(batchInsert); err != nil {
+					// 	g.L.Warn("jvmStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
+					// }
+					log.Println("span 入库并清除缓存")
+					// 清空缓存
+					spanQueue = spanQueue[:0]
+				}
+			}
+			break
+		case <-ticker.C:
+			if len(spanQueue) > 0 {
+				// 插入
+				log.Println("定时任务 span 入库并清除缓存")
+				// 清空缓存
+				spanQueue = spanQueue[:0]
 			}
 			break
 		}

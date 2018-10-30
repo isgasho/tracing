@@ -21,12 +21,15 @@ type Config struct {
 	}
 
 	Storage struct {
-		Cluster          []string
-		Keyspace         string
-		NumConns         int
-		JVMCacheLen      int // 缓存长度
-		JVMStoreInterval int // 毫秒
-		JVMStoreLen      int // 时间未到超过该长度即可插入
+		Cluster           []string
+		Keyspace          string
+		NumConns          int
+		JVMCacheLen       int // 缓存长度
+		JVMStoreInterval  int // 毫秒
+		JVMStoreLen       int // 时间未到超过该长度即可插入
+		SpanCacheLen      int // 缓存长度
+		SpanStoreLen      int // 时间未到超过该长度即可插入
+		SpanStoreInterval int // 毫秒
 	}
 
 	Mysql struct {

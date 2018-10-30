@@ -100,47 +100,52 @@ func (sky *SkyWalking) JVMCollector() {
 	}
 }
 
+// analysisSpan ...
+func analysisSpan(tracID string, skySpan *protocol.SpanObject) *util.Span {
+	span := &util.Span{
+		TraceID:         tracID,
+		SpanID:          skySpan.SpanId,
+		StartTime:       skySpan.StartTime,
+		EndTime:         skySpan.EndTime,
+		ParentSpanID:    skySpan.ParentSpanId,
+		OperationNameID: skySpan.OperationNameId,
+		OperationName:   skySpan.OperationName,
+		// Refs            []*SpanRef `msg:"rfs"`
+	}
+	return span
+}
+
 // TracCollector  全链路信息采集
 func (sky *SkyWalking) TracCollector() {
-	// jvmQueue := &util.JVMS{
-	// 	// AppID:   gAgent.appID,
-	// 	AppName: gAgent.appName,
-	// 	JVMs:    make([]*util.JVM, 0),
-	// }
-
-	// isHaveInstanceID := false
-	// if gAgent.appInstanceID != 0 {
-	// 	isHaveInstanceID = true
-	// }
+	// 缓存
 	var spanQueue []*util.Span
-
+	// 定时器
 	ticker := time.NewTicker(time.Duration(misc.Conf.SkyWalking.TraceReportInterval) * time.Millisecond)
-
 	for {
 		select {
 		case reqPack, ok := <-sky.upTracChan:
 			if ok {
-				traArr := &protocol.TraceSegmentObject{}
-				if err := proto.Unmarshal(reqPack.Segment, traArr); err != nil {
+				spansInfo := &protocol.TraceSegmentObject{}
+				if err := proto.Unmarshal(reqPack.Segment, spansInfo); err != nil {
 					g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
 					break
 				}
-
+				// GlobalTraceIds 这里可能被MQ类似的服务批量处理，所以有多个tracID
 				for _, tid := range reqPack.GlobalTraceIds {
-					log.Println("----获取 tid----->>>>>", tid)
+					if len(tid.IdParts) != 3 {
+						continue
+					}
+					tracID := fmt.Sprintf("%d.%d.%d", tid.IdParts[0], tid.IdParts[1], tid.IdParts[2])
+					for _, skySpan := range spansInfo.Spans {
+						newSpan := analysisSpan(tracID, skySpan)
+						spanQueue = append(spanQueue, newSpan)
+					}
 				}
-
-				// analysis jvm
-				// for _, metric := range jvmPack.Metrics {
-				// 	reportJVM := analysisJVM(metric)
-				// 	jvmQueue.JVMs = append(jvmQueue.JVMs, reportJVM)
-				// }
-
 				if len(spanQueue) >= misc.Conf.SkyWalking.TraceCacheLen {
 					// 发送
-					// if err := sky.sendJVMs(jvmQueue); err != nil {
-					// 	g.L.Warn("JVMCollector:sky.sendJVMs", zap.String("error", err.Error()))
-					// }
+					if err := sky.sendSpans(spanQueue); err != nil {
+						g.L.Warn("TracCollector:sky.sendSpans", zap.String("error", err.Error()))
+					}
 					// 清空缓存
 					spanQueue = spanQueue[:0]
 				}
@@ -149,15 +154,50 @@ func (sky *SkyWalking) TracCollector() {
 		case <-ticker.C:
 			if len(spanQueue) > 0 {
 				// 发送
-				// if err := sky.sendJVMs(jvmQueue); err != nil {
-				// 	g.L.Warn("JVMCollector:sky.sendJVMs", zap.String("error", err.Error()))
-				// }
+				if err := sky.sendSpans(spanQueue); err != nil {
+					g.L.Warn("TracCollector:sky.sendSpans", zap.String("error", err.Error()))
+				}
 				// 清空缓存
 				spanQueue = spanQueue[:0]
 			}
 			break
 		}
 	}
+}
+
+// sendSpans ...
+func (sky *SkyWalking) sendSpans(spans []*util.Span) error {
+	buf, err := msgpack.Marshal(spans)
+	if err != nil {
+		g.L.Warn("sendSpans:msgpack.Marshal", zap.String("error", err.Error()))
+		return err
+	}
+
+	skp := util.SkywalkingPacket{
+		Type:    util.TypeOfTraceSegment,
+		Payload: buf,
+	}
+
+	payload, err := msgpack.Marshal(skp)
+	if err != nil {
+		g.L.Warn("sendSpans:msgpack.Marshal", zap.String("error", err.Error()))
+		return err
+	}
+
+	packet := &util.VgoPacket{
+		Type:       util.TypeOfSkywalking,
+		Version:    util.VersionOf01,
+		IsSync:     util.TypeOfSyncNo,
+		IsCompress: util.TypeOfCompressYes,
+		Payload:    payload,
+	}
+
+	if err := gAgent.client.WritePacket(packet); err != nil {
+		g.L.Warn("sendSpans:gAgent.client.WritePacket", zap.String("error", err.Error()))
+		return err
+	}
+
+	return nil
 }
 
 // sendJVMs ...
@@ -191,9 +231,11 @@ func (sky *SkyWalking) sendJVMs(jvms *util.JVMS) error {
 		g.L.Warn("sendJVMs:gAgent.client.WritePacket", zap.String("error", err.Error()))
 		return err
 	}
-	return nil
 
+	return nil
 }
+
+// analysisJVM ...
 func analysisJVM(old *protocol.JVMMetric) *util.JVM {
 	cpu := &util.CPU{}
 	memorys := []*util.Memory{}

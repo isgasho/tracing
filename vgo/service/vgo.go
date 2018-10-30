@@ -385,10 +385,17 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 		}
 
 		v.storage.jvmC <- repPacket
-		// for _, jvm := range repPacket.JVMs {
-		// 	g.L.Info("jvm", zap.Any("jvm", jvm), zap.String("name", repPacket.AppName), zap.Int32("id", repPacket.InstanceID))
-		// }
+		break
 
+		// trace 数据
+	case util.TypeOfTraceSegment:
+		var spans []*util.Span
+		if err := msgpack.Unmarshal(skypacker.Payload, &spans); err != nil {
+			g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+			return err
+		}
+
+		v.storage.spansC <- spans
 		break
 	}
 	return nil
