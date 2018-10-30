@@ -27,7 +27,7 @@ type Config struct {
 		JVMReportInterval    int // jvm 信息上报频率
 		JVMCollectorInterval int // jvm 采集频率控制
 		JVMCacheLen          int // 缓存长度
-		TraceReportInterval  int // 全链路信息上报频率
+		TraceReportInterval  int // 全链路信息上报频率 单位毫秒
 		TraceCacheLen        int // 缓存长度
 	}
 }

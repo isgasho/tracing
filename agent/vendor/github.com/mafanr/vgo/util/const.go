@@ -20,6 +20,7 @@ const (
 	TypeOfSerNameDiscoveryService uint16 = 3 // 注册Api
 	TypeOfNewworkAddrRegister     uint16 = 4 // 注册Addr
 	TypeOfJVMMetrics              uint16 = 5 // JVM信息
+	TypeOfTraceSegment            uint16 = 6 // trace信息
 )
 
 // 其他控制类型

@@ -24,13 +24,15 @@ import (
 type SkyWalking struct {
 	appRegisterC chan *appRegister
 	jvmChan      chan *protocol.JVMMetrics
+	upTracChan   chan *protocol.UpstreamSegment
 }
 
 // NewSkyWalking ...
 func NewSkyWalking() *SkyWalking {
 	return &SkyWalking{
 		appRegisterC: make(chan *appRegister, 10),
-		jvmChan:      make(chan *protocol.JVMMetrics, 100),
+		jvmChan:      make(chan *protocol.JVMMetrics, misc.Conf.SkyWalking.JVMCacheLen+100),
+		upTracChan:   make(chan *protocol.UpstreamSegment, misc.Conf.SkyWalking.TraceCacheLen+100),
 	}
 }
 
@@ -97,6 +99,68 @@ func (sky *SkyWalking) JVMCollector() {
 		}
 	}
 }
+
+// TracCollector  全链路信息采集
+func (sky *SkyWalking) TracCollector() {
+	// jvmQueue := &util.JVMS{
+	// 	// AppID:   gAgent.appID,
+	// 	AppName: gAgent.appName,
+	// 	JVMs:    make([]*util.JVM, 0),
+	// }
+
+	// isHaveInstanceID := false
+	// if gAgent.appInstanceID != 0 {
+	// 	isHaveInstanceID = true
+	// }
+	var spanQueue []*util.Span
+
+	ticker := time.NewTicker(time.Duration(misc.Conf.SkyWalking.TraceReportInterval) * time.Millisecond)
+
+	for {
+		select {
+		case reqPack, ok := <-sky.upTracChan:
+			if ok {
+				traArr := &protocol.TraceSegmentObject{}
+				if err := proto.Unmarshal(reqPack.Segment, traArr); err != nil {
+					g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
+					break
+				}
+
+				for _, tid := range reqPack.GlobalTraceIds {
+					log.Println("----获取 tid----->>>>>", tid)
+				}
+
+				// analysis jvm
+				// for _, metric := range jvmPack.Metrics {
+				// 	reportJVM := analysisJVM(metric)
+				// 	jvmQueue.JVMs = append(jvmQueue.JVMs, reportJVM)
+				// }
+
+				if len(spanQueue) >= misc.Conf.SkyWalking.TraceCacheLen {
+					// 发送
+					// if err := sky.sendJVMs(jvmQueue); err != nil {
+					// 	g.L.Warn("JVMCollector:sky.sendJVMs", zap.String("error", err.Error()))
+					// }
+					// 清空缓存
+					spanQueue = spanQueue[:0]
+				}
+			}
+			break
+		case <-ticker.C:
+			if len(spanQueue) > 0 {
+				// 发送
+				// if err := sky.sendJVMs(jvmQueue); err != nil {
+				// 	g.L.Warn("JVMCollector:sky.sendJVMs", zap.String("error", err.Error()))
+				// }
+				// 清空缓存
+				spanQueue = spanQueue[:0]
+			}
+			break
+		}
+	}
+}
+
+// sendJVMs ...
 func (sky *SkyWalking) sendJVMs(jvms *util.JVMS) error {
 	buf, err := msgpack.Marshal(jvms)
 	if err != nil {
@@ -201,6 +265,8 @@ func (sky *SkyWalking) Start() error {
 	// jvm上报
 	go sky.JVMCollector()
 
+	// trace信息上报
+	go sky.TracCollector()
 	// start http server
 	sky.httpSer()
 
@@ -696,7 +762,6 @@ func (a *addressRegister) BatchRegister(ctx context.Context, in *protocol.Networ
 		mc.AddressIds = append(mc.AddressIds, kv)
 	}
 
-	log.Println("----->>>>>>>>>>> ", mc)
 	return nil, nil
 }
 
@@ -721,23 +786,27 @@ func (c *traceSegmentService) Collect(in protocol.TraceSegmentService_CollectSer
 	if err != nil {
 		log.Println(err)
 	}
-	log.Println("u.GlobalTraceIds", u.GlobalTraceIds)
-	tarr := &protocol.TraceSegmentObject{}
+	// log.Println("u.GlobalTraceIds", u.GlobalTraceIds)
+	// tarr := &protocol.TraceSegmentObject{}
 
-	if err := proto.Unmarshal(u.Segment, tarr); err != nil {
-		log.Println("proto.Unmarshal", err)
-		return err
-	}
+	// if err := proto.Unmarshal(u.Segment, tarr); err != nil {
+	// 	g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
+	// 	goto SEND_CLOSE
+	// }
 
-	for _, value := range tarr.Spans {
-		log.Println(tarr.TraceSegmentId, "value.SpanType", value.SpanType, "----------------------------->>>>", value)
-	}
+	gAgent.skyWalk.upTracChan <- u
 
+	// g.L.Debug("Collect:u.Segment", zap.Any("u", u))
+	// g.L.Debug("Collect:u.TraceSegmentObject", zap.Any("tarr", tarr))
+	// for _, value := range tarr.Spans {
+	// 	log.Println(tarr.TraceSegmentId, "value.SpanType", value.SpanType, "----------------------------->>>>", value, tarr)
+	// }
+
+	// SEND_CLOSE:
 	if err := in.SendAndClose(&protocol.Downstream{}); err != nil {
-		log.Println("SendAndClose", err)
+		g.L.Warn("Collect:in.SendAndClose", zap.String("error", err.Error()))
 		return err
 	}
 
-	log.Println("SendAndClose OK")
 	return nil
 }
