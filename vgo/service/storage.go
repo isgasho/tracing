@@ -69,7 +69,7 @@ func (storage *Storage) jvmStore() {
 					for _, value := range jvmsQueue {
 						body, err := msgpack.Marshal(value.JVMs)
 						if err != nil {
-							g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+							g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
 							continue
 						}
 
@@ -90,7 +90,7 @@ func (storage *Storage) jvmStore() {
 				for _, value := range jvmsQueue {
 					body, err := msgpack.Marshal(value.JVMs)
 					if err != nil {
-						g.L.Warn("dealSkywalking:msgpack.Unmarshal", zap.String("error", err.Error()))
+						g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
 						continue
 					}
 					batchInsert.Query(`INSERT INTO jvm (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
