@@ -37,6 +37,7 @@ func NewSkyWalking() *SkyWalking {
 // JVMCollector jvm 信息采集，JVMReportInterval秒上报一次
 func (sky *SkyWalking) JVMCollector() {
 	jvmQueue := &util.JVMS{
+		// AppID:   gAgent.appID,
 		AppName: gAgent.appName,
 		JVMs:    make([]*util.JVM, 0),
 	}
@@ -47,30 +48,39 @@ func (sky *SkyWalking) JVMCollector() {
 	}
 
 	ticker := time.NewTicker(time.Duration(misc.Conf.SkyWalking.JVMReportInterval) * time.Second)
+	start := time.Now()
 	for {
 		select {
 		case jvmPack, ok := <-sky.jvmChan:
 			if ok {
-				if !isHaveInstanceID {
-					jvmQueue.InstanceID = jvmPack.ApplicationInstanceId
-					// 本地也缓存一次
-					gAgent.appInstanceID = jvmPack.ApplicationInstanceId
-					// 保证只进入一次
-					isHaveInstanceID = true
-				}
-				// analysis jvm
-				for _, metric := range jvmPack.Metrics {
-					reportJVM := analysisJVM(metric)
-					jvmQueue.JVMs = append(jvmQueue.JVMs, reportJVM)
-				}
-
-				if len(jvmQueue.JVMs) > misc.Conf.SkyWalking.JVMCacheLen {
-					// 发送
-					if err := sky.sendJVMs(jvmQueue); err != nil {
-						g.L.Warn("JVMCollector:sky.sendJVMs", zap.String("error", err.Error()))
+				end := time.Now()
+				// 采集频率控制
+				if end.Sub(start).Seconds() >= float64(misc.Conf.SkyWalking.JVMReportInterval) {
+					// 时间更新
+					start = end
+					if !isHaveInstanceID {
+						jvmQueue.InstanceID = jvmPack.ApplicationInstanceId
+						// 本地也缓存一次
+						gAgent.appInstanceID = jvmPack.ApplicationInstanceId
+						// 保证只进入一次
+						isHaveInstanceID = true
 					}
-					// 清空缓存
-					jvmQueue.JVMs = jvmQueue.JVMs[:0]
+
+					jvmQueue.Time = end.UnixNano() / 1e6
+					// analysis jvm
+					for _, metric := range jvmPack.Metrics {
+						reportJVM := analysisJVM(metric)
+						jvmQueue.JVMs = append(jvmQueue.JVMs, reportJVM)
+					}
+
+					if len(jvmQueue.JVMs) > misc.Conf.SkyWalking.JVMCacheLen {
+						// 发送
+						if err := sky.sendJVMs(jvmQueue); err != nil {
+							g.L.Warn("JVMCollector:sky.sendJVMs", zap.String("error", err.Error()))
+						}
+						// 清空缓存
+						jvmQueue.JVMs = jvmQueue.JVMs[:0]
+					}
 				}
 			}
 			break

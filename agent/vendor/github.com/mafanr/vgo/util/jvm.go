@@ -20,8 +20,10 @@ const (
 
 // JVMS jvm批量数据
 type JVMS struct {
+	// AppID      int32  `msg:"i"`
 	AppName    string `msg:"n"`
 	InstanceID int32  `msg:"i"`
+	Time       int64  `msg:"t"`
 	JVMs       []*JVM `msg:"jvms"`
 }
 

@@ -384,9 +384,10 @@ func (v *Vgo) dealSkywalking(conn net.Conn, packet *util.VgoPacket) error {
 			return err
 		}
 
-		for _, jvm := range repPacket.JVMs {
-			g.L.Info("jvm", zap.Any("jvm", jvm), zap.String("name", repPacket.AppName), zap.Int32("id", repPacket.InstanceID))
-		}
+		v.storage.jvmC <- repPacket
+		// for _, jvm := range repPacket.JVMs {
+		// 	g.L.Info("jvm", zap.Any("jvm", jvm), zap.String("name", repPacket.AppName), zap.Int32("id", repPacket.InstanceID))
+		// }
 
 		break
 	}

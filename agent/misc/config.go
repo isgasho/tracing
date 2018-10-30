@@ -22,12 +22,13 @@ type Config struct {
 		AppName          string
 	}
 	SkyWalking struct {
-		HTTPAddr            string
-		RPCAddr             string
-		JVMReportInterval   int
-		JVMCacheLen         int
-		TraceReportInterval int
-		TraceCacheLen       int
+		HTTPAddr             string
+		RPCAddr              string
+		JVMReportInterval    int // jvm 信息上报频率
+		JVMCollectorInterval int // jvm 采集频率控制
+		JVMCacheLen          int // 缓存长度
+		TraceReportInterval  int // 全链路信息上报频率
+		TraceCacheLen        int // 缓存长度
 	}
 }
 
