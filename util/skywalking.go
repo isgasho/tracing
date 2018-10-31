@@ -14,8 +14,8 @@ type KeyWithIntegerValue struct {
 
 // KeyWithStringValue ...
 type KeyWithStringValue struct {
-	Key   string `msg:"k"`
-	Value string `msg:"v"`
+	Key   string `msg:"k" cql:"key"`
+	Value string `msg:"v" cql:"value"`
 }
 
 // API ...

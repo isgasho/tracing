@@ -78,7 +78,7 @@ func (storage *Storage) jvmStore() {
 							continue
 						}
 
-						batchInsert.Query(`INSERT INTO jvm (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
+						batchInsert.Query(`INSERT INTO jvms (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
 					}
 					if err := storage.session.ExecuteBatch(batchInsert); err != nil {
 						g.L.Warn("jvmStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
@@ -98,7 +98,7 @@ func (storage *Storage) jvmStore() {
 						g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
 						continue
 					}
-					batchInsert.Query(`INSERT INTO jvm (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
+					batchInsert.Query(`INSERT INTO jvms (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
 				}
 				if err := storage.session.ExecuteBatch(batchInsert); err != nil {
 					g.L.Warn("jvmStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
@@ -122,20 +122,42 @@ func (storage *Storage) spanStore() {
 				spanQueue = append(spanQueue, spans...)
 				if len(spanQueue) > misc.Conf.Storage.SpanStoreLen {
 					// 插入
-					// batchInsert := storage.session.NewBatch(gocql.UnloggedBatch)
-					// for _, value := range spanQueue {
-					// 	body, err := msgpack.Marshal(value.JVMs)
-					// 	if err != nil {
-					// 		g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
-					// 		continue
-					// 	}
+					batchInsert := storage.session.NewBatch(gocql.UnloggedBatch)
+					for _, value := range spanQueue {
+						batchInsert.Query(`INSERT INTO traces (trace_id, span_id, app_id, instance_id, span_type, span_layer, start_time, end_time, parent_span_id, operation_id, is_error, refs, tags, logs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+							value.TraceID, value.SpanID, value.AppID, value.InstanceID, value.SpanType, value.SpanLayer, value.StartTime, value.EndTime, value.ParentSpanID, value.OperationNameID, value.IsError, value.Refs, value.Tags, value.Logs)
+						// TraceID         string                `msg:"tid"`
+						//           int32                 `msg:"sid"`
+						//            int32                 `msg:"aid"`
+						//       int32                 `msg:"inid"`
+						//         SpanType              `msg:"sty"`
+						//        SpanLayer             `msg:"sly"`
+						//             []*SpanRef            `msg:"rfs"`
+						//        int64                 `msg:"st"`
+						//          int64                 `msg:"et"`
+						//     int32                 `msg:"pid"`
+						//  int32                 `msg:"oid"`
+						//          bool                  `msg:"ie"`
+						//             []*KeyWithStringValue `msg:"tags"`
+						//             []*LogMessage         `msg:"logs"`
 
-					// 	batchInsert.Query(`INSERT INTO jvm (app_name, instance_id, report_time, value) VALUES (?,?,?,?)`, value.AppName, value.InstanceID, value.Time, body)
-					// }
-					// if err := storage.session.ExecuteBatch(batchInsert); err != nil {
-					// 	g.L.Warn("jvmStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
-					// }
-					log.Println("span 入库并清除缓存")
+						log.Println("TraceID", value.TraceID)
+						log.Println("AppID", value.AppID)
+						log.Println("InstanceID", value.InstanceID)
+						log.Println("SpanType", value.SpanType)
+						log.Println("SpanLayer", value.SpanLayer)
+						log.Println("Refs", value.Refs)
+						log.Println("StartTime", value.StartTime)
+						log.Println("EndTime", value.EndTime)
+						log.Println("ParentSpanID", value.ParentSpanID)
+						log.Println("OperationNameID", value.OperationNameID)
+						log.Println("IsError", value.IsError)
+						log.Println("Tags", value.Tags)
+						log.Println("Logs", value.Logs)
+					}
+					if err := storage.session.ExecuteBatch(batchInsert); err != nil {
+						g.L.Warn("spanStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
+					}
 					// 清空缓存
 					spanQueue = spanQueue[:0]
 				}
@@ -144,7 +166,31 @@ func (storage *Storage) spanStore() {
 		case <-ticker.C:
 			if len(spanQueue) > 0 {
 				// 插入
-				log.Println("定时任务 span 入库并清除缓存")
+				batchInsert := storage.session.NewBatch(gocql.UnloggedBatch)
+				for _, value := range spanQueue {
+					batchInsert.Query(`INSERT INTO traces (trace_id, span_id, app_id, instance_id, span_type, span_layer, start_time, end_time, parent_span_id, operation_id, is_error, refs, tags, logs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+						value.TraceID, value.SpanID, value.AppID, value.InstanceID, int32(value.SpanType), int32(value.SpanLayer), value.StartTime, value.EndTime, value.ParentSpanID, value.OperationNameID, value.IsError, value.Refs, value.Tags, value.Logs)
+					log.Println("TraceID", value.TraceID)
+					log.Println("AppID", value.AppID)
+					log.Println("InstanceID", value.InstanceID)
+					log.Println("SpanType", value.SpanType)
+					log.Println("SpanLayer", value.SpanLayer)
+					log.Println("Refs", value.Refs)
+					log.Println("StartTime", value.StartTime)
+					log.Println("EndTime", value.EndTime)
+					log.Println("ParentSpanID", value.ParentSpanID)
+					log.Println("OperationNameID", value.OperationNameID)
+					log.Println("IsError", value.IsError)
+					log.Println("Tags", value.Tags)
+					log.Println("Logs", value.Logs)
+
+					for _, tag := range value.Tags {
+						log.Println("tag", tag.Key, tag.Value)
+					}
+				}
+				if err := storage.session.ExecuteBatch(batchInsert); err != nil {
+					g.L.Warn("spanStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
+				}
 				// 清空缓存
 				spanQueue = spanQueue[:0]
 			}

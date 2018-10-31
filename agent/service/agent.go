@@ -17,6 +17,7 @@ import (
 
 // Agent ...
 type Agent struct {
+	isGetID       bool
 	appName       string // 应用名
 	appID         int32  //	应用ID
 	appInstanceID int32  // 应用实例ID
@@ -36,6 +37,7 @@ var gAgent *Agent
 // New ...
 func New() *Agent {
 	gAgent = &Agent{
+		isGetID:   false,
 		syncCall:  NewSyncCall(),
 		client:    NewTCPClient(),
 		skyWalk:   NewSkyWalking(),
@@ -78,6 +80,14 @@ func (a *Agent) initAppName() error {
 	g.L.Info("initAppName", zap.String("AppName", a.appName))
 
 	return nil
+}
+
+// reloadID ...
+func (a *Agent) reloadID(appID, instanceID int32) {
+	if !a.isGetID {
+		a.appID = appID
+		a.appInstanceID = instanceID
+	}
 }
 
 // Start ...

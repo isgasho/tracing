@@ -39,7 +39,6 @@ func NewSkyWalking() *SkyWalking {
 // JVMCollector jvm 信息采集，JVMReportInterval秒上报一次
 func (sky *SkyWalking) JVMCollector() {
 	jvmQueue := &util.JVMS{
-		// AppID:   gAgent.appID,
 		AppName: gAgent.appName,
 		JVMs:    make([]*util.JVM, 0),
 	}
@@ -101,16 +100,62 @@ func (sky *SkyWalking) JVMCollector() {
 }
 
 // analysisSpan ...
-func analysisSpan(tracID string, skySpan *protocol.SpanObject) *util.Span {
+func analysisSpan(appID, instanceID int32, tracID string, skySpan *protocol.SpanObject) *util.Span {
+	var refs []*util.SpanRef
+	for _, skyRef := range skySpan.Refs {
+		if len(skyRef.ParentTraceSegmentId.IdParts) != 3 {
+			continue
+		}
+		tracID := fmt.Sprintf("%d.%d.%d", skyRef.ParentTraceSegmentId.IdParts[0], skyRef.ParentTraceSegmentId.IdParts[1], skyRef.ParentTraceSegmentId.IdParts[2])
+		ref := &util.SpanRef{
+			TraceID: tracID,
+			SpanID:  skyRef.ParentSpanId,
+			RefType: util.RefType(skyRef.RefType),
+		}
+		refs = append(refs, ref)
+	}
+
+	var tags []*util.KeyWithStringValue
+	for _, skyTag := range skySpan.Tags {
+		tag := &util.KeyWithStringValue{
+			Key:   skyTag.Key,
+			Value: skyTag.Value,
+		}
+		tags = append(tags, tag)
+	}
+
+	var newLogs []*util.LogMessage
+	for _, skylog := range skySpan.Logs {
+		var datas []*util.KeyWithStringValue
+		for _, skyData := range skylog.Data {
+			data := &util.KeyWithStringValue{
+				Key:   skyData.Key,
+				Value: skyData.Value,
+			}
+			datas = append(datas, data)
+		}
+		newLog := &util.LogMessage{
+			Time: skylog.Time,
+			Data: datas,
+		}
+		newLogs = append(newLogs, newLog)
+	}
+
 	span := &util.Span{
 		TraceID:         tracID,
 		SpanID:          skySpan.SpanId,
+		AppID:           appID,
+		InstanceID:      instanceID,
+		SpanType:        util.SpanType(skySpan.SpanType),
+		SpanLayer:       util.SpanLayer(skySpan.SpanLayer),
+		Refs:            refs,
 		StartTime:       skySpan.StartTime,
 		EndTime:         skySpan.EndTime,
 		ParentSpanID:    skySpan.ParentSpanId,
 		OperationNameID: skySpan.OperationNameId,
-		OperationName:   skySpan.OperationName,
-		// Refs            []*SpanRef `msg:"rfs"`
+		IsError:         skySpan.IsError,
+		Tags:            tags,
+		Logs:            newLogs,
 	}
 	return span
 }
@@ -130,6 +175,12 @@ func (sky *SkyWalking) TracCollector() {
 					g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
 					break
 				}
+
+				if !gAgent.isGetID {
+					gAgent.appID = spansInfo.ApplicationId
+					gAgent.appInstanceID = spansInfo.ApplicationInstanceId
+				}
+
 				// GlobalTraceIds 这里可能被MQ类似的服务批量处理，所以有多个tracID
 				for _, tid := range reqPack.GlobalTraceIds {
 					if len(tid.IdParts) != 3 {
@@ -137,7 +188,7 @@ func (sky *SkyWalking) TracCollector() {
 					}
 					tracID := fmt.Sprintf("%d.%d.%d", tid.IdParts[0], tid.IdParts[1], tid.IdParts[2])
 					for _, skySpan := range spansInfo.Spans {
-						newSpan := analysisSpan(tracID, skySpan)
+						newSpan := analysisSpan(spansInfo.ApplicationId, spansInfo.ApplicationInstanceId, tracID, skySpan)
 						spanQueue = append(spanQueue, newSpan)
 					}
 				}
@@ -554,6 +605,9 @@ func (i *instanceDiscoveryService) RegisterInstance(ctx context.Context, in *pro
 	}
 
 	gAgent.appInstanceID = respPacket.Value
+
+	// 注册完成
+	gAgent.isGetID = false
 
 	am := &protocol.ApplicationInstanceMapping{
 		ApplicationId:         gAgent.appID,
