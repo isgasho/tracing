@@ -37,3 +37,8 @@ const (
 const (
 	VersionOf01 byte = 1
 )
+
+const (
+	SpanInsert string = `INSERT INTO traces (trace_id, span_id, app_id, instance_id, span_type, span_layer, start_time, end_time, parent_span_id, operation_id, is_error, refs, tags, logs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	JVMInsert  string = `INSERT INTO jvms (app_name, instance_id, report_time, jvms) VALUES (?,?,?,?)`
+)

@@ -38,12 +38,55 @@ CREATE TYPE IF NOT EXISTS span_ref (
     ref_type        int,
 );
 
+CREATE TYPE IF NOT EXISTS cpu (
+    usage_percent   double,
+);
+
+CREATE TYPE IF NOT EXISTS memory (
+    is_heap     boolean,
+	init        bigint,
+	max         bigint,
+	used        bigint,
+	committed   bigint,
+);
+
+
+CREATE TYPE IF NOT EXISTS memory_pool (
+	type        int,
+	init        bigint,
+	max         bigint,
+	used        bigint,
+	commited    bigint,
+);
+
+CREATE TYPE IF NOT EXISTS gc (
+	phrase      int,
+	count       bigint,
+	time        bigint,
+);
+
+CREATE TYPE IF NOT EXISTS jvm (
+    time            bigint,
+    cpu             frozen<cpu>,
+    memory          list<frozen<memory>>,
+    memory_pool     list<frozen<memory_pool>>,
+    gc              list<frozen<gc>>,
+);
+
+
+-- CREATE TABLE IF NOT EXISTS jvms (
+--     app_name text,                  // app_name
+--     instance_id int,                // 实例id
+--     report_time bigint,             // 上报时间
+--     value blob,                     // jvm 数据
+--     PRIMARY KEY (app_name, instance_id, report_time)
+-- );
 
 CREATE TABLE IF NOT EXISTS jvms (
     app_name text,                  // app_name
     instance_id int,                // 实例id
     report_time bigint,             // 上报时间
-    value blob,                     // jvm 数据
+    jvms  list<frozen<jvm>>,
     PRIMARY KEY (app_name, instance_id, report_time)
 );
 

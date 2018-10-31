@@ -20,48 +20,47 @@ const (
 
 // JVMS jvm批量数据
 type JVMS struct {
-	// AppID      int32  `msg:"i"`
-	AppName    string `msg:"n"`
-	InstanceID int32  `msg:"i"`
-	Time       int64  `msg:"t"`
-	JVMs       []*JVM `msg:"jvms"`
+	AppName    string `msg:"n" cql:"app_name"`
+	InstanceID int32  `msg:"i" cql:"instance_id"`
+	Time       int64  `msg:"t" cql:"report_time"`
+	JVMs       []*JVM `msg:"jvms" cql:"jvms"`
 }
 
 // JVM jvm 信息
 type JVM struct {
-	Time       int64         `msg:"t"`
-	CPU        *CPU          `msg:"c"`
-	Memory     []*Memory     `msg:"m"`
-	MemoryPool []*MemoryPool `msg:"mp"`
-	Gc         []*GC         `msg:"gc"`
+	Time       int64         `msg:"t"  cql:"time"`
+	CPU        *CPU          `msg:"c"  cql:"cpu"`
+	Memory     []*Memory     `msg:"m"  cql:"memory"`
+	MemoryPool []*MemoryPool `msg:"mp" cql:"memory_pool"`
+	Gc         []*GC         `msg:"gc" cql:"gc"`
 }
 
 // CPU ...
 type CPU struct {
-	UsagePercent float64 `msg:"up"`
+	UsagePercent float64 `msg:"up" cql:"usage_percent"`
 }
 
 // MemoryPool ...
 type MemoryPool struct {
-	Type     PoolType `msg:"t"`
-	Init     int64    `msg:"i"`
-	Max      int64    `msg:"m"`
-	Used     int64    `msg:"u"`
-	Commited int64    `msg:"c"`
+	Type     PoolType `msg:"t" cql:"type"`
+	Init     int64    `msg:"i" cql:"init"`
+	Max      int64    `msg:"m" cql:"max"`
+	Used     int64    `msg:"u" cql:"used"`
+	Commited int64    `msg:"c" cql:"commited"`
 }
 
 // Memory ...
 type Memory struct {
-	IsHeap    bool  `msg:"ih"`
-	Init      int64 `msg:"i"`
-	Max       int64 `msg:"m"`
-	Used      int64 `msg:"u"`
-	Committed int64 `msg:"c"`
+	IsHeap    bool  `msg:"ih" cql:"is_heap"`
+	Init      int64 `msg:"i"  cql:"init"`
+	Max       int64 `msg:"m"  cql:"max"`
+	Used      int64 `msg:"u"  cql:"used"`
+	Committed int64 `msg:"c"  cql:"committed"`
 }
 
 // GC ...
 type GC struct {
-	Phrase GCPhrase `msg:"p"`
-	Count  int64    `msg:"c"`
-	Time   int64    `msg:"t"`
+	Phrase GCPhrase `msg:"p" cql:"phrase"`
+	Count  int64    `msg:"c" cql:"count"`
+	Time   int64    `msg:"t" cql:"time"`
 }
