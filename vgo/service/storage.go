@@ -70,11 +70,6 @@ func (storage *Storage) jvmStore() {
 					// 插入
 					batchInsert := storage.session.NewBatch(gocql.UnloggedBatch)
 					for _, value := range jvmsQueue {
-						// body, err := msgpack.Marshal(value.JVMs)
-						// if err != nil {
-						// 	g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
-						// 	continue
-						// }
 						batchInsert.Query(util.JVMInsert, value.AppName, value.InstanceID, value.Time, value.JVMs)
 					}
 					if err := storage.session.ExecuteBatch(batchInsert); err != nil {
@@ -90,11 +85,6 @@ func (storage *Storage) jvmStore() {
 				// 插入
 				batchInsert := storage.session.NewBatch(gocql.UnloggedBatch)
 				for _, value := range jvmsQueue {
-					// body, err := msgpack.Marshal(value.JVMs)
-					// if err != nil {
-					// 	g.L.Warn("jvmStore:msgpack.Unmarshal", zap.String("error", err.Error()))
-					// 	continue
-					// }
 					batchInsert.Query(util.JVMInsert, value.AppName, value.InstanceID, value.Time, value.JVMs)
 				}
 				if err := storage.session.ExecuteBatch(batchInsert); err != nil {

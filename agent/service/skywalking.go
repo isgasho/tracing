@@ -101,6 +101,7 @@ func (sky *SkyWalking) JVMCollector() {
 
 // analysisSpan ...
 func analysisSpan(appID, instanceID int32, tracID string, skySpan *protocol.SpanObject) *util.Span {
+	// log.Println("1--日志打印", skySpan)
 	var refs []*util.SpanRef
 	for _, skyRef := range skySpan.Refs {
 		if len(skyRef.ParentTraceSegmentId.IdParts) != 3 {
@@ -128,6 +129,7 @@ func analysisSpan(appID, instanceID int32, tracID string, skySpan *protocol.Span
 	for _, skylog := range skySpan.Logs {
 		var datas []*util.KeyWithStringValue
 		for _, skyData := range skylog.Data {
+			log.Println("2---日志打印", skyData.Key, skyData.Value)
 			data := &util.KeyWithStringValue{
 				Key:   skyData.Key,
 				Value: skyData.Value,
@@ -188,6 +190,14 @@ func (sky *SkyWalking) TracCollector() {
 					}
 					tracID := fmt.Sprintf("%d.%d.%d", tid.IdParts[0], tid.IdParts[1], tid.IdParts[2])
 					for _, skySpan := range spansInfo.Spans {
+						log.Println()
+						log.Println()
+						log.Println()
+						log.Println("全链路信息---->>>> ", spansInfo)
+						log.Println()
+						log.Println()
+						log.Println()
+
 						newSpan := analysisSpan(spansInfo.ApplicationId, spansInfo.ApplicationInstanceId, tracID, skySpan)
 						spanQueue = append(spanQueue, newSpan)
 					}
@@ -750,9 +760,8 @@ type addressRegister struct {
 
 // BatchRegister ...
 func (a *addressRegister) BatchRegister(ctx context.Context, in *protocol.NetworkAddresses) (*protocol.NetworkAddressMappings, error) {
+	// log.Println("addressRegister", in)
 	return nil, nil
-
-	log.Println("BatchRegister", in)
 
 	if len(in.Addresses) < 0 {
 		return nil, fmt.Errorf("addrs is nil")

@@ -2,11 +2,13 @@ package misc
 
 import (
 	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/mafanr/g"
 	"go.uber.org/zap"
 )
 
+// InitMysql ...
 func InitMysql() {
 	var err error
 
