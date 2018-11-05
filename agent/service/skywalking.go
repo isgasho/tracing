@@ -100,18 +100,18 @@ func (sky *SkyWalking) JVMCollector() {
 }
 
 // analysisSpan ...
-func analysisSpan(appID, instanceID int32, tracID string, skySpan *protocol.SpanObject) *util.Span {
+func analysisSpan(appID, instanceID int32, tracID string, tsID string, skySpan *protocol.SpanObject) *util.Span {
 	// log.Println("1--日志打印", skySpan)
 	var refs []*util.SpanRef
 	for _, skyRef := range skySpan.Refs {
 		if len(skyRef.ParentTraceSegmentId.IdParts) != 3 {
 			continue
 		}
-		tracID := fmt.Sprintf("%d.%d.%d", skyRef.ParentTraceSegmentId.IdParts[0], skyRef.ParentTraceSegmentId.IdParts[1], skyRef.ParentTraceSegmentId.IdParts[2])
+		tsID := fmt.Sprintf("%d.%d.%d", skyRef.ParentTraceSegmentId.IdParts[0], skyRef.ParentTraceSegmentId.IdParts[1], skyRef.ParentTraceSegmentId.IdParts[2])
 		ref := &util.SpanRef{
-			TraceID: tracID,
-			SpanID:  skyRef.ParentSpanId,
-			RefType: util.RefType(skyRef.RefType),
+			TraceSegmentID: tsID,
+			SpanID:         skyRef.ParentSpanId,
+			RefType:        util.RefType(skyRef.RefType),
 		}
 		refs = append(refs, ref)
 	}
@@ -145,6 +145,7 @@ func analysisSpan(appID, instanceID int32, tracID string, skySpan *protocol.Span
 
 	span := &util.Span{
 		TraceID:         tracID,
+		TraceSegmentID:  tsID,
 		SpanID:          skySpan.SpanId,
 		AppID:           appID,
 		InstanceID:      instanceID,
@@ -172,44 +173,43 @@ func (sky *SkyWalking) TracCollector() {
 		select {
 		case reqPack, ok := <-sky.upTracChan:
 			if ok {
-				spansInfo := &protocol.TraceSegmentObject{}
-				if err := proto.Unmarshal(reqPack.Segment, spansInfo); err != nil {
-					g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
-					break
-				}
-
-				if !gAgent.isGetID {
-					gAgent.appID = spansInfo.ApplicationId
-					gAgent.appInstanceID = spansInfo.ApplicationInstanceId
-				}
-
 				// GlobalTraceIds 这里可能被MQ类似的服务批量处理，所以有多个tracID
-				for _, tid := range reqPack.GlobalTraceIds {
-					if len(tid.IdParts) != 3 {
+				for _, tIDinfo := range reqPack.GlobalTraceIds {
+					if len(tIDinfo.IdParts) != 3 {
 						continue
 					}
-					tracID := fmt.Sprintf("%d.%d.%d", tid.IdParts[0], tid.IdParts[1], tid.IdParts[2])
-					for _, skySpan := range spansInfo.Spans {
-						log.Println()
-						log.Println()
-						log.Println()
-						log.Println("全链路信息---->>>> ", spansInfo)
-						log.Println()
-						log.Println()
-						log.Println()
+					tracID := fmt.Sprintf("%d.%d.%d", tIDinfo.IdParts[0], tIDinfo.IdParts[1], tIDinfo.IdParts[2])
+					spansInfo := &protocol.TraceSegmentObject{}
+					if err := proto.Unmarshal(reqPack.Segment, spansInfo); err != nil {
+						g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
+						break
+					}
 
-						newSpan := analysisSpan(spansInfo.ApplicationId, spansInfo.ApplicationInstanceId, tracID, skySpan)
+					if !gAgent.isGetID {
+						gAgent.appID = spansInfo.ApplicationId
+						gAgent.appInstanceID = spansInfo.ApplicationInstanceId
+					}
+
+					if len(spansInfo.TraceSegmentId.IdParts) != 3 {
+						continue
+					}
+
+					tsID := fmt.Sprintf("%d.%d.%d", spansInfo.TraceSegmentId.IdParts[0], spansInfo.TraceSegmentId.IdParts[1], spansInfo.TraceSegmentId.IdParts[2])
+					for _, skySpan := range spansInfo.Spans {
+						newSpan := analysisSpan(spansInfo.ApplicationId, spansInfo.ApplicationInstanceId, tracID, tsID, skySpan)
 						spanQueue = append(spanQueue, newSpan)
 					}
-				}
-				if len(spanQueue) >= misc.Conf.SkyWalking.TraceCacheLen {
-					// 发送
-					if err := sky.sendSpans(spanQueue); err != nil {
-						g.L.Warn("TracCollector:sky.sendSpans", zap.String("error", err.Error()))
+
+					if len(spanQueue) >= misc.Conf.SkyWalking.TraceCacheLen {
+						// 发送
+						if err := sky.sendSpans(spanQueue); err != nil {
+							g.L.Warn("TracCollector:sky.sendSpans", zap.String("error", err.Error()))
+						}
+						// 清空缓存
+						spanQueue = spanQueue[:0]
 					}
-					// 清空缓存
-					spanQueue = spanQueue[:0]
 				}
+
 			}
 			break
 		case <-ticker.C:
@@ -233,7 +233,19 @@ func (sky *SkyWalking) sendSpans(spans []*util.Span) error {
 		g.L.Warn("sendSpans:msgpack.Marshal", zap.String("error", err.Error()))
 		return err
 	}
-
+	log.Println()
+	log.Println()
+	log.Println("------------------start----------------------------")
+	for _, span := range spans {
+		log.Println("发送的地方 TraceID", span.TraceID)
+		log.Println("发送的地方 TraceSegmentID", span.TraceSegmentID)
+		log.Println("发送的地方 AppID", span.AppID)
+		log.Println("发送的地方 SpanID", span.SpanID)
+		log.Println("发送的地方 InstanceID", span.InstanceID)
+	}
+	log.Println("------------------end----------------------------")
+	log.Println()
+	log.Println()
 	skp := util.SkywalkingPacket{
 		Type:    util.TypeOfTraceSegment,
 		Payload: buf,
@@ -889,23 +901,11 @@ func (c *traceSegmentService) Collect(in protocol.TraceSegmentService_CollectSer
 
 	u, err := in.Recv()
 	if err != nil {
-		log.Println(err)
+		g.L.Warn("Collect:in.Recv", zap.String("error", err.Error()))
+		return err
 	}
-	// log.Println("u.GlobalTraceIds", u.GlobalTraceIds)
-	// tarr := &protocol.TraceSegmentObject{}
-
-	// if err := proto.Unmarshal(u.Segment, tarr); err != nil {
-	// 	g.L.Warn("Collect:proto.Unmarshal", zap.String("error", err.Error()))
-	// 	goto SEND_CLOSE
-	// }
 
 	gAgent.skyWalk.upTracChan <- u
-
-	// g.L.Debug("Collect:u.Segment", zap.Any("u", u))
-	// g.L.Debug("Collect:u.TraceSegmentObject", zap.Any("tarr", tarr))
-	// for _, value := range tarr.Spans {
-	// 	log.Println(tarr.TraceSegmentId, "value.SpanType", value.SpanType, "----------------------------->>>>", value, tarr)
-	// }
 
 	// SEND_CLOSE:
 	if err := in.SendAndClose(&protocol.Downstream{}); err != nil {

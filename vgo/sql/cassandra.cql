@@ -33,9 +33,9 @@ CREATE TYPE IF NOT EXISTS log (
 );
 
 CREATE TYPE IF NOT EXISTS span_ref (
-    trace_id        blob,
-    span_id         int,
-    ref_type        int,
+    trace_segment_id    blob,
+    span_id             int,
+    ref_type            int,
 );
 
 CREATE TYPE IF NOT EXISTS cpu (
@@ -91,19 +91,20 @@ CREATE TABLE IF NOT EXISTS jvms (
 );
 
 CREATE TABLE IF NOT EXISTS traces (
-    trace_id        blob,
-    span_id         bigint,
-    app_id          bigint,
-    instance_id     bigint,
-    span_type       int,
-    span_layer      int,
-    start_time      bigint,
-    end_time        bigint,
-    parent_span_id  int,
-    operation_id    int,
-    is_error        boolean,
-    refs            list<frozen<span_ref>>,
-    tags            list<frozen<keyvalue_string>>,
-    logs            list<frozen<log>>,
-    PRIMARY KEY (trace_id, span_id)
+    trace_id            blob,
+    trace_segment_id    blob,
+    span_id             bigint,
+    app_id              bigint,
+    instance_id         bigint,
+    span_type           int,
+    span_layer          int,
+    start_time          bigint,
+    end_time            bigint,
+    parent_span_id      int,
+    operation_id        int,
+    is_error            boolean,
+    refs                list<frozen<span_ref>>,
+    tags                list<frozen<keyvalue_string>>,
+    logs                list<frozen<log>>,
+    PRIMARY KEY (trace_id, trace_segment_id, span_id)
 );

@@ -30,6 +30,7 @@ const (
 // Span ...
 type Span struct {
 	TraceID         string                `msg:"tid"`
+	TraceSegmentID  string                `msg:"tsid"`
 	SpanID          int32                 `msg:"sid"`
 	AppID           int32                 `msg:"aid"`
 	InstanceID      int32                 `msg:"inid"`
@@ -48,7 +49,7 @@ type Span struct {
 
 // SpanRef ...
 type SpanRef struct {
-	TraceID string  `msg:"tid" cql:"trace_id"`
-	SpanID  int32   `msg:"sid" cql:"span_id"`
-	RefType RefType `msg:"rt"  cql:"ref_type"`
+	TraceSegmentID string  `msg:"sid" cql:"trace_segment_id"`
+	SpanID         int32   `msg:"sid" cql:"span_id"`
+	RefType        RefType `msg:"rt"  cql:"ref_type"`
 }

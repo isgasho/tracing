@@ -1,6 +1,7 @@
 package service
 
 import (
+	"log"
 	"time"
 
 	"github.com/mafanr/g"
@@ -113,6 +114,7 @@ func (storage *Storage) spanStore() {
 					for _, value := range spanQueue {
 						batchInsert.Query(util.SpanInsert,
 							value.TraceID,
+							value.TraceSegmentID,
 							value.SpanID,
 							value.AppID,
 							value.InstanceID,
@@ -126,6 +128,9 @@ func (storage *Storage) spanStore() {
 							value.Refs,
 							value.Tags,
 							value.Logs)
+						log.Println("入库的地方 value.TraceID", value.TraceID)
+						log.Println("入库的地方 value.AppID", value.AppID)
+						log.Println("入库的地方 value.InstanceID", value.InstanceID)
 					}
 					if err := storage.session.ExecuteBatch(batchInsert); err != nil {
 						g.L.Warn("spanStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
@@ -142,6 +147,7 @@ func (storage *Storage) spanStore() {
 				for _, value := range spanQueue {
 					batchInsert.Query(util.SpanInsert,
 						value.TraceID,
+						value.TraceSegmentID,
 						value.SpanID,
 						value.AppID,
 						value.InstanceID,
@@ -155,6 +161,17 @@ func (storage *Storage) spanStore() {
 						value.Refs,
 						value.Tags,
 						value.Logs)
+
+					log.Println("----------------------------------------------------")
+					log.Println("------------------- start ---------------------------------")
+					log.Println("----------------------------------------------------")
+					log.Println("入库的地方 value.TraceID", value.TraceID)
+					log.Println("入库的地方 value.SpanID", value.SpanID)
+					log.Println("入库的地方 value.AppID", value.AppID)
+					log.Println("入库的地方 value.InstanceID", value.InstanceID)
+					log.Println("--------------------- end -------------------------------")
+					log.Println("----------------------------------------------------")
+					log.Println("----------------------------------------------------")
 				}
 				if err := storage.session.ExecuteBatch(batchInsert); err != nil {
 					g.L.Warn("spanStore:storage.session.ExecuteBatch", zap.String("error", err.Error()))
