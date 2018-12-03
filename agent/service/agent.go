@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"github.com/mafanr/pinpoint"
 	"log"
 	"os"
 	"strings"
@@ -30,7 +29,7 @@ type Agent struct {
 	quitC         chan bool
 	uploadC       chan *util.VgoPacket
 	downloadC     chan *util.VgoPacket
-	pinpoint      *pinpoint.Pinpoint
+	pinpoint      *Pinpoint
 }
 
 var gAgent *Agent
