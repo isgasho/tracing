@@ -17,15 +17,15 @@ func NewApp() *App {
 
 // AgentInfo ...
 type AgentInfo struct {
-	AppID        int32  `db:"app_id" json:"app_id"  msg:"app_id"`
-	InstanceID   int32  `db:"instance_id" json:"instance_id" msg:"instance_id"`
-	AgentUUID    string `db:"agent_uuid" json:"agent_uuid" msg:"agent_uuid"`
-	AppName      string `db:"app_name" json:"app_name"  msg:"app_id"`
-	OsName       string `db:"os_name" json:"os_name" msg:"os_name"`
-	Ipv4S        string `db:"ipv4s" json:"ipv4s" msg:"ipv4s"`
-	RegisterTime int64  `db:"register_time" json:"register_time" msg:"register_time"`
-	ProcessID    int32  `db:"process_id" json:"process_id" msg:"process_id"`
-	HostName     string `db:"host_name" json:"host_name" msg:"host_name"`
+	AppName        string `db:"applicationName" json:"applicationName"  msg:"applicationName"`
+	ServiceType    int32  `db:"serviceType" json:"serviceType"  msg:"serviceType"`
+	SocketID       int32  `db:"socketId" json:"socketId" msg:"socketId"`
+	HostName       string `db:"hostName" json:"hostName" msg:"hostName"`
+	AgentID        string `db:"agentId" json:"agentId"  msg:"agentId"`
+	IP4S           string `db:"ip" json:"ip" msg:"ip"`
+	Pid            int32  `db:"pid" json:"pid" msg:"pid"`
+	Version        string `db:"version" json:"version" msg:"version"`
+	StartTimestamp int64  `db:"startTimestamp" json:"startTimestamp" msg:"startTimestamp"`
 }
 
 // NewAgentInfo ...

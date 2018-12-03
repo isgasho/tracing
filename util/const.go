@@ -23,6 +23,12 @@ const (
 	TypeOfTraceSegment            uint16 = 6 // trace信息
 )
 
+const (
+	TypeOfTCPData   uint16 = 1 // tcp
+	TypeOfUDPData   uint16 = 2 // udp
+	TypeOfAgentInfo uint16 = 3 // 注册app id
+)
+
 // 其他控制类型
 const (
 	// MaxMessageSize max message size

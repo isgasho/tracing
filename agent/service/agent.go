@@ -17,19 +17,16 @@ import (
 
 // Agent ...
 type Agent struct {
-	isGetID       bool
-	appName       string // 应用名
-	appID         int32  //	应用ID
-	appInstanceID int32  // 应用实例ID
-	agentUUID     string
-	syncCall      *SyncCall
-	client        *TCPClient
-	syncID        uint32
-	agentInfo     *util.AgentInfo
-	quitC         chan bool
-	uploadC       chan *util.VgoPacket
-	downloadC     chan *util.VgoPacket
-	pinpoint      *Pinpoint
+	appName   string // 应用名
+	agentID   string //	应用ID
+	syncCall  *SyncCall
+	client    *TCPClient
+	syncID    uint32
+	agentInfo *util.AgentInfo
+	quitC     chan bool
+	uploadC   chan *util.VgoPacket
+	downloadC chan *util.VgoPacket
+	pinpoint  *Pinpoint
 }
 
 var gAgent *Agent
@@ -37,14 +34,13 @@ var gAgent *Agent
 // New ...
 func New() *Agent {
 	gAgent = &Agent{
-		isGetID:   false,
 		syncCall:  NewSyncCall(),
 		client:    NewTCPClient(),
 		agentInfo: util.NewAgentInfo(),
 		quitC:     make(chan bool, 1),
 		uploadC:   make(chan *util.VgoPacket, 100),
 		downloadC: make(chan *util.VgoPacket, 100),
-		//skyWalk:   NewSkyWalking(),
+		pinpoint:  NewPinpoint(),
 	}
 	return gAgent
 }
@@ -82,17 +78,13 @@ func (a *Agent) initAppName() error {
 	return nil
 }
 
-// reloadID ...
-func (a *Agent) reloadID(appID, instanceID int32) {
-	if !a.isGetID {
-		a.appID = appID
-		a.appInstanceID = instanceID
-	}
+// setAgentInfo ...
+func (a *Agent) setAgentInfo(agentID string) {
+	a.agentID = agentID
 }
 
 // Start ...
 func (a *Agent) Start() error {
-
 	// 获取App name
 	if err := a.initAppName(); err != nil {
 		g.L.Fatal("Start:a.initAppInfo", zap.Error(err))
@@ -107,12 +99,20 @@ func (a *Agent) Start() error {
 	// 初始化tcp client
 	go a.client.Init()
 
+	// start pinpoint
+	if err := a.pinpoint.Start(); err != nil {
+		g.L.Fatal("Start:a.pinpoint.Start", zap.Error(err))
+	}
+
 	return nil
+}
+
+func (a *Agent) write(data *util.VgoPacket) {
+
 }
 
 // Close ...
 func (a *Agent) Close() error {
-
 	return nil
 }
 

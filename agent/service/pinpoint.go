@@ -2,6 +2,8 @@ package service
 
 import (
 	"github.com/mafanr/vgo/agent/misc"
+	"github.com/mafanr/vgo/util"
+	"github.com/vmihailenco/msgpack"
 	"net"
 	"time"
 
@@ -12,14 +14,14 @@ import (
 
 // Pinpoint  analysis pinpoint
 type Pinpoint struct {
-	//infoAddr string // tcp addr for info
-	//statAddr string // udp addr for stat
-	//spanAddr string // udp addr for span
+	tcpChan chan []byte
 }
 
 // NewPinpoint ...
 func NewPinpoint() *Pinpoint {
-	return &Pinpoint{}
+	return &Pinpoint{
+		tcpChan: make(chan []byte, 100),
+	}
 }
 
 // Start ...
@@ -29,11 +31,83 @@ func (pinpoint *Pinpoint) Start() error {
 	go pinpoint.AgentStat()
 	go pinpoint.AgentSpan()
 
+	go pinpoint.tcpCollector()
+
 	return nil
 }
 
 // Close ...
 func (pinpoint *Pinpoint) Close() error {
+	return nil
+}
+
+// Start ...
+func (pinpoint *Pinpoint) tcpCollector() {
+	for {
+		select {
+		case data, ok := <-pinpoint.tcpChan:
+			if ok {
+				packet := &util.VgoPacket{
+					Type:       util.TypeOfPinpoint,
+					Version:    util.VersionOf01,
+					IsSync:     util.TypeOfSyncNo,
+					IsCompress: util.TypeOfCompressNo,
+					Payload:    data,
+				}
+				if err := gAgent.client.WritePacket(packet); err != nil {
+					g.L.Warn("sendSpans:gAgent.client.WritePacket", zap.String("error", err.Error()))
+				}
+			}
+		}
+	}
+}
+
+// reportAgentInfo ...
+func (pinpoint *Pinpoint) reportSEND(data []byte) error {
+	pinpointData := util.NewPinpointData()
+	pinpointData.Type = util.TypeOfTCPData
+	pinpointData.AgentName = gAgent.appName
+	pinpointData.AgentID = gAgent.agentID
+
+	spanData := &util.SpanDataModel{
+		Spans: data,
+	}
+	pinpointData.Payload = append(pinpointData.Payload, spanData)
+	payload, err := msgpack.Marshal(pinpointData)
+	if err != nil {
+		g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+		return err
+	}
+
+	gAgent.pinpoint.tcpChan <- payload
+
+	return nil
+}
+
+// reportAgentInfo ...
+func (pinpoint *Pinpoint) reportAgentInfo(appInfo *util.AgentInfo) error {
+	pinpointData := util.NewPinpointData()
+	pinpointData.Type = util.TypeOfTCPData
+	pinpointData.AgentName = appInfo.AppName
+	pinpointData.AgentID = appInfo.AgentID
+
+	appInfoBuf, err := msgpack.Marshal(appInfo)
+	if err != nil {
+		g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+		return err
+	}
+	spanData := &util.SpanDataModel{
+		Spans: appInfoBuf,
+	}
+	pinpointData.Payload = append(pinpointData.Payload, spanData)
+	payload, err := msgpack.Marshal(pinpointData)
+	if err != nil {
+		g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+		return err
+	}
+
+	gAgent.pinpoint.tcpChan <- payload
+
 	return nil
 }
 

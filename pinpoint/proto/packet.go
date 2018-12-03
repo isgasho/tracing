@@ -4,11 +4,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/pinpoint/thrift"
-	"github.com/mafanr/vgo/pinpoint/thrift/pinpoint"
 	"github.com/mafanr/vgo/pinpoint/thrift/trace"
-	"go.uber.org/zap"
 )
 
 const TCP_MAX_PACKET_SIZE int = 16 * 1024
@@ -93,27 +89,26 @@ type Packet interface {
 }
 
 func DealRequestResponse(message Packet) *trace.TResult_ {
-	tStruct := thrift.Deserialize(message.GetPayload())
-	isSuccess := false
-	switch m := tStruct.(type) {
-	case *pinpoint.TAgentInfo:
-
-		break
-	case *trace.TSqlMetaData:
-
-		break
-	case *trace.TApiMetaData:
-
-		break
-	case *trace.TStringMetaData:
-
-		break
-	default:
-		g.L.Warn("unknown type", zap.Any("data", m))
-	}
-
-	isSuccess = true
+	//tStruct := thrift.Deserialize(message.GetPayload())
+	//isSuccess := false
+	//switch m := tStruct.(type) {
+	//case *pinpoint.TAgentInfo:
+	//
+	//	break
+	//case *trace.TSqlMetaData:
+	//
+	//	break
+	//case *trace.TApiMetaData:
+	//
+	//	break
+	//case *trace.TStringMetaData:
+	//
+	//	break
+	//default:
+	//	g.L.Warn("unknown type", zap.Any("data", m))
+	//}
+	//isSuccess := true
 	result := trace.NewTResult_()
-	result.Success = isSuccess
+	result.Success = true
 	return result
 }
