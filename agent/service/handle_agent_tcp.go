@@ -49,6 +49,7 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 				g.L.Warn("applicationSend.Decode", zap.String("error", err.Error()))
 				return err
 			}
+
 			// proto.DealRequestResponse(applicationSend)
 			// pinpoint.reportSEND(applicationSend.GetPayload())
 

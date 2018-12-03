@@ -18,6 +18,6 @@ func NewPinpointData() *PinpointData {
 // type DataType : SpanV2 SpanChunk AgentStat AgentStatBatch
 // SpanDataModel data
 type SpanDataModel struct {
-	Type  int    `msg:"type"`
+	Type  uint16 `msg:"type"`
 	Spans []byte `msg:"spans"`
 }

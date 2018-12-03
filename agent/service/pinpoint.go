@@ -70,6 +70,7 @@ func (pinpoint *Pinpoint) reportSEND(data []byte) error {
 	pinpointData.AgentID = gAgent.agentID
 
 	spanData := &util.SpanDataModel{
+		Type:  util.TypeOfAgentSEND,
 		Spans: data,
 	}
 	pinpointData.Payload = append(pinpointData.Payload, spanData)
@@ -97,6 +98,7 @@ func (pinpoint *Pinpoint) reportAgentInfo(appInfo *util.AgentInfo) error {
 		return err
 	}
 	spanData := &util.SpanDataModel{
+		Type:  util.TypeOfAgentInfo,
 		Spans: appInfoBuf,
 	}
 	pinpointData.Payload = append(pinpointData.Payload, spanData)

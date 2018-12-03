@@ -27,6 +27,7 @@ const (
 	TypeOfTCPData   uint16 = 1 // tcp
 	TypeOfUDPData   uint16 = 2 // udp
 	TypeOfAgentInfo uint16 = 3 // 注册app id
+	TypeOfAgentSEND uint16 = 4
 )
 
 // 其他控制类型
