@@ -1,7 +1,0 @@
-
-syntax = "proto3";
-
-
-// nothing down stream from collector yet.
-message Downstream {
-}

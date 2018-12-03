@@ -14,6 +14,7 @@ type Config struct {
 		LogLevel   string
 		AdminToken string
 	}
+
 	Agent struct {
 		VgoAddr          string
 		KeepLiveInterval int
@@ -21,6 +22,13 @@ type Config struct {
 		ENV              string
 		AppName          string
 	}
+
+	Pinpoint struct {
+		InfoAddr string // tcp addr for info
+		StatAddr string // udp addr for stat
+		SpanAddr string // udp addr for span
+	}
+
 	SkyWalking struct {
 		HTTPAddr             string
 		RPCAddr              string

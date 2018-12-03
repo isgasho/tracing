@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/mafanr/pinpoint"
 	"log"
 	"os"
 	"strings"
@@ -24,12 +25,12 @@ type Agent struct {
 	agentUUID     string
 	syncCall      *SyncCall
 	client        *TCPClient
-	skyWalk       *SkyWalking
 	syncID        uint32
 	agentInfo     *util.AgentInfo
 	quitC         chan bool
 	uploadC       chan *util.VgoPacket
 	downloadC     chan *util.VgoPacket
+	pinpoint      *pinpoint.Pinpoint
 }
 
 var gAgent *Agent
@@ -40,11 +41,11 @@ func New() *Agent {
 		isGetID:   false,
 		syncCall:  NewSyncCall(),
 		client:    NewTCPClient(),
-		skyWalk:   NewSkyWalking(),
 		agentInfo: util.NewAgentInfo(),
 		quitC:     make(chan bool, 1),
 		uploadC:   make(chan *util.VgoPacket, 100),
 		downloadC: make(chan *util.VgoPacket, 100),
+		//skyWalk:   NewSkyWalking(),
 	}
 	return gAgent
 }
@@ -106,11 +107,6 @@ func (a *Agent) Start() error {
 
 	// 初始化tcp client
 	go a.client.Init()
-
-	// 启动本地接收采集信息端口
-	if err := a.skyWalk.Start(); err != nil {
-		g.L.Fatal("Start:a.skyWalk.Start", zap.Error(err))
-	}
 
 	return nil
 }
