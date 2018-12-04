@@ -1,2 +1,4 @@
 .idea/
 .bin/
+vgo/vgo
+agent/agent
