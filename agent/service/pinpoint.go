@@ -186,7 +186,7 @@ func (pinpoint *Pinpoint) udpCollector() {
 					// 清空缓存
 					pinpointData.Payload = pinpointData.Payload[:0]
 				}
-				g.L.Debug("udpCollector", zap.Any("packet", packet), zap.Any("data", spanData))
+				// g.L.Debug("udpCollector", zap.Any("packet", packet), zap.Any("data", spanData))
 			}
 			break
 		case <-ticker.C:
