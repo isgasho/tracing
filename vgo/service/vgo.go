@@ -28,15 +28,17 @@ type Vgo struct {
 	web      *web.Web
 }
 
+var gVgo *Vgo
+
 // New ...
 func New() *Vgo {
-	return &Vgo{
+	gVgo = &Vgo{
 		stats:    stats.New(),
 		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
 		web:      web.New(),
-		// apps:    NewAppStore(),
 	}
+	return gVgo
 }
 
 // Start ...

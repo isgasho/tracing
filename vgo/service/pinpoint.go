@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"log"
 	"net"
 
@@ -35,17 +36,24 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 		for _, value := range packet.Payload {
 			switch value.Type {
 			case util.TypeOfAgentInfo:
-				appInfo := util.NewAgentInfo()
-				if err := msgpack.Unmarshal(value.Spans, appInfo); err != nil {
+				agentInfo := util.NewAgentInfo()
+				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
 					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
+				agentInfo.IsLive = true
+				g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
+				gVgo.storage.agentStore(agentInfo)
+				break
+			case util.TypeOfAgentOffline:
+				// Agent下线处理
+
 				break
 			case util.TypeOfAgentSEND:
 				DealTCPRequestResponse(value.Spans)
 				break
 			default:
-				g.L.Warn("unknow type")
+				g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", packet.Type)))
 				break
 			}
 		}
@@ -56,7 +64,7 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 		}
 		break
 	default:
-		g.L.Warn("unknow type")
+		g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", packet.Type)))
 	}
 	return nil
 }

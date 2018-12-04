@@ -17,15 +17,16 @@ func NewApp() *App {
 
 // AgentInfo ...
 type AgentInfo struct {
-	AppName        string `db:"applicationName" json:"applicationName"  msg:"applicationName"`
-	ServiceType    int32  `db:"serviceType" json:"serviceType"  msg:"serviceType"`
-	SocketID       int32  `db:"socketId" json:"socketId" msg:"socketId"`
-	HostName       string `db:"hostName" json:"hostName" msg:"hostName"`
-	AgentID        string `db:"agentId" json:"agentId"  msg:"agentId"`
+	AppName        string `db:"app_name" json:"applicationName"  msg:"applicationName"`
+	ServiceType    int32  `db:"ser_type" json:"serviceType"  msg:"serviceType"`
+	SocketID       int32  `db:"socket_id" json:"socketId" msg:"socketId"`
+	HostName       string `db:"host_name" json:"hostName" msg:"hostName"`
+	AgentID        string `db:"agent_id" json:"agentId"  msg:"agentId"`
 	IP4S           string `db:"ip" json:"ip" msg:"ip"`
 	Pid            int32  `db:"pid" json:"pid" msg:"pid"`
 	Version        string `db:"version" json:"version" msg:"version"`
-	StartTimestamp int64  `db:"startTimestamp" json:"startTimestamp" msg:"startTimestamp"`
+	StartTimestamp int64  `db:"start_time" json:"startTimestamp" msg:"startTimestamp"`
+	IsLive         bool   `db:"is_live" json:"is_live" msg:"is_live"`
 }
 
 // NewAgentInfo ...

@@ -112,7 +112,7 @@ func (pinpoint *Pinpoint) AgentStat() error {
 			return err
 		}
 		pinpoint.udpChan <- spanModel
-		g.L.Debug("AgentStat Recv", zap.String("message", string(data[:n])))
+		// g.L.Debug("AgentStat Recv", zap.String("message", string(data[:n])))
 	}
 }
 
@@ -145,7 +145,7 @@ func (pinpoint *Pinpoint) AgentSpan() error {
 			return err
 		}
 		pinpoint.udpChan <- spanModel
-		g.L.Debug("AgentSpan Recv", zap.String("message", string(data[:n])))
+		// g.L.Debug("AgentSpan Recv", zap.String("message", string(data[:n])))
 	}
 }
 
