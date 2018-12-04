@@ -14,6 +14,7 @@ import (
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
 	"github.com/mafanr/vgo/vgo/stats"
+	"github.com/mafanr/vgo/vgo/web"
 	"go.uber.org/zap"
 )
 
@@ -24,6 +25,7 @@ type Vgo struct {
 	apps     sync.Map     // 应用信息 key code(int32) , value app
 	appN2c   sync.Map     // 应用ID和应用名映射 key appname(string), value code(int32)
 	pinpoint *Pinpoint    // 处理pinpoint 数据
+	web      *web.Web
 }
 
 // New ...
@@ -32,6 +34,7 @@ func New() *Vgo {
 		stats:    stats.New(),
 		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
+		web:      web.New(),
 		// apps:    NewAppStore(),
 	}
 }
@@ -77,6 +80,10 @@ func (v *Vgo) init() error {
 	// }
 
 	// start web ser
+	if err := v.web.Start(); err != nil {
+		g.L.Warn("init:v.web.Start", zap.String("error", err.Error()))
+		return err
+	}
 
 	// start stats
 	if err := v.stats.Start(); err != nil {

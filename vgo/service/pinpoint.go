@@ -1,6 +1,9 @@
 package service
 
 import (
+	"log"
+	"net"
+
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
@@ -8,8 +11,6 @@ import (
 	"github.com/mafanr/vgo/util"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
-	"log"
-	"net"
 )
 
 // Pinpoint ...
