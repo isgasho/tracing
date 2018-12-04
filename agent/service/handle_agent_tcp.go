@@ -9,8 +9,8 @@ import (
 	"net"
 
 	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/pinpoint/proto"
-	"github.com/mafanr/vgo/pinpoint/thrift"
+	"github.com/mafanr/vgo/proto/pinpoint/proto"
+	"github.com/mafanr/vgo/proto/pinpoint/thrift"
 	"go.uber.org/zap"
 )
 

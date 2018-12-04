@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/pinpoint/proto"
+	"github.com/mafanr/vgo/proto/pinpoint/proto"
 	"go.uber.org/zap"
 )
 
