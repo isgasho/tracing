@@ -15,12 +15,14 @@ import (
 // Pinpoint  analysis pinpoint
 type Pinpoint struct {
 	tcpChan chan []byte
+	udpChan chan []byte
 }
 
 // NewPinpoint ...
 func NewPinpoint() *Pinpoint {
 	return &Pinpoint{
 		tcpChan: make(chan []byte, 100),
+		udpChan: make(chan []byte, 200),
 	}
 }
 
@@ -32,6 +34,7 @@ func (pinpoint *Pinpoint) Start() error {
 	go pinpoint.AgentSpan()
 
 	go pinpoint.tcpCollector()
+	go pinpoint.udpCollector()
 
 	return nil
 }
@@ -62,7 +65,114 @@ func (pinpoint *Pinpoint) tcpCollector() {
 	}
 }
 
-// reportAgentInfo ...
+// AgentInfo ...
+func (pinpoint *Pinpoint) AgentInfo() error {
+	l, err := net.Listen("tcp", misc.Conf.Pinpoint.InfoAddr)
+	if err != nil {
+		g.L.Fatal("AgentInfo", zap.Error(err))
+		return err
+	}
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			g.L.Fatal("AgentInfo", zap.String("addr", misc.Conf.Pinpoint.InfoAddr), zap.Error(err))
+			return err
+		}
+		go pinpoint.agentInfo(conn)
+	}
+}
+
+// AgentStat ...
+func (pinpoint *Pinpoint) AgentStat() error {
+	addrInfo, _ := net.ResolveUDPAddr("udp", misc.Conf.Pinpoint.StatAddr)
+	listener, err := net.ListenUDP("udp", addrInfo)
+	if err != nil {
+		g.L.Fatal("AgentStat ListenUDP", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
+	}
+	data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
+	for {
+		listener.SetReadDeadline(time.Now().Add(2 * time.Second))
+		n, _, err := listener.ReadFrom(data)
+		if err != nil {
+			if err, ok := err.(net.Error); ok && err.Timeout() {
+
+			} else {
+				g.L.Warn("AgentStat ReadFrom", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
+			}
+			continue
+		}
+		if n == 0 {
+			continue
+		}
+		//handleAgentUDP(data[:n])
+		pinpoint.udpChan <- data[:n]
+		g.L.Debug("AgentStat Recv", zap.String("message", string(data[:n])))
+	}
+}
+
+// AgentSpan ...
+func (pinpoint *Pinpoint) AgentSpan() error {
+	addrInfo, _ := net.ResolveUDPAddr("udp", misc.Conf.Pinpoint.SpanAddr)
+	listener, err := net.ListenUDP("udp", addrInfo)
+	if err != nil {
+		g.L.Fatal("AgentSpan ListenUDP", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
+	}
+	data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
+	for {
+		listener.SetReadDeadline(time.Now().Add(2 * time.Second))
+		n, _, err := listener.ReadFrom(data)
+		if err != nil {
+			if err, ok := err.(net.Error); ok && err.Timeout() {
+
+			} else {
+				g.L.Warn("AgentSpan ReadFrom", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
+			}
+			continue
+		}
+		if n == 0 {
+			continue
+		}
+		pinpoint.udpChan <- data[:n]
+		//handleAgentUDP(data[:n])
+		g.L.Debug("AgentSpan Recv", zap.String("message", string(data[:n])))
+	}
+}
+
+// udpCollector ...
+func (pinpoint *Pinpoint) udpCollector() {
+	// 定时器
+	ticker := time.NewTicker(time.Duration(misc.Conf.Pinpoint.SpanRportInterval) * time.Millisecond)
+	for {
+		select {
+		case data, ok := <-pinpoint.udpChan:
+			if ok {
+				//packet := &util.VgoPacket{
+				//	Type:       util.TypeOfPinpoint,
+				//	Version:    util.VersionOf01,
+				//	IsSync:     util.TypeOfSyncNo,
+				//	IsCompress: util.TypeOfCompressNo,
+				//	Payload:    data,
+				//}
+				//if err := gAgent.client.WritePacket(packet); err != nil {
+				//	g.L.Warn("sendSpans:gAgent.client.WritePacket", zap.String("error", err.Error()))
+				//}
+				g.L.Debug("udpCollector", zap.String("data", string(data)))
+			}
+			break
+		case <-ticker.C:
+			//if len(spanQueue) > 0 {
+			//	// 发送
+			//	if err := sky.sendSpans(spanQueue); err != nil {
+			//		g.L.Warn("TracCollector:sky.sendSpans", zap.String("error", err.Error()))
+			//	}
+			//	// 清空缓存
+			//	spanQueue = spanQueue[:0]
+			//}
+		}
+	}
+}
+
+// reportSEND ...
 func (pinpoint *Pinpoint) reportSEND(data []byte) error {
 	pinpointData := util.NewPinpointData()
 	pinpointData.Type = util.TypeOfTCPData
@@ -111,75 +221,4 @@ func (pinpoint *Pinpoint) reportAgentInfo(appInfo *util.AgentInfo) error {
 	gAgent.pinpoint.tcpChan <- payload
 
 	return nil
-}
-
-// AgentInfo ...
-func (pinpoint *Pinpoint) AgentInfo() error {
-	l, err := net.Listen("tcp", misc.Conf.Pinpoint.InfoAddr)
-	if err != nil {
-		g.L.Fatal("AgentInfo", zap.Error(err))
-		return err
-	}
-	for {
-		conn, err := l.Accept()
-		if err != nil {
-			g.L.Fatal("AgentInfo", zap.String("addr", misc.Conf.Pinpoint.InfoAddr), zap.Error(err))
-			return err
-		}
-		go pinpoint.agentInfo(conn)
-	}
-}
-
-// AgentStat ...
-func (pinpoint *Pinpoint) AgentStat() error {
-	addrInfo, _ := net.ResolveUDPAddr("udp", misc.Conf.Pinpoint.StatAddr)
-	listener, err := net.ListenUDP("udp", addrInfo)
-	if err != nil {
-		g.L.Fatal("AgentStat ListenUDP", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
-	}
-	for {
-		data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
-		listener.SetReadDeadline(time.Now().Add(2 * time.Second))
-		n, _, err := listener.ReadFrom(data)
-		if err != nil {
-			if err, ok := err.(net.Error); ok && err.Timeout() {
-
-			} else {
-				g.L.Warn("AgentStat ReadFrom", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
-			}
-			continue
-		}
-		if n == 0 {
-			continue
-		}
-		handleAgentUDP(data[:n])
-		g.L.Debug("AgentStat Recv", zap.String("message", string(data[:n])))
-	}
-}
-
-// AgentSpan ...
-func (pinpoint *Pinpoint) AgentSpan() error {
-	addrInfo, _ := net.ResolveUDPAddr("udp", misc.Conf.Pinpoint.SpanAddr)
-	listener, err := net.ListenUDP("udp", addrInfo)
-	if err != nil {
-		g.L.Fatal("AgentSpan ListenUDP", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
-	}
-	for {
-		data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
-		listener.SetReadDeadline(time.Now().Add(2 * time.Second))
-		n, _, err := listener.ReadFrom(data)
-		if err != nil {
-			if err, ok := err.(net.Error); ok && err.Timeout() {
-
-			} else {
-				g.L.Warn("AgentSpan ReadFrom", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
-			}
-			continue
-		}
-		if n == 0 {
-			continue
-		}
-		handleAgentUDP(data[:n])
-		g.L.Debug("AgentSpan Recv", zap.String("message", string(data[:n])))
-	}
 }

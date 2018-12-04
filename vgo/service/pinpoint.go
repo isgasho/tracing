@@ -35,8 +35,10 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 			switch value.Type {
 			case util.TypeOfAgentInfo:
 				appInfo := util.NewAgentInfo()
-				msgpack.Unmarshal(value.Spans, appInfo)
-				log.Print("获取到AgentInfo", appInfo)
+				if err := msgpack.Unmarshal(value.Spans, appInfo); err != nil {
+					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
+					return err
+				}
 				break
 			case util.TypeOfAgentSEND:
 				DealTCPRequestResponse(value.Spans)
@@ -45,10 +47,34 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 		}
 		break
 	case util.TypeOfUDPData:
-
+		for _, value := range packet.Payload {
+			DealUDPRequestResponse(value.Spans)
+		}
 		break
 	}
 	return nil
+}
+
+// DealUDPRequestResponse ...
+func DealUDPRequestResponse(data []byte) {
+	tStruct := thrift.Deserialize(data)
+	switch m := tStruct.(type) {
+	case *trace.TSpan:
+		g.L.Debug("udp", zap.String("type", "TSpan"))
+		break
+	case *trace.TSpanChunk:
+		g.L.Debug("udp", zap.String("type", "TSpanChunk"))
+		break
+	case *pinpoint.TAgentStat:
+		g.L.Debug("udp", zap.String("type", "TAgentStat"))
+		break
+	case *pinpoint.TAgentStatBatch:
+
+		g.L.Debug("udp", zap.String("type", "TAgentStatBatch"))
+		break
+	default:
+		g.L.Warn("unknow type", zap.Any("data", m))
+	}
 }
 
 // DealTCPRequestResponse ...
@@ -72,8 +98,3 @@ func DealTCPRequestResponse(message []byte) error {
 	}
 	return nil
 }
-
-//if err := v.dealSkywalking(conn, packet); err != nil {
-//	g.L.Warn("agentWork:v.dealSkywalking", zap.String("error", err.Error()))
-//	return
-//}

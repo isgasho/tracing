@@ -24,9 +24,10 @@ type Config struct {
 	}
 
 	Pinpoint struct {
-		InfoAddr string // tcp addr for info
-		StatAddr string // udp addr for stat
-		SpanAddr string // udp addr for span
+		InfoAddr          string // tcp addr for info
+		StatAddr          string // udp addr for stat
+		SpanAddr          string // udp addr for span
+		SpanRportInterval int    // 全链路信息上报频率 单位毫秒
 	}
 
 	SkyWalking struct {
