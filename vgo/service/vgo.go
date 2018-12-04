@@ -98,6 +98,7 @@ func (v *Vgo) init() error {
 }
 
 func (v *Vgo) initMysql() error {
+	return nil
 	// init sql
 	g.InitMysql(misc.Conf.Mysql.Acc, misc.Conf.Mysql.Pw, misc.Conf.Mysql.Addr, misc.Conf.Mysql.Port, misc.Conf.Mysql.Database)
 	return nil
