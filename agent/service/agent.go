@@ -6,8 +6,10 @@ import (
 	"os"
 	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/mafanr/vgo/agent/misc"
+	"github.com/vmihailenco/msgpack"
 
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/util"
@@ -17,16 +19,17 @@ import (
 
 // Agent ...
 type Agent struct {
-	appName   string // 应用名
-	agentID   string //	应用ID
-	syncCall  *SyncCall
-	client    *TCPClient
-	syncID    uint32
-	agentInfo *util.AgentInfo
-	quitC     chan bool
-	uploadC   chan *util.VgoPacket
-	downloadC chan *util.VgoPacket
-	pinpoint  *Pinpoint
+	appName           string // 应用名
+	agentID           string //	应用ID
+	syncCall          *SyncCall
+	client            *TCPClient
+	syncID            uint32
+	agentInfo         *util.AgentInfo
+	quitC             chan bool
+	uploadC           chan *util.VgoPacket
+	downloadC         chan *util.VgoPacket
+	pinpoint          *Pinpoint
+	isReportAgentInfo bool
 }
 
 var gAgent *Agent
@@ -68,7 +71,7 @@ func (a *Agent) initAppName() error {
 			a.appName = misc.Conf.Agent.AppName
 		} else {
 			// 从主机名获取
-			_, agentName := getAgentIdAndName()
+			_, agentName := getAgentIDAndName()
 			a.appName = agentName
 		}
 	}
@@ -99,12 +102,72 @@ func (a *Agent) Start() error {
 	// 初始化tcp client
 	go a.client.Init()
 
+	// 上报agent信息
+	go a.reportAgentInfo()
+
 	// start pinpoint
 	if err := a.pinpoint.Start(); err != nil {
 		g.L.Fatal("Start:a.pinpoint.Start", zap.Error(err))
 	}
 
 	return nil
+}
+
+func (a *Agent) reportAgentInfo() {
+	for {
+		time.Sleep(3 * time.Second)
+		if a.isReportAgentInfo {
+			pinpointData := util.NewPinpointData()
+			pinpointData.Type = util.TypeOfTCPData
+			pinpointData.AgentName = a.agentInfo.AppName
+			pinpointData.AgentID = a.agentInfo.AgentID
+			agentInfoBuf, err := msgpack.Marshal(a.agentInfo)
+			if err != nil {
+				g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+				continue
+			}
+			spanData := &util.SpanDataModel{
+				Type:  util.TypeOfAgentInfo,
+				Spans: agentInfoBuf,
+			}
+			pinpointData.Payload = append(pinpointData.Payload, spanData)
+			payload, err := msgpack.Marshal(pinpointData)
+			if err != nil {
+				g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+				continue
+			}
+
+			// 获取ID
+			id := gAgent.getSyncID()
+			packet := &util.VgoPacket{
+				Type:       util.TypeOfPinpoint,
+				Version:    util.VersionOf01,
+				IsSync:     util.TypeOfSyncYes,
+				IsCompress: util.TypeOfCompressNo,
+				ID:         id,
+				Payload:    payload,
+			}
+
+			if err := gAgent.client.WritePacket(packet); err != nil {
+				g.L.Warn("ApplicationCodeRegister:gAgent.client.WritePacket", zap.String("error", err.Error()))
+				continue
+			}
+
+			// 创建chan
+			if _, ok := gAgent.syncCall.newChan(id, 10); !ok {
+				g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.newChan", zap.String("error", "创建sync chan失败"))
+				continue
+			}
+
+			// 阻塞同步等待，并关闭chan
+			if _, err := gAgent.syncCall.syncRead(id, 10, true); err != nil {
+				g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.syncRead", zap.String("error", err.Error()))
+				continue
+			}
+			// 上报成功无须上报
+			a.isReportAgentInfo = false
+		}
+	}
 }
 
 func (a *Agent) write(data *util.VgoPacket) {
@@ -149,7 +212,8 @@ func (a *Agent) download() {
 	}
 }
 
-func getAgentIdAndName() (agentId, agentName string) {
+// getAgentIDAndName ...
+func getAgentIDAndName() (agentId, agentName string) {
 	host, err := os.Hostname()
 	if err != nil {
 		log.Fatalln("[FATAL] get hostname error: ", err)

@@ -157,21 +157,19 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 				g.L.Warn("controlHandShake.Decode", zap.String("error", err.Error()))
 				return err
 			}
-			appInfo := util.NewAgentInfo()
-			if err := json.Unmarshal(controlHandShake.GetPayload(), appInfo); err != nil {
+			agentInfo := util.NewAgentInfo()
+			if err := json.Unmarshal(controlHandShake.GetPayload(), agentInfo); err != nil {
 				g.L.Warn("json.Unmarshal", zap.String("error", err.Error()))
 				return err
 			}
 
-			appInfo.AppName = gAgent.appName
-			gAgent.setAgentInfo(appInfo.AgentID)
+			agentInfo.AppName = gAgent.appName
+			agentInfo.IsLive = true
+			gAgent.setAgentInfo(agentInfo.AgentID)
+			gAgent.agentInfo = agentInfo
+			gAgent.isReportAgentInfo = true
 
-			if err := pinpoint.reportAgentInfo(appInfo); err != nil {
-				g.L.Warn("pinpoint.reportAgentInfo", zap.String("error", err.Error()))
-				return err
-			}
-
-			g.L.Info("agentInfo", zap.Any("body", appInfo))
+			g.L.Info("agentInfo", zap.Any("agentInfo", agentInfo))
 
 			isRePacket = true
 			rePacket, err = createResponse(controlHandShake)

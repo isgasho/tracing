@@ -58,7 +58,6 @@ func (storage *Storage) Close() error {
 
 // agentStore ...
 func (storage *Storage) agentStore(agentInfo *util.AgentInfo) error {
-
 	if err := storage.session.Query(util.AgentInfoInsert,
 		agentInfo.AppName,
 		agentInfo.AgentID,

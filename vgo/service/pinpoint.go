@@ -41,9 +41,16 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
-				agentInfo.IsLive = true
+				if err := gVgo.storage.agentStore(agentInfo); err != nil {
+					g.L.Warn("dealUpload:storage.agentStore", zap.String("error", err.Error()))
+					return err
+				}
+				// 注册信息原样返回
+				if _, err := conn.Write(inPacket.Encode()); err != nil {
+					g.L.Warn("dealSkywalking:conn.Write", zap.String("error", err.Error()))
+					return err
+				}
 				g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
-				gVgo.storage.agentStore(agentInfo)
 				break
 			case util.TypeOfAgentOffline:
 				// Agent下线处理
