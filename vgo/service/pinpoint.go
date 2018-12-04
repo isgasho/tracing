@@ -44,6 +44,9 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 			case util.TypeOfAgentSEND:
 				DealTCPRequestResponse(value.Spans)
 				break
+			default:
+				g.L.Warn("unknow type")
+				break
 			}
 		}
 		break
@@ -52,6 +55,8 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 			DealUDPRequestResponse(value.Spans)
 		}
 		break
+	default:
+		g.L.Warn("unknow type")
 	}
 	return nil
 }

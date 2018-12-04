@@ -9,10 +9,16 @@ type PinpointData struct {
 	Payload   []*SpanDataModel `msg:"payload"`
 }
 
+// NewPinpointData ...
 func NewPinpointData() *PinpointData {
 	return &PinpointData{
 		Payload: make([]*SpanDataModel, 0),
 	}
+}
+
+// NewSpanDataModel ...
+func NewSpanDataModel() *SpanDataModel {
+	return &SpanDataModel{}
 }
 
 // type DataType : SpanV2 SpanChunk AgentStat AgentStatBatch

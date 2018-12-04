@@ -24,10 +24,14 @@ const (
 )
 
 const (
-	TypeOfTCPData   uint16 = 1 // tcp
-	TypeOfUDPData   uint16 = 2 // udp
-	TypeOfAgentInfo uint16 = 3 // 注册app id
-	TypeOfAgentSEND uint16 = 4
+	TypeOfTCPData         uint16 = 1 // tcp
+	TypeOfUDPData         uint16 = 2 // udp
+	TypeOfAgentInfo       uint16 = 3 // 注册app id
+	TypeOfAgentSEND       uint16 = 4
+	TypeOfTSpan           uint16 = 5
+	TypeOfTSpanChunk      uint16 = 6
+	TypeOfTAgentStat      uint16 = 7
+	TypeOfTAgentStatBatch uint16 = 8
 )
 
 // 其他控制类型
