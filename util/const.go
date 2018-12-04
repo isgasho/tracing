@@ -53,5 +53,5 @@ const (
 const (
 	// SpanInsert string = `INSERT INTO traces (trace_id, trace_segment_id, span_id, app_id, instance_id, span_type, span_layer, start_time, end_time, parent_span_id, operation_id, is_error, refs, tags, logs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	// JVMInsert  string = `INSERT INTO jvms (app_name, instance_id, report_time, jvms) VALUES (?,?,?,?)`
-	AgentInfoInsert string = `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip, pid, version, start_time, is_live) VALUES (?,?,?,?,?,?,?,?,?,?);`
+	AgentInfoInsert string = `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip, pid, version, start_time, is_live, is_container, end_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);`
 )

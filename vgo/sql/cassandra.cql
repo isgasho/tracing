@@ -4,24 +4,19 @@ CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy',
     AND durable_writes = true;
 
 
-
 CREATE TABLE IF NOT EXISTS agents (
-    app_name    TEXT,
-    agent_id    TEXT,                 
-    ser_type    int,            
-    socket_id   int,               
-    host_name   TEXT,
-    ip          TEXT,
-    pid         INT,
-    version     TEXT,
-    start_time  bigint,
-    is_live     BOOLEAN,
-    PRIMARY KEY (app_name, agent_id)
-);
-
-CREATE TABLE IF NOT EXISTS agent (
-    app_name    TEXT,
-    agent_id    TEXT,                 
+    app_name     TEXT,
+    agent_id     TEXT,                 
+    ser_type     int,            
+    socket_id    int,               
+    host_name    TEXT,
+    ip           TEXT,
+    pid          INT,
+    version      TEXT,
+    start_time   bigint,
+    end_time     bigint,
+    is_live      BOOLEAN,
+    is_container BOOLEAN,
     PRIMARY KEY (app_name, agent_id)
 );
 

@@ -68,7 +68,9 @@ func (storage *Storage) agentStore(agentInfo *util.AgentInfo) error {
 		agentInfo.Pid,
 		agentInfo.Version,
 		agentInfo.StartTimestamp,
-		agentInfo.IsLive).Exec(); err != nil {
+		agentInfo.IsLive,
+		agentInfo.IsContainer,
+		agentInfo.EndTimestamp).Exec(); err != nil {
 		g.L.Warn("agentStore:storage.session.Query", zap.String("error", err.Error()), zap.String("sql", util.AgentInfoInsert))
 		return err
 	}

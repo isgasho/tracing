@@ -26,7 +26,9 @@ type AgentInfo struct {
 	Pid            int32  `db:"pid" json:"pid" msg:"pid"`
 	Version        string `db:"version" json:"version" msg:"version"`
 	StartTimestamp int64  `db:"start_time" json:"startTimestamp" msg:"startTimestamp"`
+	EndTimestamp   int64  `db:"end_time" json:"end_time" msg:"end_time"`
 	IsLive         bool   `db:"is_live" json:"is_live" msg:"is_live"`
+	IsContainer    bool   `db:"is_container" json:"is_container" msg:"is_container"`
 }
 
 // NewAgentInfo ...

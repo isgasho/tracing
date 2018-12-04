@@ -126,6 +126,7 @@ func (a *Agent) reportAgentInfo() {
 				g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
 				continue
 			}
+
 			spanData := &util.SpanDataModel{
 				Type:  util.TypeOfAgentInfo,
 				Spans: agentInfoBuf,

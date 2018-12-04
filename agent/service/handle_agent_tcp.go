@@ -6,6 +6,9 @@ import (
 	"encoding/json"
 	"io"
 	"net"
+	"time"
+
+	"github.com/mafanr/vgo/agent/misc"
 
 	"github.com/mafanr/vgo/util"
 
@@ -165,6 +168,8 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 
 			agentInfo.AppName = gAgent.appName
 			agentInfo.IsLive = true
+			agentInfo.IsContainer = misc.Conf.Agent.IsContainer
+
 			gAgent.setAgentInfo(agentInfo.AgentID)
 			gAgent.agentInfo = agentInfo
 			gAgent.isReportAgentInfo = true
@@ -181,11 +186,16 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 
 		case proto.CONTROL_CLIENT_CLOSE:
 			g.L.Debug("agentInfo", zap.String("type", "CONTROL_CLIENT_CLOSE"))
+			// sdk客户端断线
+			gAgent.agentInfo.IsLive = false
+			gAgent.isReportAgentInfo = true
+			gAgent.agentInfo.EndTimestamp = time.Now().UnixNano() / 1e6
+
 			controlClientClose := proto.NewControlClientClose()
 			if err := controlClientClose.Decode(conn, reader); err != nil {
 				g.L.Warn("controlClientClose.Decode", zap.String("error", err.Error()))
-				return err
 			}
+
 			break
 
 		case proto.CONTROL_PING:
