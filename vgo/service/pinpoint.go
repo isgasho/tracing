@@ -24,7 +24,7 @@ func NewPinpoint() *Pinpoint {
 }
 
 // dealUpload 处理pinpoint上行数据
-func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
+func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 	packet := &util.PinpointData{}
 	if err := msgpack.Unmarshal(inPacket.Payload, packet); err != nil {
 		g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
@@ -54,20 +54,12 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 				break
 			case util.TypeOfAgentOffline:
 				// Agent下线处理
-
 				break
-			case util.TypeOfAgentInfo:
-				DealTCPRequestResponse(value.Spans)
-				break
-			case util.TypeOfSQLMetaData:
-				DealTCPRequestResponse(value.Spans)
-				break
-
-			case util.TypeOfAPIMetaData:
-				DealTCPRequestResponse(value.Spans)
-				break
-			case util.TypeOfStringMetaData:
-				DealTCPRequestResponse(value.Spans)
+			case util.TypeOfAgentInfo, util.TypeOfSQLMetaData, util.TypeOfAPIMetaData, util.TypeOfStringMetaData:
+				if err := p.DealTCPRequestResponse(inPacket, value.Spans); err != nil {
+					g.L.Warn("dealUpload:p.DealTCPRequestResponse", zap.String("error", err.Error()))
+					return err
+				}
 				break
 			default:
 				g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", value.Type)), zap.Uint16("type", value.Type))
@@ -77,7 +69,7 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 		break
 	case util.TypeOfUDPData:
 		for _, value := range packet.Payload {
-			DealUDPRequestResponse(value.Spans)
+			p.DealUDPRequestResponse(value.Spans)
 		}
 		break
 	default:
@@ -87,7 +79,7 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 }
 
 // DealUDPRequestResponse ...
-func DealUDPRequestResponse(data []byte) {
+func (p *Pinpoint) DealUDPRequestResponse(data []byte) {
 	tStruct := thrift.Deserialize(data)
 	switch m := tStruct.(type) {
 	case *trace.TSpan:
@@ -109,7 +101,7 @@ func DealUDPRequestResponse(data []byte) {
 }
 
 // DealTCPRequestResponse ...
-func DealTCPRequestResponse(message []byte) error {
+func (p *Pinpoint) DealTCPRequestResponse(inPacket *util.VgoPacket, message []byte) error {
 	tStruct := thrift.Deserialize(message)
 	switch m := tStruct.(type) {
 	case *pinpoint.TAgentInfo:

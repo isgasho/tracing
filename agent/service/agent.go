@@ -19,15 +19,16 @@ import (
 type Agent struct {
 	// appName           string // 应用名
 	// agentID           string //	应用ID
-	syncCall          *SyncCall
-	client            *TCPClient
-	syncID            uint32
-	agentInfo         *util.AgentInfo
-	quitC             chan bool
-	uploadC           chan *util.VgoPacket
-	downloadC         chan *util.VgoPacket
-	pinpoint          *Pinpoint
-	isReportAgentInfo bool
+	syncCall                 *SyncCall
+	client                   *TCPClient
+	syncID                   uint32
+	agentInfo                *util.AgentInfo
+	quitC                    chan bool
+	uploadC                  chan *util.VgoPacket
+	downloadC                chan *util.VgoPacket
+	pinpoint                 *Pinpoint
+	isReportAgentInfo        bool
+	isReportAgentInfoSuccess bool
 }
 
 var gAgent *Agent
@@ -167,6 +168,7 @@ func (a *Agent) reportAgentInfo() {
 			}
 			// 上报成功无须上报
 			a.isReportAgentInfo = false
+			a.isReportAgentInfoSuccess = true
 		}
 	}
 }

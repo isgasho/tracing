@@ -130,7 +130,7 @@ func (pinpoint *Pinpoint) AgentSpan() error {
 func (pinpoint *Pinpoint) tcpCollector() {
 
 	for {
-		if !gAgent.isReportAgentInfo {
+		if !gAgent.isReportAgentInfoSuccess {
 			time.Sleep(1 * time.Second)
 			continue
 		}
@@ -178,7 +178,7 @@ func (pinpoint *Pinpoint) tcpCollector() {
 // udpCollector ...
 func (pinpoint *Pinpoint) udpCollector() {
 	for {
-		if !gAgent.isReportAgentInfo {
+		if !gAgent.isReportAgentInfoSuccess {
 			time.Sleep(1 * time.Second)
 			continue
 		}
