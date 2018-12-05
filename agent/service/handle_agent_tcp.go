@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"time"
@@ -15,6 +16,8 @@ import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/proto/pinpoint/proto"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift"
+	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
+	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"go.uber.org/zap"
 )
 
@@ -54,10 +57,13 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 				return err
 			}
 
-			if err := pinpoint.reportSEND(applicationSend.GetPayload()); err != nil {
-				g.L.Warn("pinpoint.reportSEND", zap.String("error", err.Error()))
+			spanModel, err := handleAgentTCP(applicationSend.GetPayload())
+			if err != nil {
+				g.L.Warn("AgentStat:handleAgentUDP", zap.String("error", err.Error()))
 				return err
 			}
+
+			pinpoint.tcpChan <- spanModel
 			break
 
 		case proto.APPLICATION_REQUEST:
@@ -68,10 +74,12 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 				return err
 			}
 
-			if err := pinpoint.reportSEND(applicationRequest.GetPayload()); err != nil {
-				g.L.Warn("pinpoint.reportSEND", zap.String("error", err.Error()))
+			spanModel, err := handleAgentTCP(applicationRequest.GetPayload())
+			if err != nil {
+				g.L.Warn("AgentStat:handleAgentUDP", zap.String("error", err.Error()))
 				return err
 			}
+			pinpoint.tcpChan <- spanModel
 
 			tResult := proto.DealRequestResponse(applicationRequest)
 			response := proto.NewApplicationResponse()
@@ -243,4 +251,32 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 			}
 		}
 	}
+}
+
+// handleAgentTCP ...
+func handleAgentTCP(message []byte) (*util.SpanDataModel, error) {
+	spanModel := util.NewSpanDataModel()
+	tStruct := thrift.Deserialize(message)
+	switch m := tStruct.(type) {
+	case *pinpoint.TAgentInfo:
+		spanModel.Type = util.TypeOfAgentInfo
+		spanModel.Spans = message
+		break
+	case *trace.TSqlMetaData:
+		spanModel.Type = util.TypeOfSQLMetaData
+		spanModel.Spans = message
+		break
+	case *trace.TApiMetaData:
+		spanModel.Type = util.TypeOfAPIMetaData
+		spanModel.Spans = message
+		break
+	case *trace.TStringMetaData:
+		spanModel.Type = util.TypeOfStringMetaData
+		spanModel.Spans = message
+		break
+	default:
+		g.L.Warn("unknown type", zap.String("type", fmt.Sprintf("unknow type %t", m)))
+		return nil, fmt.Errorf("unknow type %t", m)
+	}
+	return spanModel, nil
 }

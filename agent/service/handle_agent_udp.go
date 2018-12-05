@@ -32,7 +32,7 @@ func handleAgentUDP(data []byte) (*util.SpanDataModel, error) {
 		spanModel.Spans = data
 		break
 	default:
-		g.L.Warn("unknow type", zap.Any("data", m))
+		g.L.Warn("unknown type", zap.String("type", fmt.Sprintf("unknow type %t", m)))
 		return nil, fmt.Errorf("unknow type %t", m)
 	}
 	return spanModel, nil

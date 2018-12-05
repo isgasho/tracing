@@ -17,13 +17,13 @@ type AppStore struct {
 
 // Apis ...
 type Apis struct {
-	Apis map[int32]*util.SerNameInfo
+	// Apis map[int32]*util.SerNameInfo
 }
 
 // NewApis ...
 func NewApis() *Apis {
 	return &Apis{
-		Apis: make(map[int32]*util.SerNameInfo),
+		// Apis: make(map[int32]*util.SerNameInfo),
 	}
 }
 
@@ -207,44 +207,44 @@ func (as *AppStore) LoadSerCode() error {
 }
 
 // GetSerCode  通过Code&name获取code
-func (as *AppStore) GetSerCode(serInfo *util.SerNameInfo) (int32, error) {
-	// var id int64
-	// as.slock.RLock()
-	// apis, ok := as.SerNames[serInfo.AppCode]
-	// as.slock.RUnlock()
-	// if ok {
-	// 	for _, api := range apis.Apis {
-	// 		if strings.EqualFold(api.SerName, serInfo.SerName) {
-	// 			return api.SerID, nil
-	// 		}
-	// 	}
-	// }
+// func (as *AppStore) GetSerCode(serInfo *util.SerNameInfo) (int32, error) {
+// var id int64
+// as.slock.RLock()
+// apis, ok := as.SerNames[serInfo.AppCode]
+// as.slock.RUnlock()
+// if ok {
+// 	for _, api := range apis.Apis {
+// 		if strings.EqualFold(api.SerName, serInfo.SerName) {
+// 			return api.SerID, nil
+// 		}
+// 	}
+// }
 
-	// result, err := g.DB.Exec(fmt.Sprintf("insert into `server_name` (`server_name`, `span_type`, `app_code`) values ('%s' , '%d' '%d')", serInfo.SerName,
-	// 	serInfo.SpanType, serInfo.AppCode))
-	// if err != nil {
-	// 	query := fmt.Sprintf("select id from server_name where app_code='%d' and server_name='%s'", serInfo.AppCode, serInfo.SerName)
-	// 	rows, err := g.DB.Query(query)
-	// 	if err != nil {
-	// 		g.L.Warn("LoadSerCode:g.DB.Query", zap.Error(err), zap.String("query", query))
-	// 		return 0, err
-	// 	}
-	// 	defer rows.Close()
+// result, err := g.DB.Exec(fmt.Sprintf("insert into `server_name` (`server_name`, `span_type`, `app_code`) values ('%s' , '%d' '%d')", serInfo.SerName,
+// 	serInfo.SpanType, serInfo.AppCode))
+// if err != nil {
+// 	query := fmt.Sprintf("select id from server_name where app_code='%d' and server_name='%s'", serInfo.AppCode, serInfo.SerName)
+// 	rows, err := g.DB.Query(query)
+// 	if err != nil {
+// 		g.L.Warn("LoadSerCode:g.DB.Query", zap.Error(err), zap.String("query", query))
+// 		return 0, err
+// 	}
+// 	defer rows.Close()
 
-	// 	rows.Next()
-	// 	rows.Scan(&id)
+// 	rows.Next()
+// 	rows.Scan(&id)
 
-	// 	return 0, err
-	// }
+// 	return 0, err
+// }
 
-	// id, err = result.LastInsertId()
-	// if err != nil {
-	// 	g.L.Warn("LoadAppCode:result.LastInsertId", zap.Error(err))
-	// 	return 0, err
-	// }
+// id, err = result.LastInsertId()
+// if err != nil {
+// 	g.L.Warn("LoadAppCode:result.LastInsertId", zap.Error(err))
+// 	return 0, err
+// }
 
-	// serInfo.SerID = int32(id)
-	// // as.SerNames[serInfo.AppCode] = serInfo
+// serInfo.SerID = int32(id)
+// // as.SerNames[serInfo.AppCode] = serInfo
 
-	return 0, nil
-}
+// 	return 0, nil
+// }

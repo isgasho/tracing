@@ -2,9 +2,7 @@ package service
 
 import (
 	"bufio"
-	"fmt"
 	"net"
-	"sync"
 	"time"
 
 	"github.com/vmihailenco/msgpack"
@@ -13,18 +11,19 @@ import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
+	"github.com/mafanr/vgo/vgo/storage"
+
 	"github.com/mafanr/vgo/vgo/stats"
+
 	"github.com/mafanr/vgo/vgo/web"
 	"go.uber.org/zap"
 )
 
 // Vgo ...
 type Vgo struct {
-	stats    *stats.Stats // 离线计算
-	storage  *Storage     // 存储
-	apps     sync.Map     // 应用信息 key code(int32) , value app
-	appN2c   sync.Map     // 应用ID和应用名映射 key appname(string), value code(int32)
-	pinpoint *Pinpoint    // 处理pinpoint 数据
+	stats    *stats.Stats     // 离线计算
+	storage  *storage.Storage // 存储
+	pinpoint *Pinpoint        // 处理pinpoint 数据
 	web      *web.Web
 }
 
@@ -34,7 +33,7 @@ var gVgo *Vgo
 func New() *Vgo {
 	gVgo = &Vgo{
 		stats:    stats.New(),
-		storage:  NewStorage(),
+		storage:  storage.NewStorage(),
 		pinpoint: NewPinpoint(),
 		web:      web.New(),
 	}
@@ -158,12 +157,12 @@ func (v *Vgo) agentWork(conn net.Conn) {
 						return
 					}
 					break
-				case util.TypeOfSkywalking:
+					// case util.TypeOfSkywalking:
 					//if err := v.dealSkywalking(conn, packet); err != nil {
 					//	g.L.Warn("agentWork:v.dealSkywalking", zap.String("error", err.Error()))
 					//	return
 					//}
-					break
+					// break
 				case util.TypeOfPinpoint:
 					if err := v.pinpoint.dealUpload(conn, packet); err != nil {
 						g.L.Warn("agentWork:v.pinpoint.dealUpload", zap.String("error", err.Error()))
@@ -228,54 +227,54 @@ func (v *Vgo) Close() error {
 	return nil
 }
 
-// loadAPI 通过Agentuuid到数据库中查找 agent info
-func (v *Vgo) loadAPI(ser *util.API, app *util.App) (int32, error) {
+// // loadAPI 通过Agentuuid到数据库中查找 agent info
+// func (v *Vgo) loadAPI(ser *util.API, app *util.App) (int32, error) {
 
-	// var apiID int32
-	isFind := false
-	apiID := util.String2Uint32(fmt.Sprintf("%s%d", ser.SerName, ser.SpanType))
-	_, ok := app.Apis.Load(int32(apiID))
-	if ok {
-		return int32(apiID), nil
-	}
+// 	// var apiID int32
+// 	isFind := false
+// 	apiID := util.String2Uint32(fmt.Sprintf("%s%d", ser.SerName, ser.SpanType))
+// 	_, ok := app.Apis.Load(int32(apiID))
+// 	if ok {
+// 		return int32(apiID), nil
+// 	}
 
-	// 缓存没有， 查询数据库
-	query := fmt.Sprintf("select `id`, `span_type` from  `server_name` where app_id='%d' and server_name='%s'", ser.AppID, ser.SerName)
-	rows, err := g.DB.Query(query)
-	if err != nil {
-		g.L.Warn("loadAPI:g.DB.Query", zap.Error(err), zap.Int32("AppID", ser.AppID), zap.String("api", ser.SerName), zap.String("query", query))
-		return 0, err
-	}
-	// 防止泄漏
-	defer rows.Close()
+// 	// 缓存没有， 查询数据库
+// 	query := fmt.Sprintf("select `id`, `span_type` from  `server_name` where app_id='%d' and server_name='%s'", ser.AppID, ser.SerName)
+// 	rows, err := g.DB.Query(query)
+// 	if err != nil {
+// 		g.L.Warn("loadAPI:g.DB.Query", zap.Error(err), zap.Int32("AppID", ser.AppID), zap.String("api", ser.SerName), zap.String("query", query))
+// 		return 0, err
+// 	}
+// 	// 防止泄漏
+// 	defer rows.Close()
 
-	api := &util.API{}
-	for rows.Next() {
-		rows.Scan(&api.SerID, &api.SpanType)
-		isFind = true
-		break
-	}
+// 	api := &util.API{}
+// 	for rows.Next() {
+// 		rows.Scan(&api.SerID, &api.SpanType)
+// 		isFind = true
+// 		break
+// 	}
 
-	// 数据库中可能不存在, 	直接插入
-	if !isFind {
-		query := fmt.Sprintf("insert into server_name (id ,app_id, server_name, span_type) values ('%d', '%d', '%s', '%d')",
-			int32(apiID), ser.AppID, ser.SerName, ser.SpanType)
-		_, err := g.DB.Exec(query)
-		if err != nil {
-			g.L.Warn("loadAPI:g.DB.Exec", zap.String("query", query), zap.Error(err))
-			return 0, err
-		}
-		api.SerID = int32(apiID)
-	}
+// 	// 数据库中可能不存在, 	直接插入
+// 	if !isFind {
+// 		query := fmt.Sprintf("insert into server_name (id ,app_id, server_name, span_type) values ('%d', '%d', '%s', '%d')",
+// 			int32(apiID), ser.AppID, ser.SerName, ser.SpanType)
+// 		_, err := g.DB.Exec(query)
+// 		if err != nil {
+// 			g.L.Warn("loadAPI:g.DB.Exec", zap.String("query", query), zap.Error(err))
+// 			return 0, err
+// 		}
+// 		api.SerID = int32(apiID)
+// 	}
 
-	api.AppID = ser.AppID
-	api.SerName = ser.SerName
-	api.SpanType = ser.SpanType
+// 	api.AppID = ser.AppID
+// 	api.SerName = ser.SerName
+// 	api.SpanType = ser.SpanType
 
-	// 缓存到内存中
-	app.Apis.Store(api.SerID, api)
-	return api.SerID, nil
-}
+// 	// 缓存到内存中
+// 	app.Apis.Store(api.SerID, api)
+// 	return api.SerID, nil
+// }
 
 // // loadAPI 通过Agentuuid到数据库中查找 agent info
 // func (v *Vgo) loadAPI(ser *util.API, app *util.App) (int32, error) {
@@ -387,99 +386,102 @@ func (v *Vgo) LoadAgents() error {
 
 // GetAppID 获取AppID
 func (v *Vgo) GetAppID(name string) (int32, error) {
-	// 内存查找
-	id, ok := v.appN2c.Load(name)
-	if ok {
-		return id.(int32), nil
-	}
+	// // 内存查找
+	// id, ok := v.appN2c.Load(name)
+	// if ok {
+	// 	return id.(int32), nil
+	// }
 
-	// 数据库中查找
-	query := fmt.Sprintf("SELECT id FROM app WHERE `app`.`name`='%s';", name)
-	rows, err := g.DB.Query(query)
-	if err != nil {
-		g.L.Warn("GetAppID:g.DB.Exec", zap.Error(err), zap.String("sql", query))
-		return 0, err
-	}
+	// // 数据库中查找
+	// query := fmt.Sprintf("SELECT id FROM app WHERE `app`.`name`='%s';", name)
+	// rows, err := g.DB.Query(query)
+	// if err != nil {
+	// 	g.L.Warn("GetAppID:g.DB.Exec", zap.Error(err), zap.String("sql", query))
+	// 	return 0, err
+	// }
 
-	defer rows.Close()
-	isFind := false
-	var appID int32
-	for rows.Next() {
-		rows.Scan(&appID)
-		isFind = true
-		break
-	}
+	// defer rows.Close()
+	// isFind := false
+	// var appID int32
+	// for rows.Next() {
+	// 	rows.Scan(&appID)
+	// 	isFind = true
+	// 	break
+	// }
 
-	if isFind {
-		app := util.NewApp()
-		app.Name = name
-		app.AppID = int32(appID)
-		// 缓存到内存中
-		v.apps.Store(int32(appID), app)
-		v.apps.Store(app.Name, int32(appID))
-		return int32(appID), nil
-	}
+	// if isFind {
+	// 	app := util.NewApp()
+	// 	app.Name = name
+	// 	app.AppID = int32(appID)
+	// 	// 缓存到内存中
+	// 	v.apps.Store(int32(appID), app)
+	// 	v.apps.Store(app.Name, int32(appID))
+	// 	return int32(appID), nil
+	// }
 
-	// 如果不存在插入
-	query = fmt.Sprintf("insert into `app` (`name`) values ('%s')", name)
-	result, err := g.DB.Exec(query)
-	if err != nil {
-		g.L.Warn("GetAppID:g.DB.Exec", zap.Error(err), zap.String("sql", query))
-		return 0, err
-	}
+	// // 如果不存在插入
+	// query = fmt.Sprintf("insert into `app` (`name`) values ('%s')", name)
+	// result, err := g.DB.Exec(query)
+	// if err != nil {
+	// 	g.L.Warn("GetAppID:g.DB.Exec", zap.Error(err), zap.String("sql", query))
+	// 	return 0, err
+	// }
 
-	newID, err := result.LastInsertId()
-	if err != nil {
-		g.L.Warn("LoadAppCode:result.LastInsertId", zap.Error(err))
-		return 0, err
-	}
+	// newID, err := result.LastInsertId()
+	// if err != nil {
+	// 	g.L.Warn("LoadAppCode:result.LastInsertId", zap.Error(err))
+	// 	return 0, err
+	// }
 
-	app := util.NewApp()
-	app.Name = name
-	app.AppID = int32(newID)
-	// 缓存到内存中
-	v.apps.Store(int32(newID), app)
-	v.apps.Store(app.Name, int32(newID))
-	return int32(newID), nil
+	// app := util.NewApp()
+	// app.Name = name
+	// app.AppID = int32(newID)
+	// // 缓存到内存中
+	// v.apps.Store(int32(newID), app)
+	// v.apps.Store(app.Name, int32(newID))
+	// return int32(newID), nil
+	return 0, nil
 
 }
 
 // loadApp 通过Appid到数库中加载app
 func (v *Vgo) loadApp(appid int32) (*util.App, error) {
-	oApp, ok := v.apps.Load(appid)
-	if ok {
-		return oApp.(*util.App), nil
-	}
-	query := fmt.Sprintf("select name from  `app` where id='%d'", appid)
-	rows, err := g.DB.Query(query)
-	if err != nil {
-		g.L.Warn("loadApp:g.DB.Query", zap.Error(err), zap.Int32("appid", appid))
-		return nil, err
-	}
-	// 防止泄漏
-	defer rows.Close()
+	// oApp, ok := v.apps.Load(appid)
+	// if ok {
+	// 	return oApp.(*util.App), nil
+	// }
+	// query := fmt.Sprintf("select name from  `app` where id='%d'", appid)
+	// rows, err := g.DB.Query(query)
+	// if err != nil {
+	// 	g.L.Warn("loadApp:g.DB.Query", zap.Error(err), zap.Int32("appid", appid))
+	// 	return nil, err
+	// }
+	// // 防止泄漏
+	// defer rows.Close()
 
-	var name string
-	isFind := false
-	for rows.Next() {
-		rows.Scan(&name)
-		isFind = true
-		break
-	}
-	// 数据库中可能不存在
-	if !isFind {
-		return nil, fmt.Errorf("unfind app, appid is %d", appid)
-	}
-	app := &util.App{
-		Name:  name,
-		AppID: appid,
-	}
+	// var name string
+	// isFind := false
+	// for rows.Next() {
+	// 	rows.Scan(&name)
+	// 	isFind = true
+	// 	break
+	// }
+	// // 数据库中可能不存在
+	// if !isFind {
+	// 	return nil, fmt.Errorf("unfind app, appid is %d", appid)
+	// }
+	// app := &util.App{
+	// 	Name:  name,
+	// 	AppID: appid,
+	// }
 
-	// 缓存到内存
-	v.apps.Store(app.AppID, app)
-	v.appN2c.Store(app.Name, app.AppID)
+	// // 缓存到内存
+	// v.apps.Store(app.AppID, app)
+	// v.appN2c.Store(app.Name, app.AppID)
 
-	return app, nil
+	// return app, nil
+
+	return nil, nil
 }
 
 // GetInstanceID 获取App实例ID

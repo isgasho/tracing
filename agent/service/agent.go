@@ -128,7 +128,7 @@ func (a *Agent) reportAgentInfo() {
 			}
 
 			spanData := &util.SpanDataModel{
-				Type:  util.TypeOfAgentInfo,
+				Type:  util.TypeOfRegister,
 				Spans: agentInfoBuf,
 			}
 			pinpointData.Payload = append(pinpointData.Payload, spanData)

@@ -35,14 +35,14 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 	case util.TypeOfTCPData:
 		for _, value := range packet.Payload {
 			switch value.Type {
-			case util.TypeOfAgentInfo:
+			case util.TypeOfRegister:
 				agentInfo := util.NewAgentInfo()
 				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
 					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
-				if err := gVgo.storage.agentStore(agentInfo); err != nil {
-					g.L.Warn("dealUpload:storage.agentStore", zap.String("error", err.Error()))
+				if err := gVgo.storage.AgentStore(agentInfo); err != nil {
+					g.L.Warn("dealUpload:storage.AgentStore", zap.String("error", err.Error()))
 					return err
 				}
 				// 注册信息原样返回
@@ -56,11 +56,21 @@ func (pinpoint *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) er
 				// Agent下线处理
 
 				break
-			case util.TypeOfAgentSEND:
+			case util.TypeOfAgentInfo:
+				DealTCPRequestResponse(value.Spans)
+				break
+			case util.TypeOfSQLMetaData:
+				DealTCPRequestResponse(value.Spans)
+				break
+
+			case util.TypeOfAPIMetaData:
+				DealTCPRequestResponse(value.Spans)
+				break
+			case util.TypeOfStringMetaData:
 				DealTCPRequestResponse(value.Spans)
 				break
 			default:
-				g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", packet.Type)))
+				g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", value.Type)), zap.Uint16("type", value.Type))
 				break
 			}
 		}
@@ -94,7 +104,7 @@ func DealUDPRequestResponse(data []byte) {
 		g.L.Debug("udp", zap.String("type", "TAgentStatBatch"))
 		break
 	default:
-		g.L.Warn("unknow type", zap.Any("data", m))
+		g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
 	}
 }
 

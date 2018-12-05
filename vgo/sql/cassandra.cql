@@ -4,6 +4,19 @@ CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy',
     AND durable_writes = true;
 
 
+CREATE TYPE IF NOT EXISTS ser_info (
+	ser_info_str        TEXT,
+	vm_args             LIST<TEXT>,
+	ser_infos           frozen<ser_info>,
+);
+
+CREATE TYPE IF NOT EXISTS ser_meta_data (
+	ser_info_str        TEXT,
+	vm_args             LIST<TEXT>,
+	ser_infos           LIST<frozen<ser_info>>,
+);
+
+
 CREATE TABLE IF NOT EXISTS agents (
     app_name     TEXT,
     agent_id     TEXT,                 
@@ -20,6 +33,13 @@ CREATE TABLE IF NOT EXISTS agents (
     PRIMARY KEY (app_name, agent_id)
 );
 
+
+CREATE TABLE IF NOT EXISTS agent_info (
+    app_name                TEXT,
+    agent_id                TEXT,
+    ser_meta_data           frozen<ser_meta_data>,
+    PRIMARY KEY (app_name, agent_id)
+);
 
 -- CREATE TYPE IF NOT EXISTS keyvalue (
 --     key             text,

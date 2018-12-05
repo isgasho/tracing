@@ -23,16 +23,20 @@ const (
 	TypeOfTraceSegment            uint16 = 6 // trace信息
 )
 
+// 监控报文类型Pinpoint
 const (
 	TypeOfTCPData         uint16 = 1 // tcp
 	TypeOfUDPData         uint16 = 2 // udp
-	TypeOfAgentInfo       uint16 = 3 // 注册app id
-	TypeOfAgentSEND       uint16 = 4
-	TypeOfTSpan           uint16 = 5
-	TypeOfTSpanChunk      uint16 = 6
-	TypeOfTAgentStat      uint16 = 7
-	TypeOfTAgentStatBatch uint16 = 8
-	TypeOfAgentOffline    uint16 = 9 // Agent 下线
+	TypeOfRegister        uint16 = 3 // 注册app id
+	TypeOfAgentInfo       uint16 = 4
+	TypeOfSQLMetaData     uint16 = 5
+	TypeOfAPIMetaData     uint16 = 6
+	TypeOfStringMetaData  uint16 = 7
+	TypeOfTSpan           uint16 = 8
+	TypeOfTSpanChunk      uint16 = 9
+	TypeOfTAgentStat      uint16 = 10
+	TypeOfTAgentStatBatch uint16 = 11
+	TypeOfAgentOffline    uint16 = 12 // Agent 下线
 )
 
 // 其他控制类型
