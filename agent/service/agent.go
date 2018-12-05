@@ -1,14 +1,12 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/mafanr/vgo/agent/misc"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/mafanr/g"
@@ -19,8 +17,8 @@ import (
 
 // Agent ...
 type Agent struct {
-	appName           string // 应用名
-	agentID           string //	应用ID
+	// appName           string // 应用名
+	// agentID           string //	应用ID
 	syncCall          *SyncCall
 	client            *TCPClient
 	syncID            uint32
@@ -55,35 +53,37 @@ func (a *Agent) getSyncID() uint32 {
 
 // initAppName ...
 func (a *Agent) initAppName() error {
-	// 使用环境变量
-	if misc.Conf.Agent.UseEnv {
-		if misc.Conf.Agent.ENV == "" {
-			g.L.Fatal("initAppName:.", zap.Error(fmt.Errorf("env is nil")))
-		}
-		name := os.Getenv(misc.Conf.Agent.ENV)
-		if name == "" {
-			g.L.Fatal("initAppName:os.Getenv", zap.Error(fmt.Errorf("get env is nil")), zap.String("env", misc.Conf.Agent.ENV))
-		}
-		a.appName = name
-	} else {
-		// 从配置文件获取
-		if len(misc.Conf.Agent.AppName) > 0 {
-			a.appName = misc.Conf.Agent.AppName
-		} else {
-			// 从主机名获取
-			_, agentName := getAgentIDAndName()
-			a.appName = agentName
-		}
-	}
 
-	g.L.Info("initAppName", zap.String("AppName", a.appName))
+	return nil
+	// 使用环境变量
+	// if misc.Conf.Agent.UseEnv {
+	// 	if misc.Conf.Agent.ENV == "" {
+	// 		g.L.Fatal("initAppName:.", zap.Error(fmt.Errorf("env is nil")))
+	// 	}
+	// 	name := os.Getenv(misc.Conf.Agent.ENV)
+	// 	if name == "" {
+	// 		g.L.Fatal("initAppName:os.Getenv", zap.Error(fmt.Errorf("get env is nil")), zap.String("env", misc.Conf.Agent.ENV))
+	// 	}
+	// 	a.appName = name
+	// } else {
+	// 	// 从配置文件获取
+	// 	if len(misc.Conf.Agent.AppName) > 0 {
+	// 		a.appName = misc.Conf.Agent.AppName
+	// 	} else {
+	// 		// 从主机名获取
+	// 		_, agentName := getAgentIDAndName()
+	// 		a.appName = agentName
+	// 	}
+	// }
+
+	// g.L.Info("initAppName", zap.String("AppName", a.appName))
 
 	return nil
 }
 
 // setAgentInfo ...
 func (a *Agent) setAgentInfo(agentID string) {
-	a.agentID = agentID
+	// a.agentID = agentID
 }
 
 // Start ...

@@ -129,10 +129,18 @@ func (pinpoint *Pinpoint) AgentSpan() error {
 // tcpCollector ...
 func (pinpoint *Pinpoint) tcpCollector() {
 
+	for {
+		if !gAgent.isReportAgentInfo {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
+	}
+
 	pinpointData := util.NewPinpointData()
 	pinpointData.Type = util.TypeOfTCPData
-	pinpointData.AgentName = gAgent.appName
-	pinpointData.AgentID = gAgent.agentID
+	pinpointData.AgentName = gAgent.agentInfo.AppName
+	pinpointData.AgentID = gAgent.agentInfo.AgentID
 
 	packet := &util.VgoPacket{
 		Type:       util.TypeOfPinpoint,
@@ -169,12 +177,19 @@ func (pinpoint *Pinpoint) tcpCollector() {
 
 // udpCollector ...
 func (pinpoint *Pinpoint) udpCollector() {
+	for {
+		if !gAgent.isReportAgentInfo {
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
+	}
 	// 定时器
 	ticker := time.NewTicker(time.Duration(misc.Conf.Pinpoint.SpanReportInterval) * time.Millisecond)
 	pinpointData := util.NewPinpointData()
 	pinpointData.Type = util.TypeOfUDPData
-	pinpointData.AgentName = gAgent.appName
-	pinpointData.AgentID = gAgent.agentID
+	pinpointData.AgentName = gAgent.agentInfo.AppName
+	pinpointData.AgentID = gAgent.agentInfo.AgentID
 
 	packet := &util.VgoPacket{
 		Type:       util.TypeOfPinpoint,
