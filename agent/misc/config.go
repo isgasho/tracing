@@ -22,6 +22,7 @@ type Config struct {
 		ENV              string
 		AppName          string
 		IsContainer      bool
+		OperatingEnv     int32
 	}
 
 	Pinpoint struct {

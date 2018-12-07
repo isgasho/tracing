@@ -174,11 +174,11 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 				return err
 			}
 
-			// gAgent.appName = agentInfo.AppName
-			// gAgent.agentID = agentInfo.AgentID
-
 			agentInfo.IsLive = true
 			agentInfo.IsContainer = misc.Conf.Agent.IsContainer
+
+			// 运行环境
+			agentInfo.OperatingEnv = misc.Conf.Agent.OperatingEnv
 
 			gAgent.agentInfo = agentInfo
 			gAgent.isReportAgentInfo = true

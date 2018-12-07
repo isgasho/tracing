@@ -7,6 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/mafanr/vgo/agent/misc"
+
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/mafanr/g"
@@ -106,6 +108,7 @@ func (a *Agent) Start() error {
 	// 上报agent信息
 	go a.reportAgentInfo()
 
+	g.L.Info("Start:a.pinpoint.Start", zap.Any("agentConf", misc.Conf.Agent))
 	// start pinpoint
 	if err := a.pinpoint.Start(); err != nil {
 		g.L.Fatal("Start:a.pinpoint.Start", zap.Error(err))
@@ -129,9 +132,15 @@ func (a *Agent) reportAgentInfo() {
 			}
 
 			spanData := &util.SpanDataModel{
-				Type:  util.TypeOfRegister,
 				Spans: agentInfoBuf,
 			}
+
+			if a.agentInfo.IsLive == false {
+				spanData.Type = util.TypeOfAgentOffline
+			} else {
+				spanData.Type = util.TypeOfRegister
+			}
+
 			pinpointData.Payload = append(pinpointData.Payload, spanData)
 			payload, err := msgpack.Marshal(pinpointData)
 			if err != nil {

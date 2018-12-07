@@ -49,6 +49,12 @@ const (
 	TypeOfSyncNo      byte = 2 // 非同步
 )
 
+// 运行环境
+const (
+	TypeOfEnvJAVA int32 = 1
+	TypeOfEnvGO   int32 = 2
+)
+
 // 版本类型
 const (
 	VersionOf01 byte = 1
@@ -57,5 +63,9 @@ const (
 const (
 	// SpanInsert string = `INSERT INTO traces (trace_id, trace_segment_id, span_id, app_id, instance_id, span_type, span_layer, start_time, end_time, parent_span_id, operation_id, is_error, refs, tags, logs) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 	// JVMInsert  string = `INSERT INTO jvms (app_name, instance_id, report_time, jvms) VALUES (?,?,?,?)`
-	AgentInfoInsert string = `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip, pid, version, start_time, is_live, is_container, end_time) VALUES (?,?,?,?,?,?,?,?,?,?,?,?);`
+	// AgentInsert     string = `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip, pid, version, start_time, is_live, is_container, end_time, operating_env) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?);`
+	AgentInsert     string = "INSERT into `agent`(`app_name`, `agent_id`, `ser_type`, `host_name`, `ip`, `pid`, `version`, `start_time`, `end_time`, `is_live`, `is_container`, `operating_env`) values ( '%s', '%s', %d, '%s', '%s', %d, '%s', %d, %d, %t, %t, %d)"
+	AgentUpdate     string = "UPDATE `agent` SET ser_type=%d, host_name='%s', ip='%s', pid=%d, version='%s', start_time=%d, end_time=%d, is_live=%t, is_container=%t, operating_env=%d  WHERE app_name='%s' and agent_id='%s';"
+	AgentOffLine    string = "UPDATE `agent` SET is_live=%t , end_time=%d WHERE app_name='%s' and agent_id='%s';"
+	AgentInfoInsert string = "UPDATE `agent` SET agent_info='%q' WHERE app_name='%s' and agent_id='%s';"
 )

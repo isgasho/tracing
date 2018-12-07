@@ -11,7 +11,6 @@ import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
-	"github.com/mafanr/vgo/vgo/storage"
 
 	"github.com/mafanr/vgo/vgo/stats"
 
@@ -21,9 +20,9 @@ import (
 
 // Vgo ...
 type Vgo struct {
-	stats    *stats.Stats     // 离线计算
-	storage  *storage.Storage // 存储
-	pinpoint *Pinpoint        // 处理pinpoint 数据
+	stats    *stats.Stats // 离线计算
+	storage  *Storage     // 存储
+	pinpoint *Pinpoint    // 处理pinpoint 数据
 	web      *web.Web
 }
 
@@ -33,7 +32,7 @@ var gVgo *Vgo
 func New() *Vgo {
 	gVgo = &Vgo{
 		stats:    stats.New(),
-		storage:  storage.NewStorage(),
+		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
 		web:      web.New(),
 	}
@@ -99,7 +98,6 @@ func (v *Vgo) init() error {
 }
 
 func (v *Vgo) initMysql() error {
-	return nil
 	// init sql
 	g.InitMysql(misc.Conf.Mysql.Acc, misc.Conf.Mysql.Pw, misc.Conf.Mysql.Addr, misc.Conf.Mysql.Port, misc.Conf.Mysql.Database)
 	return nil
