@@ -174,7 +174,7 @@ func (s *Storage) spanStore() {
 				if len(spansQueue) >= misc.Conf.Storage.SpanCacheLen {
 					// 插入
 					for _, qSapn := range spansQueue {
-						if err := s.writeSpan(qSapn); err != nil {
+						if err := s.WriteSpan(qSapn); err != nil {
 							g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 							continue
 						}
@@ -188,7 +188,7 @@ func (s *Storage) spanStore() {
 			if len(spansQueue) > 0 {
 				// 插入
 				for _, sapn := range spansQueue {
-					if err := s.writeSpan(sapn); err != nil {
+					if err := s.WriteSpan(sapn); err != nil {
 						g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 						continue
 					}
@@ -238,6 +238,20 @@ func (s *Storage) spanChunkStore() {
 			break
 		}
 	}
+}
+
+// WriteSpan ...
+func (s *Storage) WriteSpan(span *trace.TSpan) error {
+	if err := s.writeSpan(span); err != nil {
+		g.L.Warn("WriteSpan error", zap.String("error", err.Error()))
+		return err
+	}
+
+	if err := s.writeIndexes(span); err != nil {
+		g.L.Warn("WriteSpan error", zap.String("error", err.Error()))
+		return err
+	}
+	return nil
 }
 
 // writeSpan ...
@@ -306,7 +320,76 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 		spanChunk.GetKeyTime(),
 		spanChunk.Version,
 	).Exec(); err != nil {
-		g.L.Warn("writeSpan error", zap.String("error", err.Error()), zap.String("SQL", insertSpanChunk))
+		g.L.Warn("writeSpanChunk error", zap.String("error", err.Error()), zap.String("SQL", insertSpanChunk))
+		return err
+	}
+
+	return nil
+}
+
+// writeIndexes ...
+func (s *Storage) writeIndexes(span *trace.TSpan) error {
+	if err := s.saveAppNameAndAPIID(span); err != nil {
+		g.L.Warn("saveAppNameAndAPIID error", zap.String("error", err.Error()))
+		return err
+	}
+	if err := s.appOperationIndex(span); err != nil {
+		g.L.Warn("appOperationIndex error", zap.String("error", err.Error()))
+		return err
+	}
+	return nil
+}
+
+// saveAppNameAndAPIID ...
+func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
+	if !false {
+		insertAppAndAgentID := `
+		INSERT
+		INTO app_names(app_name, agent_id)
+		VALUES (?, ?)`
+		if err := s.session.Query(
+			insertAppAndAgentID,
+			span.ApplicationName,
+			span.AgentId,
+		).Exec(); err != nil {
+			g.L.Warn("inster app_names error", zap.String("error", err.Error()), zap.String("SQL", insertAppAndAgentID))
+			return err
+		}
+	}
+
+	insertAPIID := `
+	INSERT
+	INTO operation_apis(app_name, agent_id, api_id)
+	VALUES (?, ?, ?)`
+	if err := s.session.Query(
+		insertAPIID,
+		span.ApplicationName,
+		span.AgentId,
+		span.GetApiId(),
+	).Exec(); err != nil {
+		g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
+		return err
+	}
+
+	return nil
+}
+
+// appOperationIndex ...
+func (s *Storage) appOperationIndex(span *trace.TSpan) error {
+
+	insertOperIndex := `
+	INSERT
+	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id)
+	VALUES (?, ?, ?, ?, ?)`
+	if err := s.session.Query(
+		insertOperIndex,
+		span.ApplicationName,
+		span.AgentId,
+		span.GetApiId(),
+		span.StartTime,
+		span.TransactionId,
+	).Exec(); err != nil {
+		g.L.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", insertOperIndex))
 		return err
 	}
 

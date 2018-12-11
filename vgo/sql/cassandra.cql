@@ -54,3 +54,25 @@ CREATE TABLE IF NOT EXISTS traces_chunk (
     version             int,
     PRIMARY KEY (trace_id, span_id)
 );
+
+CREATE TABLE IF NOT EXISTS app_names (
+    app_name        text,
+    agent_id        text,
+    PRIMARY KEY (app_name, agent_id)
+);
+
+CREATE TABLE IF NOT EXISTS operation_apis (
+    app_name        text,
+    agent_id        text,
+    api_id          int,
+    PRIMARY KEY ((app_name, agent_id), api_id)
+);
+
+CREATE TABLE IF NOT EXISTS  app_operation_index (
+    app_name        text,
+    agent_id        text,
+    api_id          int,
+    start_time      bigint,
+    trace_id        blob,
+    PRIMARY KEY ((app_name, agent_id, api_id), start_time)
+);

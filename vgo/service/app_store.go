@@ -9,10 +9,14 @@ import (
 // AppStore ...
 type AppStore struct {
 	sync.RWMutex
-	Apps     map[string]*util.App
-	AppCodes map[int32]string
-	slock    sync.RWMutex
-	SerNames map[int32]*Apis
+	Apps map[string]*App
+}
+
+// App app
+type App struct {
+	sync.RWMutex
+	AppName string
+	Apis    map[int]string
 }
 
 // Apis ...
@@ -30,9 +34,7 @@ func NewApis() *Apis {
 // NewAppStore ...
 func NewAppStore() *AppStore {
 	return &AppStore{
-		// Apps:     make(map[string]*util.App),
-		// AppCodes: make(map[int32]string),
-		// SerNames: make(map[int32]*Apis),
+		Apps: make(map[string]*App),
 	}
 }
 
