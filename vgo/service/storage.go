@@ -1,26 +1,59 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/gocql/gocql"
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"github.com/mafanr/vgo/util"
+	"github.com/mafanr/vgo/vgo/misc"
 	"github.com/sunface/talent"
 	"go.uber.org/zap"
 )
 
 // Storage ...
 type Storage struct {
+	session       *gocql.Session
+	spanChan      chan *trace.TSpan
+	spanChunkChan chan *trace.TSpanChunk
 }
 
 // NewStorage ...
 func NewStorage() *Storage {
-	return &Storage{}
+	return &Storage{
+		spanChan:      make(chan *trace.TSpan, misc.Conf.Storage.SpanCacheLen+500),
+		spanChunkChan: make(chan *trace.TSpanChunk, misc.Conf.Storage.SpanChunkCacheLen+500),
+	}
+}
+
+// Init ...
+func (s *Storage) Init() error {
+
+	// connect to the cluster
+	cluster := gocql.NewCluster(misc.Conf.Storage.Cluster...)
+	cluster.Keyspace = misc.Conf.Storage.Keyspace
+	cluster.Consistency = gocql.Quorum
+	//设置连接池的数量,默认是2个（针对每一个host,都建立起NumConns个连接）
+	cluster.NumConns = misc.Conf.Storage.NumConns
+
+	session, err := cluster.CreateSession()
+	if err != nil {
+		g.L.Warn("Start:cluster.CreateSession", zap.String("error", err.Error()))
+		return err
+	}
+	s.session = session
+	return nil
 }
 
 // Start ...
 func (s *Storage) Start() error {
+
+	go s.spanStore()
+	go s.spanChunkStore()
+
 	return nil
 }
 
@@ -31,6 +64,7 @@ func (s *Storage) Close() error {
 
 // AgentStore ...
 func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
+	return nil
 	query := fmt.Sprintf(util.AgentInsert,
 		agentInfo.AppName, agentInfo.AgentID, agentInfo.ServiceType, agentInfo.HostName,
 		agentInfo.IP4S, agentInfo.Pid, agentInfo.Version, agentInfo.StartTimestamp, agentInfo.EndTimestamp,
@@ -51,6 +85,7 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 
 // AgentInfoStore ...
 func (s *Storage) AgentInfoStore(appName, agentID string, agentInfo []byte) error {
+	return nil
 	query := fmt.Sprintf(util.AgentInfoInsert, agentInfo, appName, agentID)
 	_, err := g.DB.Query(query)
 	if err != nil {
@@ -62,6 +97,7 @@ func (s *Storage) AgentInfoStore(appName, agentID string, agentInfo []byte) erro
 
 // AgentOffline ...
 func (s *Storage) AgentOffline(appName, agentID string, endTime int64, isLive bool) error {
+	return nil
 	query := fmt.Sprintf(util.AgentOffLine, isLive, endTime, appName, agentID)
 	_, err := g.DB.Query(query)
 	if err != nil {
@@ -73,6 +109,7 @@ func (s *Storage) AgentOffline(appName, agentID string, endTime int64, isLive bo
 
 // AgentAPIStore ...
 func (s *Storage) AgentAPIStore(appName, agentID string, apiInfo *trace.TApiMetaData) error {
+	return nil
 	query := fmt.Sprintf("insert into agent_api (app_name, agent_id, api_id, api_info, agent_start_time) values ('%s','%q','%d','%s',%d);",
 		appName, agentID, apiInfo.ApiId, apiInfo.ApiInfo, apiInfo.AgentStartTime)
 	if _, err := g.DB.Query(query); err != nil {
@@ -90,6 +127,7 @@ func (s *Storage) AgentAPIStore(appName, agentID string, apiInfo *trace.TApiMeta
 
 // AgentSQLStore ...
 func (s *Storage) AgentSQLStore(appName, agentID string, apiInfo *trace.TSqlMetaData) error {
+	return nil
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(apiInfo.Sql))
 	query := fmt.Sprintf("insert into agent_sql (app_name, agent_id, sql_id, sql_info, agent_start_time) values ('%s','%s','%d','%q',%d);",
 		appName, agentID, apiInfo.SqlId, newSQL, apiInfo.AgentStartTime)
@@ -108,6 +146,7 @@ func (s *Storage) AgentSQLStore(appName, agentID string, apiInfo *trace.TSqlMeta
 
 // AgentStringStore ...
 func (s *Storage) AgentStringStore(appName, agentID string, apiInfo *trace.TStringMetaData) error {
+	return nil
 	query := fmt.Sprintf("insert into agent_str (app_name, agent_id, str_id, str_info, agent_start_time) values ('%s','%s','%d','%q',%d);",
 		appName, agentID, apiInfo.StringId, apiInfo.StringValue, apiInfo.AgentStartTime)
 	if _, err := g.DB.Query(query); err != nil {
@@ -120,5 +159,156 @@ func (s *Storage) AgentStringStore(appName, agentID string, apiInfo *trace.TStri
 		}
 		return nil
 	}
+	return nil
+}
+
+// spanStore ...
+func (s *Storage) spanStore() {
+	ticker := time.NewTicker(time.Duration(misc.Conf.Storage.SpanStoreInterval) * time.Millisecond)
+	var spansQueue []*trace.TSpan
+	for {
+		select {
+		case span, ok := <-s.spanChan:
+			if ok {
+				spansQueue = append(spansQueue, span)
+				if len(spansQueue) >= misc.Conf.Storage.SpanCacheLen {
+					// 插入
+					for _, qSapn := range spansQueue {
+						if err := s.writeSpan(qSapn); err != nil {
+							g.L.Warn("writeSpan error", zap.String("error", err.Error()))
+							continue
+						}
+					}
+					// 清空缓存
+					spansQueue = spansQueue[:0]
+				}
+			}
+			break
+		case <-ticker.C:
+			if len(spansQueue) > 0 {
+				// 插入
+				for _, sapn := range spansQueue {
+					if err := s.writeSpan(sapn); err != nil {
+						g.L.Warn("writeSpan error", zap.String("error", err.Error()))
+						continue
+					}
+				}
+				// 清空缓存
+				spansQueue = spansQueue[:0]
+			}
+			break
+		}
+	}
+}
+
+// spanChunkStore ...
+func (s *Storage) spanChunkStore() {
+	ticker := time.NewTicker(time.Duration(misc.Conf.Storage.SpanStoreInterval) * time.Millisecond)
+	var spansChunkQueue []*trace.TSpanChunk
+	for {
+		select {
+		case spanChunk, ok := <-s.spanChunkChan:
+			if ok {
+				spansChunkQueue = append(spansChunkQueue, spanChunk)
+				if len(spansChunkQueue) >= misc.Conf.Storage.SpanChunkCacheLen {
+					// 插入
+					for _, qSapnChunk := range spansChunkQueue {
+						if err := s.writeSpanChunk(qSapnChunk); err != nil {
+							g.L.Warn("writeSpanChunk error", zap.String("error", err.Error()))
+							continue
+						}
+					}
+					// 清空缓存
+					spansChunkQueue = spansChunkQueue[:0]
+				}
+			}
+			break
+		case <-ticker.C:
+			if len(spansChunkQueue) > 0 {
+				// 插入
+				for _, sapnChunk := range spansChunkQueue {
+					if err := s.writeSpanChunk(sapnChunk); err != nil {
+						g.L.Warn("writeSpanChunk error", zap.String("error", err.Error()))
+						continue
+					}
+				}
+				// 清空缓存
+				spansChunkQueue = spansChunkQueue[:0]
+			}
+			break
+		}
+	}
+}
+
+// writeSpan ...
+func (s *Storage) writeSpan(span *trace.TSpan) error {
+	insertSpan := `
+	INSERT
+	INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
+		start_time, elapsed, rpc, service_type, end_point, remote_addr, annotations, err,
+		span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, api_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	annotations, _ := json.Marshal(span.GetAnnotations())
+	spanEvenlist, _ := json.Marshal(span.GetSpanEventList())
+	exceptioninfo, _ := json.Marshal(span.GetExceptionInfo())
+
+	if err := s.session.Query(
+		insertSpan,
+		span.TransactionId,
+		span.SpanId,
+		span.AgentId,
+		span.ApplicationName,
+		span.AgentStartTime,
+		span.ParentSpanId,
+		span.StartTime,
+		span.Elapsed,
+		span.RPC,
+		span.ServiceType,
+		span.GetEndPoint(),
+		span.GetRemoteAddr(),
+		annotations, //span.GetAnnotations(), // 转码
+		span.GetErr(),
+		spanEvenlist, // span.GetSpanEventList(), // 转码
+		span.GetParentApplicationName(),
+		span.GetParentApplicationType(),
+		span.GetAcceptorHost(),
+		span.GetApplicationServiceType(),
+		exceptioninfo, // span.GetExceptionInfo(), // 转码
+		span.GetApiId(),
+	).Exec(); err != nil {
+		g.L.Warn("writeSpan error", zap.String("error", err.Error()), zap.String("SQL", insertSpan))
+		return err
+	}
+
+	return nil
+}
+
+// writeSpanChunk ...
+func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
+	insertSpanChunk := `
+	INSERT
+	INTO traces_chunk(trace_id, span_id, agent_id, app_name, service_type, end_point,
+		span_event_list, app_service_type, key_time, version)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	spanEvenlist, _ := json.Marshal(spanChunk.GetSpanEventList())
+	if err := s.session.Query(
+		insertSpanChunk,
+		spanChunk.TransactionId,
+		spanChunk.SpanId,
+		spanChunk.AgentId,
+		spanChunk.ApplicationName,
+		spanChunk.GetServiceType(),
+		spanChunk.GetEndPoint(),
+		spanEvenlist,
+		spanChunk.GetApplicationServiceType(),
+		spanChunk.GetKeyTime(),
+		spanChunk.Version,
+	).Exec(); err != nil {
+		g.L.Warn("writeSpan error", zap.String("error", err.Error()), zap.String("SQL", insertSpanChunk))
+		return err
+	}
+
 	return nil
 }

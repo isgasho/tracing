@@ -57,7 +57,8 @@ const (
 
 // 版本类型
 const (
-	VersionOf01 byte = 1
+	VersionOf01    byte = 1
+	VersionVERSION      = 0
 )
 
 const (

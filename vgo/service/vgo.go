@@ -41,6 +41,12 @@ func New() *Vgo {
 
 // Start ...
 func (v *Vgo) Start() error {
+
+	if err := v.storage.Init(); err != nil {
+		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+		return err
+	}
+
 	if err := v.storage.Start(); err != nil {
 		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
 		return err

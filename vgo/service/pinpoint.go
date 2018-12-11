@@ -99,16 +99,17 @@ func (p *Pinpoint) DealUDPRequestResponse(data []byte) {
 	tStruct := thrift.Deserialize(data)
 	switch m := tStruct.(type) {
 	case *trace.TSpan:
-		g.L.Debug("udp", zap.String("type", "TSpan"))
+		// g.L.Debug("udp", zap.String("type", "TSpan"))
+		gVgo.storage.spanChan <- m
 		break
 	case *trace.TSpanChunk:
-		g.L.Debug("udp", zap.String("type", "TSpanChunk"))
+		// g.L.Debug("udp", zap.String("type", "TSpanChunk"))
+		gVgo.storage.spanChunkChan <- m
 		break
 	case *pinpoint.TAgentStat:
 		g.L.Debug("udp", zap.String("type", "TAgentStat"))
 		break
 	case *pinpoint.TAgentStatBatch:
-
 		g.L.Debug("udp", zap.String("type", "TAgentStatBatch"))
 		break
 	default:
