@@ -59,7 +59,7 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
-				if err := gVgo.storage.AgentOffline(packet.AgentName, packet.AgentID, agentInfo.EndTimestamp, agentInfo.IsLive); err != nil {
+				if err := gVgo.storage.AgentOffline(packet.AgentName, packet.AgentID, agentInfo.StartTimestamp, agentInfo.EndTimestamp, agentInfo.IsLive); err != nil {
 					g.L.Warn("dealUpload:storage.AgentOffline", zap.String("error", err.Error()))
 					return err
 				}
@@ -127,7 +127,7 @@ func (p *Pinpoint) DealTCPRequestResponse(packet *util.PinpointData, message []b
 			g.L.Warn("DealTCPRequestResponse:json.Marshal", zap.String("error", err.Error()))
 			return err
 		}
-		if err := gVgo.storage.AgentInfoStore(packet.AgentName, packet.AgentID, agentInfo); err != nil {
+		if err := gVgo.storage.AgentInfoStore(packet.AgentName, packet.AgentID, m.StartTimestamp, agentInfo); err != nil {
 			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentInfoStore", zap.String("error", err.Error()))
 			return err
 		}

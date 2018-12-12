@@ -16,19 +16,25 @@ type AppStore struct {
 type App struct {
 	sync.RWMutex
 	AppName string
+	Agents  map[string]*Agent
+}
+
+// Agent ....
+type Agent struct {
+	sync.RWMutex
+	AgentID string
 	Apis    map[int]string
 }
 
 // Apis ...
 type Apis struct {
-	// Apis map[int32]*util.SerNameInfo
+	ID     int
+	APIStr string
 }
 
 // NewApis ...
 func NewApis() *Apis {
-	return &Apis{
-		// Apis: make(map[int32]*util.SerNameInfo),
-	}
+	return &Apis{}
 }
 
 // NewAppStore ...

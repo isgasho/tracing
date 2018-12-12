@@ -15,6 +15,68 @@ CREATE TYPE IF NOT EXISTS annotation (
     value   frozen<value>,
 );
 
+
+
+CREATE TABLE IF NOT EXISTS agents_test (
+    app_name            text,
+    agent_id            text,
+    agent_info          blob,
+    PRIMARY KEY (app_name, agent_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS agents (
+    app_name            text,
+    agent_id            text,
+    ser_type            int,
+    socket_id           int,
+    host_name           text,
+    ip                  text,
+    pid                 int,
+    version             text,
+    start_time          bigint,
+    end_time            bigint,
+    is_live             BOOLEAN,
+    is_container        BOOLEAN,
+    operating_env       int,
+    agent_info          text,
+    PRIMARY KEY (app_name, agent_id, start_time)
+);
+
+
+CREATE TABLE IF NOT EXISTS agent_apis (
+    app_name            text,
+    agent_id            text,
+    api_id              int,
+    start_time          bigint,
+    api_info            text,
+    line                int,
+    type                int,
+    PRIMARY KEY (app_name, agent_id, api_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS agent_sqls (
+    app_name            text,
+    agent_id            text,
+    sql_id              int,
+    start_time          bigint,
+    sql_info            text,
+    PRIMARY KEY (app_name, agent_id, sql_id)
+);
+
+
+CREATE TABLE IF NOT EXISTS agent_strs (
+    app_name            text,
+    agent_id            text,
+    str_id              int,
+    start_time          bigint,
+    str_info            text,
+    PRIMARY KEY (app_name, agent_id, str_id)
+);
+
+
+
 CREATE TABLE IF NOT EXISTS traces (
     trace_id            text,
     span_id             bigint,
@@ -73,6 +135,6 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     agent_id        text,
     api_id          int,
     start_time      bigint,
-    trace_id        blob,
+    trace_id        text,
     PRIMARY KEY ((app_name, agent_id, api_id), start_time)
 );

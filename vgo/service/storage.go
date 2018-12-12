@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -64,44 +63,66 @@ func (s *Storage) Close() error {
 
 // AgentStore ...
 func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
-	return nil
-	query := fmt.Sprintf(util.AgentInsert,
-		agentInfo.AppName, agentInfo.AgentID, agentInfo.ServiceType, agentInfo.HostName,
-		agentInfo.IP4S, agentInfo.Pid, agentInfo.Version, agentInfo.StartTimestamp, agentInfo.EndTimestamp,
-		agentInfo.IsLive, agentInfo.IsContainer, agentInfo.OperatingEnv)
-	if _, err := g.DB.Query(query); err != nil {
-		g.L.Warn("AgentInfoStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-		query = fmt.Sprintf(util.AgentUpdate, agentInfo.ServiceType, agentInfo.HostName,
-			agentInfo.IP4S, agentInfo.Pid, agentInfo.Version, agentInfo.StartTimestamp, agentInfo.EndTimestamp,
-			agentInfo.IsLive, agentInfo.IsContainer, agentInfo.OperatingEnv, agentInfo.AppName, agentInfo.AgentID)
-		if _, err := g.DB.Query(query); err != nil {
-			g.L.Warn("AgentStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-			return err
-		}
-		return nil
+
+	agentInsert := `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip,
+		pid, version, start_time, end_time, is_live, is_container, operating_env) 
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+
+	if err := s.session.Query(
+		agentInsert,
+		agentInfo.AppName,
+		agentInfo.AgentID,
+		agentInfo.ServiceType,
+		agentInfo.SocketID,
+		agentInfo.HostName,
+		agentInfo.IP4S,
+		agentInfo.Pid,
+		agentInfo.Version,
+		agentInfo.StartTimestamp,
+		agentInfo.EndTimestamp,
+		agentInfo.IsLive,
+		agentInfo.IsContainer,
+		agentInfo.OperatingEnv,
+	).Exec(); err != nil {
+		g.L.Warn("AgentStore error", zap.String("error", err.Error()), zap.String("SQL", agentInsert))
+		return err
 	}
+
 	return nil
 }
 
 // AgentInfoStore ...
-func (s *Storage) AgentInfoStore(appName, agentID string, agentInfo []byte) error {
-	return nil
-	query := fmt.Sprintf(util.AgentInfoInsert, agentInfo, appName, agentID)
-	_, err := g.DB.Query(query)
-	if err != nil {
-		g.L.Warn("AgentInfoStore:g.DB.Query", zap.String("query", query), zap.Error(err))
+func (s *Storage) AgentInfoStore(appName, agentID string, startTime int64, agentInfo []byte) error {
+	agentInofInsert := `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 
+	VALUES ( ?, ?, ?, ?);`
+	if err := s.session.Query(
+		agentInofInsert,
+		appName,
+		agentID,
+		startTime,
+		string(agentInfo),
+	).Exec(); err != nil {
+		g.L.Warn("AgentInfoStore error", zap.String("error", err.Error()), zap.String("SQL", agentInofInsert))
 		return err
 	}
 	return nil
 }
 
 // AgentOffline ...
-func (s *Storage) AgentOffline(appName, agentID string, endTime int64, isLive bool) error {
-	return nil
-	query := fmt.Sprintf(util.AgentOffLine, isLive, endTime, appName, agentID)
-	_, err := g.DB.Query(query)
-	if err != nil {
-		g.L.Warn("AgentOffline:g.DB.Query", zap.String("query", query), zap.Error(err))
+func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64, isLive bool) error {
+
+	agentOfflineInsert := `INSERT INTO agents (app_name, agent_id, start_time, end_time, is_live) 
+	VALUES ( ?, ?, ?, ?, ?);`
+
+	if err := s.session.Query(
+		agentOfflineInsert,
+		appName,
+		agentID,
+		startTime,
+		endTime,
+		isLive,
+	).Exec(); err != nil {
+		g.L.Warn("AgentOffline error", zap.String("error", err.Error()), zap.String("SQL", agentOfflineInsert))
 		return err
 	}
 	return nil
@@ -109,56 +130,62 @@ func (s *Storage) AgentOffline(appName, agentID string, endTime int64, isLive bo
 
 // AgentAPIStore ...
 func (s *Storage) AgentAPIStore(appName, agentID string, apiInfo *trace.TApiMetaData) error {
-	return nil
-	query := fmt.Sprintf("insert into agent_api (app_name, agent_id, api_id, api_info, agent_start_time) values ('%s','%q','%d','%s',%d);",
-		appName, agentID, apiInfo.ApiId, apiInfo.ApiInfo, apiInfo.AgentStartTime)
-	if _, err := g.DB.Query(query); err != nil {
-		g.L.Warn("AgentAPIStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-		query = fmt.Sprintf("update  agent_api set api_info='%q', agent_start_time=%d where app_name='%s' and agent_id='%s' and api_id='%d';",
-			apiInfo.ApiInfo, apiInfo.AgentStartTime, appName, agentID, apiInfo.ApiId)
-		if _, err := g.DB.Query(query); err != nil {
-			g.L.Warn("AgentAPIStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-			return err
-		}
-		return nil
+
+	agentAPIInsert := `INSERT INTO agent_apis (app_name, agent_id, api_id, start_time, api_info, line, type) 
+	VALUES (?, ?, ?, ?, ?, ?, ?);`
+	if err := s.session.Query(
+		agentAPIInsert,
+		appName,
+		agentID,
+		apiInfo.ApiId,
+		apiInfo.AgentStartTime,
+		apiInfo.ApiInfo,
+		apiInfo.GetLine(),
+		apiInfo.GetType(),
+	).Exec(); err != nil {
+		g.L.Warn("AgentAPIStore error", zap.String("error", err.Error()), zap.String("SQL", agentAPIInsert))
+		return err
 	}
+
 	return nil
 }
 
 // AgentSQLStore ...
-func (s *Storage) AgentSQLStore(appName, agentID string, apiInfo *trace.TSqlMetaData) error {
-	return nil
-	newSQL := g.B64.EncodeToString(talent.String2Bytes(apiInfo.Sql))
-	query := fmt.Sprintf("insert into agent_sql (app_name, agent_id, sql_id, sql_info, agent_start_time) values ('%s','%s','%d','%q',%d);",
-		appName, agentID, apiInfo.SqlId, newSQL, apiInfo.AgentStartTime)
-	if _, err := g.DB.Query(query); err != nil {
-		g.L.Warn("AgentSQLStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-		query = fmt.Sprintf("update  agent_sql set sql_info='%q', agent_start_time=%d where app_name='%s' and agent_id='%s' and sql_id='%d';",
-			newSQL, apiInfo.AgentStartTime, appName, agentID, apiInfo.SqlId)
-		if _, err := g.DB.Query(query); err != nil {
-			g.L.Warn("AgentSQLStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-			return err
-		}
-		return nil
+func (s *Storage) AgentSQLStore(appName, agentID string, sqlInfo *trace.TSqlMetaData) error {
+	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))
+	agentSQLInsert := `INSERT INTO agent_sqls (app_name, agent_id, sql_id, start_time, sql_info) 
+	VALUES (?, ?, ?, ?, ?);`
+	if err := s.session.Query(
+		agentSQLInsert,
+		appName,
+		agentID,
+		sqlInfo.SqlId,
+		sqlInfo.AgentStartTime,
+		newSQL,
+	).Exec(); err != nil {
+		g.L.Warn("AgentSQLStore error", zap.String("error", err.Error()), zap.String("SQL", agentSQLInsert))
+		return err
 	}
+
 	return nil
 }
 
 // AgentStringStore ...
-func (s *Storage) AgentStringStore(appName, agentID string, apiInfo *trace.TStringMetaData) error {
-	return nil
-	query := fmt.Sprintf("insert into agent_str (app_name, agent_id, str_id, str_info, agent_start_time) values ('%s','%s','%d','%q',%d);",
-		appName, agentID, apiInfo.StringId, apiInfo.StringValue, apiInfo.AgentStartTime)
-	if _, err := g.DB.Query(query); err != nil {
-		g.L.Warn("AgentStringStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-		query = fmt.Sprintf("update  agent_str set str_info='%q', agent_start_time=%d where app_name='%s' and agent_id='%s' and str_id='%d';",
-			apiInfo.StringValue, apiInfo.AgentStartTime, appName, agentID, apiInfo.StringId)
-		if _, err := g.DB.Query(query); err != nil {
-			g.L.Warn("AgentStringStore:g.DB.Query", zap.String("query", query), zap.Error(err))
-			return err
-		}
-		return nil
+func (s *Storage) AgentStringStore(appName, agentID string, strInfo *trace.TStringMetaData) error {
+	agentStrInsert := `INSERT INTO agent_strs (app_name, agent_id, str_id, start_time, str_info) 
+	VALUES (?, ?, ?, ?, ?);`
+	if err := s.session.Query(
+		agentStrInsert,
+		appName,
+		agentID,
+		strInfo.StringId,
+		strInfo.AgentStartTime,
+		strInfo.StringValue,
+	).Exec(); err != nil {
+		g.L.Warn("AgentStringStore error", zap.String("error", err.Error()), zap.String("SQL", agentStrInsert))
+		return err
 	}
+
 	return nil
 }
 

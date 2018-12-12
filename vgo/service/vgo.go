@@ -161,12 +161,6 @@ func (v *Vgo) agentWork(conn net.Conn) {
 						return
 					}
 					break
-					// case util.TypeOfSkywalking:
-					//if err := v.dealSkywalking(conn, packet); err != nil {
-					//	g.L.Warn("agentWork:v.dealSkywalking", zap.String("error", err.Error()))
-					//	return
-					//}
-					// break
 				case util.TypeOfPinpoint:
 					if err := v.pinpoint.dealUpload(conn, packet); err != nil {
 						g.L.Warn("agentWork:v.pinpoint.dealUpload", zap.String("error", err.Error()))
