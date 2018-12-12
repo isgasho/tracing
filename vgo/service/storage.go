@@ -370,7 +370,7 @@ func (s *Storage) writeIndexes(span *trace.TSpan) error {
 
 // saveAppNameAndAPIID ...
 func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
-	if !false {
+	if !gVgo.appStore.checkAndSaveAgent(span.ApplicationName, span.AgentId) {
 		insertAppAndAgentID := `
 		INSERT
 		INTO app_names(app_name, agent_id)
@@ -385,26 +385,26 @@ func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
 		}
 	}
 
-	insertAPIID := `
+	if !gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId()) {
+		insertAPIID := `
 	INSERT
 	INTO operation_apis(app_name, agent_id, api_id)
 	VALUES (?, ?, ?)`
-	if err := s.session.Query(
-		insertAPIID,
-		span.ApplicationName,
-		span.AgentId,
-		span.GetApiId(),
-	).Exec(); err != nil {
-		g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
-		return err
+		if err := s.session.Query(
+			insertAPIID,
+			span.ApplicationName,
+			span.AgentId,
+			span.GetApiId(),
+		).Exec(); err != nil {
+			g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
+			return err
+		}
 	}
-
 	return nil
 }
 
 // appOperationIndex ...
 func (s *Storage) appOperationIndex(span *trace.TSpan) error {
-
 	insertOperIndex := `
 	INSERT
 	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id)

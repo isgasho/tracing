@@ -24,6 +24,7 @@ type Vgo struct {
 	storage  *Storage     // 存储
 	pinpoint *Pinpoint    // 处理pinpoint 数据
 	web      *web.Web
+	appStore *AppStore
 }
 
 var gVgo *Vgo
@@ -35,6 +36,7 @@ func New() *Vgo {
 		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
 		web:      web.New(),
+		appStore: NewAppStore(),
 	}
 	return gVgo
 }
@@ -67,24 +69,6 @@ func (v *Vgo) init() error {
 		return err
 	}
 
-	// load apps
-	if err := v.LoadApps(); err != nil {
-		g.L.Warn("init:LoadApps", zap.String("error", err.Error()))
-		return err
-	}
-
-	// load agents
-	if err := v.LoadAgents(); err != nil {
-		g.L.Warn("init:LoadAgents", zap.String("error", err.Error()))
-		return err
-	}
-
-	// // load server name code
-	// if err := v.apps.LoadSerCode(); err != nil {
-	// 	g.L.Warn("init:apps.LoadSerCode", zap.String("error", err.Error()))
-	// 	return err
-	// }
-
 	// start web ser
 	if err := v.web.Start(); err != nil {
 		g.L.Warn("init:v.web.Start", zap.String("error", err.Error()))
@@ -104,6 +88,7 @@ func (v *Vgo) init() error {
 }
 
 func (v *Vgo) initMysql() error {
+	return nil
 	// init sql
 	g.InitMysql(misc.Conf.Mysql.Acc, misc.Conf.Mysql.Pw, misc.Conf.Mysql.Addr, misc.Conf.Mysql.Port, misc.Conf.Mysql.Database)
 	return nil

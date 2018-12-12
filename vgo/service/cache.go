@@ -16,8 +16,3 @@ func NewCache() *Cache {
 		App: make(map[string]map[int]string),
 	}
 }
-
-// type Api struct {
-// 	ID     int
-// 	ApiStr string
-// }
