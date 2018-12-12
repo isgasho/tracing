@@ -59,7 +59,7 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
-				if err := gVgo.storage.AgentOffline(packet.AgentName, packet.AgentID, agentInfo.StartTimestamp, agentInfo.EndTimestamp, agentInfo.IsLive); err != nil {
+				if err := gVgo.storage.AgentOffline(packet.AppName, packet.AgentID, agentInfo.StartTimestamp, agentInfo.EndTimestamp, agentInfo.IsLive); err != nil {
 					g.L.Warn("dealUpload:storage.AgentOffline", zap.String("error", err.Error()))
 					return err
 				}
@@ -85,7 +85,7 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 		break
 	case util.TypeOfUDPData:
 		for _, value := range packet.Payload {
-			p.DealUDPRequestResponse(value.Spans)
+			p.DealUDPRequestResponse(packet.AppName, packet.AgentID, value.Spans)
 		}
 		break
 	default:
@@ -95,22 +95,24 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 }
 
 // DealUDPRequestResponse ...
-func (p *Pinpoint) DealUDPRequestResponse(data []byte) {
+func (p *Pinpoint) DealUDPRequestResponse(appName, agentID string, data []byte) {
 	tStruct := thrift.Deserialize(data)
 	switch m := tStruct.(type) {
 	case *trace.TSpan:
-		// g.L.Debug("udp", zap.String("type", "TSpan"))
 		gVgo.storage.spanChan <- m
 		break
 	case *trace.TSpanChunk:
-		// g.L.Debug("udp", zap.String("type", "TSpanChunk"))
 		gVgo.storage.spanChunkChan <- m
 		break
 	case *pinpoint.TAgentStat:
-		g.L.Debug("udp", zap.String("type", "TAgentStat"))
+		if err := gVgo.storage.writeAgentStat(appName, agentID, m, data); err != nil {
+			g.L.Warn("writeAgentStat error", zap.String("error", err.Error()))
+		}
 		break
 	case *pinpoint.TAgentStatBatch:
-		g.L.Debug("udp", zap.String("type", "TAgentStatBatch"))
+		if err := gVgo.storage.writeAgentStatBatch(appName, agentID, m, data); err != nil {
+			g.L.Warn("writeAgentStatBatch error", zap.String("error", err.Error()))
+		}
 		break
 	default:
 		g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
@@ -127,25 +129,25 @@ func (p *Pinpoint) DealTCPRequestResponse(packet *util.PinpointData, message []b
 			g.L.Warn("DealTCPRequestResponse:json.Marshal", zap.String("error", err.Error()))
 			return err
 		}
-		if err := gVgo.storage.AgentInfoStore(packet.AgentName, packet.AgentID, m.StartTimestamp, agentInfo); err != nil {
+		if err := gVgo.storage.AgentInfoStore(packet.AppName, packet.AgentID, m.StartTimestamp, agentInfo); err != nil {
 			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentInfoStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TSqlMetaData:
-		if err := gVgo.storage.AgentSQLStore(packet.AgentName, packet.AgentID, m); err != nil {
+		if err := gVgo.storage.AgentSQLStore(packet.AppName, packet.AgentID, m); err != nil {
 			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentSQLStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TApiMetaData:
-		if err := gVgo.storage.AgentAPIStore(packet.AgentName, packet.AgentID, m); err != nil {
+		if err := gVgo.storage.AgentAPIStore(packet.AppName, packet.AgentID, m); err != nil {
 			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentAPIStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TStringMetaData:
-		if err := gVgo.storage.AgentStringStore(packet.AgentName, packet.AgentID, m); err != nil {
+		if err := gVgo.storage.AgentStringStore(packet.AppName, packet.AgentID, m); err != nil {
 			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentStringStore", zap.String("error", err.Error()))
 			return err
 		}

@@ -27,9 +27,8 @@ type Config struct {
 		SpanCacheLen      int // 缓存长度
 		SpanChunkCacheLen int //
 		SpanStoreInterval int // 毫秒
-		// JVMCacheLen       int // 缓存长度
-		// JVMStoreInterval  int // 毫秒
-		// JVMStoreLen       int // 时间未到超过该长度即可插入
+		AgentStatUseTTL   bool
+		AgentStatTTL      int64
 	}
 
 	Mysql struct {

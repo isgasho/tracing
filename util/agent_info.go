@@ -3,10 +3,10 @@ package util
 // AgentInfo ...
 type AgentInfo struct {
 	AppName        string `db:"app_name" json:"applicationName"  msg:"applicationName"`
+	AgentID        string `db:"agent_id" json:"agentId"  msg:"agentId"`
 	ServiceType    int32  `db:"ser_type" json:"serviceType"  msg:"serviceType"`
 	SocketID       int32  `db:"socket_id" json:"socketId" msg:"socketId"`
 	HostName       string `db:"host_name" json:"hostName" msg:"hostName"`
-	AgentID        string `db:"agent_id" json:"agentId"  msg:"agentId"`
 	IP4S           string `db:"ip" json:"ip" msg:"ip"`
 	Pid            int32  `db:"pid" json:"pid" msg:"pid"`
 	Version        string `db:"version" json:"version" msg:"version"`

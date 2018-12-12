@@ -2,11 +2,11 @@ package util
 
 // PinpointData pinpoint data
 type PinpointData struct {
-	Type      uint16           `msg:"type"` // tcp or udp
-	AgentName string           `msg:"agentName"`
-	AgentID   string           `msg:"agentID"`
-	SpanTime  int64            `msg:"spanTime"`
-	Payload   []*SpanDataModel `msg:"payload"`
+	Type     uint16           `msg:"type"` // tcp or udp
+	AppName  string           `msg:"appName"`
+	AgentID  string           `msg:"agentID"`
+	SpanTime int64            `msg:"spanTime"`
+	Payload  []*SpanDataModel `msg:"payload"`
 }
 
 // NewPinpointData ...

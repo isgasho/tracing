@@ -6,6 +6,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
@@ -420,5 +421,87 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		return err
 	}
 
+	return nil
+}
+
+// writeAgentStatBatch ....
+func (s *Storage) writeAgentStatBatch(appName, agentID string, agentStatBatch *pinpoint.TAgentStatBatch, infoB []byte) error {
+	batchInsert := s.session.NewBatch(gocql.UnloggedBatch)
+	var insertAgentStatBatch string
+	if misc.Conf.Storage.AgentStatUseTTL {
+		insertAgentStatBatch = `
+		INSERT
+		INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
+		VALUES (?, ?, ?, ?, ?) USING TTL ?;`
+		for _, stat := range agentStatBatch.AgentStats {
+			batchInsert.Query(
+				insertAgentStatBatch,
+				appName,
+				agentID,
+				stat.GetStartTimestamp(),
+				stat.GetTimestamp(),
+				infoB,
+				misc.Conf.Storage.AgentStatTTL)
+		}
+	} else {
+		insertAgentStatBatch = `
+		INSERT
+		INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
+		VALUES (?, ?, ?, ?, ?) ;`
+		for _, stat := range agentStatBatch.AgentStats {
+			batchInsert.Query(
+				insertAgentStatBatch,
+				appName,
+				agentID,
+				stat.GetStartTimestamp(),
+				stat.GetTimestamp(),
+				infoB)
+		}
+	}
+
+	if err := s.session.ExecuteBatch(batchInsert); err != nil {
+		g.L.Warn("writeAgentStatBatch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
+		return err
+	}
+
+	return nil
+}
+
+// appOperationIndex ...
+func (s *Storage) writeAgentStat(appName, agentID string, agentStat *pinpoint.TAgentStat, infoB []byte) error {
+	if misc.Conf.Storage.AgentStatUseTTL {
+		insertAgentStat := `
+	INSERT
+	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
+	VALUES (?, ?, ?, ?, ?) USING TTL ?;`
+		if err := s.session.Query(
+			insertAgentStat,
+			appName,
+			agentID,
+			agentStat.GetStartTimestamp(),
+			agentStat.GetTimestamp(),
+			infoB,
+			misc.Conf.Storage.AgentStatTTL,
+		).Exec(); err != nil {
+			g.L.Warn("inster writeAgentStat error", zap.String("error", err.Error()), zap.String("SQL", insertAgentStat))
+			return err
+		}
+	} else {
+		insertAgentStat := `
+	INSERT
+	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
+	VALUES (?, ?, ?, ?, ?);`
+		if err := s.session.Query(
+			insertAgentStat,
+			appName,
+			agentID,
+			agentStat.GetStartTimestamp(),
+			agentStat.GetTimestamp(),
+			infoB,
+		).Exec(); err != nil {
+			g.L.Warn("inster writeAgentStat error", zap.String("error", err.Error()), zap.String("SQL", insertAgentStat))
+			return err
+		}
+	}
 	return nil
 }

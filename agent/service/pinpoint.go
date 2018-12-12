@@ -139,7 +139,7 @@ func (pinpoint *Pinpoint) tcpCollector() {
 
 	pinpointData := util.NewPinpointData()
 	pinpointData.Type = util.TypeOfTCPData
-	pinpointData.AgentName = gAgent.agentInfo.AppName
+	pinpointData.AppName = gAgent.agentInfo.AppName
 	pinpointData.AgentID = gAgent.agentInfo.AgentID
 
 	packet := &util.VgoPacket{
@@ -188,7 +188,7 @@ func (pinpoint *Pinpoint) udpCollector() {
 	ticker := time.NewTicker(time.Duration(misc.Conf.Pinpoint.SpanReportInterval) * time.Millisecond)
 	pinpointData := util.NewPinpointData()
 	pinpointData.Type = util.TypeOfUDPData
-	pinpointData.AgentName = gAgent.agentInfo.AppName
+	pinpointData.AppName = gAgent.agentInfo.AppName
 	pinpointData.AgentID = gAgent.agentInfo.AgentID
 
 	packet := &util.VgoPacket{

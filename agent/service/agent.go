@@ -123,7 +123,7 @@ func (a *Agent) reportAgentInfo() {
 		if a.isReportAgentInfo {
 			pinpointData := util.NewPinpointData()
 			pinpointData.Type = util.TypeOfTCPData
-			pinpointData.AgentName = a.agentInfo.AppName
+			pinpointData.AppName = a.agentInfo.AppName
 			pinpointData.AgentID = a.agentInfo.AgentID
 			agentInfoBuf, err := msgpack.Marshal(a.agentInfo)
 			if err != nil {

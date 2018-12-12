@@ -138,3 +138,14 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     trace_id        text,
     PRIMARY KEY ((app_name, agent_id, api_id), start_time)
 );
+
+
+
+CREATE TABLE IF NOT EXISTS agent_stats (
+    app_name            text,
+    agent_id            text,
+    start_time          bigint,
+    timestamp           bigint,
+    stat_info           blob,
+    PRIMARY KEY (app_name, agent_id, start_time, timestamp)
+);
