@@ -17,6 +17,12 @@ type Config struct {
 
 	Analyze struct {
 	}
+
+	Cassandra struct {
+		Cluster  []string
+		Keyspace string
+		NumConns int
+	}
 }
 
 // Conf ...
