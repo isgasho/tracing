@@ -20,6 +20,7 @@ import (
 
 // Vgo ...
 type Vgo struct {
+	// analyze
 	stats    *stats.Stats // 离线计算
 	storage  *Storage     // 存储
 	pinpoint *Pinpoint    // 处理pinpoint 数据

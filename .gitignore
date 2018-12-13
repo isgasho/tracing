@@ -2,3 +2,4 @@
 .bin/
 vgo/vgo
 agent/agent
+analyze/analyze
