@@ -19,8 +19,6 @@ import (
 
 // Agent ...
 type Agent struct {
-	// appName           string // 应用名
-	// agentID           string //	应用ID
 	syncCall                 *SyncCall
 	client                   *TCPClient
 	syncID                   uint32

@@ -20,7 +20,6 @@ type Config struct {
 		KeepLiveInterval int
 		UseEnv           bool
 		ENV              string
-		AppName          string
 		IsContainer      bool
 		OperatingEnv     int32
 	}
