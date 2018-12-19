@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS agents (
     is_container        BOOLEAN,
     operating_env       int,
     agent_info          text,
-    PRIMARY KEY (app_name, agent_id, start_time)
-);
+    PRIMARY KEY ((app_name, agent_id), start_time)
+) WITH CLUSTERING ORDER BY (start_time DESC);
 
 
 CREATE TABLE IF NOT EXISTS agent_apis (
@@ -53,8 +53,8 @@ CREATE TABLE IF NOT EXISTS agent_apis (
     api_info            text,
     line                int,
     type                int,
-    PRIMARY KEY (app_name, agent_id, api_id)
-);
+    PRIMARY KEY ((app_name, agent_id, api_id),start_time)
+) WITH CLUSTERING ORDER BY (start_time DESC);
 
 
 CREATE TABLE IF NOT EXISTS agent_sqls (
@@ -63,8 +63,8 @@ CREATE TABLE IF NOT EXISTS agent_sqls (
     sql_id              int,
     start_time          bigint,
     sql_info            text,
-    PRIMARY KEY (app_name, agent_id, sql_id)
-);
+    PRIMARY KEY ((app_name, agent_id, sql_id), start_time)
+) WITH CLUSTERING ORDER BY (start_time DESC);
 
 
 CREATE TABLE IF NOT EXISTS agent_strs (
@@ -73,8 +73,8 @@ CREATE TABLE IF NOT EXISTS agent_strs (
     str_id              int,
     start_time          bigint,
     str_info            text,
-    PRIMARY KEY (app_name, agent_id, str_id)
-);
+    PRIMARY KEY ((app_name, agent_id, str_id), start_time)
+)WITH CLUSTERING ORDER BY (start_time DESC);
 
 
 
@@ -100,8 +100,8 @@ CREATE TABLE IF NOT EXISTS traces (
     api_id              int,
     exception_info      blob,
     app_service_type    int,
-    PRIMARY KEY (trace_id, span_id)
-);
+    PRIMARY KEY ((trace_id, span_id), start_time)
+) WITH CLUSTERING ORDER BY (start_time DESC);
 
 
 CREATE TABLE IF NOT EXISTS traces_chunk (
@@ -124,12 +124,22 @@ CREATE TABLE IF NOT EXISTS app_names (
     PRIMARY KEY (app_name, agent_id)
 );
 
+-- CREATE TABLE IF NOT EXISTS operation_apis (
+--     app_name        text,
+--     agent_id        text,
+--     api_id          int,
+--     PRIMARY KEY ((app_name, agent_id), api_id)
+-- );
+
+
 CREATE TABLE IF NOT EXISTS operation_apis (
     app_name        text,
     agent_id        text,
     api_id          int,
-    PRIMARY KEY ((app_name, agent_id), api_id)
-);
+    start_time      bigint,
+    PRIMARY KEY ((app_name, agent_id, api_id), start_time)
+) WITH CLUSTERING ORDER BY (start_time DESC);
+
 
 CREATE TABLE IF NOT EXISTS  app_operation_index (
     app_name        text,
@@ -138,7 +148,7 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     start_time      bigint,
     trace_id        text,
     PRIMARY KEY ((app_name, agent_id, api_id), start_time)
-);
+) WITH CLUSTERING ORDER BY (start_time DESC);
 
 
 
@@ -148,8 +158,8 @@ CREATE TABLE IF NOT EXISTS agent_stats (
     start_time          bigint,
     timestamp           bigint,
     stat_info           blob,
-    PRIMARY KEY (app_name, agent_id, start_time, timestamp)
-);
+    PRIMARY KEY ((app_name, agent_id, start_time), timestamp)
+) WITH CLUSTERING ORDER BY (timestamp DESC);
 
 
 TRUNCATE  TABLE  agent_strs;

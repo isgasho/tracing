@@ -388,13 +388,14 @@ func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
 	if !gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId()) {
 		insertAPIID := `
 	INSERT
-	INTO operation_apis(app_name, agent_id, api_id)
-	VALUES (?, ?, ?)`
+	INTO operation_apis(app_name, agent_id, api_id, start_time)
+	VALUES (?, ?, ?, ?)`
 		if err := s.session.Query(
 			insertAPIID,
 			span.ApplicationName,
 			span.AgentId,
 			span.GetApiId(),
+			span.StartTime,
 		).Exec(); err != nil {
 			g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
 			return err
