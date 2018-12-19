@@ -17,12 +17,12 @@ CREATE TYPE IF NOT EXISTS annotation (
 
 
 
-CREATE TABLE IF NOT EXISTS agents_test (
-    app_name            text,
-    agent_id            text,
-    agent_info          blob,
-    PRIMARY KEY (app_name, agent_id)
-);
+-- CREATE TABLE IF NOT EXISTS agents_test (
+--     app_name            text,
+--     agent_id            text,
+--     agent_info          blob,
+--     PRIMARY KEY (app_name, agent_id)
+-- ) AND gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS agents (
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS agents (
     operating_env       int,
     agent_info          text,
     PRIMARY KEY ((app_name, agent_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC);
+) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS agent_apis (
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS agent_apis (
     line                int,
     type                int,
     PRIMARY KEY ((app_name, agent_id, api_id),start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC);
+) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
 
 CREATE TABLE IF NOT EXISTS agent_sqls (
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS agent_sqls (
     start_time          bigint,
     sql_info            text,
     PRIMARY KEY ((app_name, agent_id, sql_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC);
+) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS agent_strs (
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS agent_strs (
     start_time          bigint,
     str_info            text,
     PRIMARY KEY ((app_name, agent_id, str_id), start_time)
-)WITH CLUSTERING ORDER BY (start_time DESC);
+)WITH CLUSTERING ORDER BY (start_time DESC)AND gc_grace_seconds = 10800; 
 
 
 
@@ -101,7 +101,7 @@ CREATE TABLE IF NOT EXISTS traces (
     exception_info      blob,
     app_service_type    int,
     PRIMARY KEY ((trace_id, span_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC);
+) WITH CLUSTERING ORDER BY (start_time DESC)AND gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS traces_chunk (
@@ -116,20 +116,14 @@ CREATE TABLE IF NOT EXISTS traces_chunk (
     key_time            bigint,
     version             int,
     PRIMARY KEY (trace_id, span_id)
-);
+)WITH gc_grace_seconds = 10800; 
 
 CREATE TABLE IF NOT EXISTS app_names (
     app_name        text,
     agent_id        text,
     PRIMARY KEY (app_name, agent_id)
-);
+) WITH gc_grace_seconds = 10800;  
 
--- CREATE TABLE IF NOT EXISTS operation_apis (
---     app_name        text,
---     agent_id        text,
---     api_id          int,
---     PRIMARY KEY ((app_name, agent_id), api_id)
--- );
 
 
 CREATE TABLE IF NOT EXISTS operation_apis (
@@ -138,7 +132,7 @@ CREATE TABLE IF NOT EXISTS operation_apis (
     api_id          int,
     start_time      bigint,
     PRIMARY KEY ((app_name, agent_id, api_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC);
+) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;  
 
 
 CREATE TABLE IF NOT EXISTS  app_operation_index (
@@ -148,7 +142,7 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     start_time      bigint,
     trace_id        text,
     PRIMARY KEY ((app_name, agent_id, api_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC);
+) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;  
 
 
 
@@ -159,7 +153,7 @@ CREATE TABLE IF NOT EXISTS agent_stats (
     timestamp           bigint,
     stat_info           blob,
     PRIMARY KEY ((app_name, agent_id, start_time), timestamp)
-) WITH CLUSTERING ORDER BY (timestamp DESC);
+) WITH CLUSTERING ORDER BY (timestamp DESC) AND gc_grace_seconds = 10800; 
 
 
 TRUNCATE  TABLE  agent_strs;
@@ -173,4 +167,20 @@ TRUNCATE  TABLE  agent_sqls;
 TRUNCATE  TABLE  app_operation_index;
 TRUNCATE  TABLE  app_names;
             
-          
+DROP  TABLE  agent_strs;
+DROP  TABLE  agent_stats;
+DROP  TABLE  traces_chunk;
+DROP  TABLE  agents;
+DROP  TABLE  traces;
+DROP  TABLE  agent_apis;
+DROP  TABLE  operation_apis;
+DROP  TABLE  agent_sqls;
+DROP  TABLE  app_operation_index;
+DROP  TABLE  app_names;       
+
+-- CREATE TABLE IF NOT EXISTS operation_apis (
+--     app_name        text,
+--     agent_id        text,
+--     api_id          int,
+--     PRIMARY KEY ((app_name, agent_id), api_id)
+-- );

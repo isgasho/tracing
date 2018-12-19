@@ -2,10 +2,12 @@ package service
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/analyze/misc"
 	"go.uber.org/zap"
 )
 
@@ -74,6 +76,16 @@ func (appStore *AppStore) loadApp() error {
 	var isLive bool
 	var lastPointTime int64
 	for iter.Scan(&appName, &agentID, &startTime, &isLive, &lastPointTime) {
+
+		key, err := gAnalyze.hash.Get(appName)
+		if err != nil {
+			continue
+		}
+
+		if !strings.EqualFold(key, misc.Conf.Cluster.Name) {
+			g.L.Debug("非本机计算资源", zap.String("appName", appName), zap.String("host", key))
+		}
+
 		app, isExist := appStore.getApp(appName)
 		if !isExist {
 			app = NewApp(appName)

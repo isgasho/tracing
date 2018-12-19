@@ -23,6 +23,14 @@ type Config struct {
 		Keyspace string
 		NumConns int
 	}
+
+	Cluster struct {
+		Addr        string
+		Port        int
+		Name        string
+		Seeds       []string
+		HostUseTime bool
+	}
 }
 
 // Conf ...

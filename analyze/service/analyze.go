@@ -14,16 +14,22 @@ type Analyze struct {
 	stats    *stats.Stats
 	blink    *blink.Blink
 	appStore *AppStore
+	cluster  *Cluster
+	hash     *g.Hash
 }
+
+var gAnalyze *Analyze
 
 // New ...
 func New() *Analyze {
 	analyze := &Analyze{
-		stats: stats.New(),
-		blink: blink.New(),
-		db:    g.NewCassandra(),
+		stats:   stats.New(),
+		blink:   blink.New(),
+		db:      g.NewCassandra(),
+		cluster: NewCluster(),
+		hash:    g.NewHash(),
 	}
-
+	gAnalyze = analyze
 	return analyze
 }
 
@@ -31,6 +37,10 @@ func New() *Analyze {
 func (analyze *Analyze) Start() error {
 
 	g.L.Info("Conf", zap.Any("conf", misc.Conf))
+
+	if err := analyze.cluster.Start(); err != nil {
+		g.L.Fatal("Start cluster.Start", zap.String("error", err.Error()))
+	}
 
 	if err := analyze.db.Init(misc.Conf.Cassandra.NumConns, misc.Conf.Cassandra.Keyspace, misc.Conf.Cassandra.Cluster); err != nil {
 		g.L.Fatal("Start Init", zap.String("error", err.Error()))
