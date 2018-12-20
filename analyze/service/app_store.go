@@ -41,7 +41,7 @@ func NewAppStore(db *g.Cassandra) *AppStore {
 
 // Start ...
 func (appStore *AppStore) Start() error {
-	go appStore.LoadApp()
+	go appStore.LoadAppAndCounter()
 	return nil
 }
 
@@ -50,13 +50,13 @@ func (appStore *AppStore) Close() error {
 	return nil
 }
 
-// LoadApp ...
-func (appStore *AppStore) LoadApp() {
+// LoadAppAndCounter ...
+func (appStore *AppStore) LoadAppAndCounter() {
 	ticker := time.NewTicker(10 * time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			if err := appStore.loadApp(); err != nil {
+			if err := appStore.loadAppAndCounter(); err != nil {
 				g.L.Warn("loadApp", zap.String("error", err.Error()))
 			}
 			break
@@ -65,11 +65,13 @@ func (appStore *AppStore) LoadApp() {
 }
 
 // loadApp ...
-func (appStore *AppStore) loadApp() error {
+func (appStore *AppStore) loadAppAndCounter() error {
 	query := fmt.Sprintf("SELECT app_name, agent_id, start_time, is_live, last_point_time FROM agents ; ")
 	iter := appStore.db.Session.Query(query).Iter()
 
 	defer iter.Close()
+
+	var wg sync.WaitGroup
 
 	var appName, agentID string
 	var startTime int64
@@ -83,7 +85,7 @@ func (appStore *AppStore) loadApp() error {
 		}
 
 		if !strings.EqualFold(key, misc.Conf.Cluster.Name) {
-			g.L.Debug("非本机计算资源", zap.String("appName", appName), zap.String("host", key))
+			continue
 		}
 
 		app, isExist := appStore.getApp(appName)
@@ -101,6 +103,8 @@ func (appStore *AppStore) loadApp() error {
 		agent.isLive = isLive
 		agent.lastPointTime = lastPointTime
 	}
+
+	wg.Wait()
 
 	return nil
 }

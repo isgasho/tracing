@@ -1,4 +1,4 @@
-package blink
+package service
 
 import (
 	"github.com/mafanr/g"
@@ -8,8 +8,8 @@ import (
 type Blink struct {
 }
 
-// New ...
-func New() *Blink {
+// NewBlink ...
+func NewBlink() *Blink {
 	return &Blink{}
 }
 

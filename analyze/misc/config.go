@@ -31,6 +31,11 @@ type Config struct {
 		Seeds       []string
 		HostUseTime bool
 	}
+
+	Stats struct {
+		CounterNum int
+		RouteLen   int
+	}
 }
 
 // Conf ...

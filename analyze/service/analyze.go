@@ -3,16 +3,15 @@ package service
 import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/analyze/misc"
-	"github.com/mafanr/vgo/analyze/service/blink"
-	"github.com/mafanr/vgo/analyze/service/stats"
+
 	"go.uber.org/zap"
 )
 
 // Analyze ...
 type Analyze struct {
 	db       *g.Cassandra
-	stats    *stats.Stats
-	blink    *blink.Blink
+	stats    *Stats
+	blink    *Blink
 	appStore *AppStore
 	cluster  *Cluster
 	hash     *g.Hash
@@ -23,8 +22,8 @@ var gAnalyze *Analyze
 // New ...
 func New() *Analyze {
 	analyze := &Analyze{
-		stats:   stats.New(),
-		blink:   blink.New(),
+		stats:   NewStats(),
+		blink:   NewBlink(),
 		db:      g.NewCassandra(),
 		cluster: NewCluster(),
 		hash:    g.NewHash(),
