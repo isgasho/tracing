@@ -2,7 +2,7 @@ import Cookies from 'js-cookie'
 
 const misc = {
   state: {
-    service: Cookies.get('sel-service') || ''
+    service: Cookies.get('sel-service') || 'empty'
   },
   mutations: {
     SET_SERVICE: (state, service) => {

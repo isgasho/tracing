@@ -1,28 +1,30 @@
-/* eslint-disable */
 import Vue from 'vue'
 import VueI18n from 'vue-i18n'
-import elementEnLocale from 'element-ui/lib/locale/lang/en' // element-ui lang
-import elementZhLocale from 'element-ui/lib/locale/lang/zh-CN'// element-ui lang
+import Cookies from 'js-cookie'
+
+import iviewEn from 'iview/dist/locale/en-US';
+import iviewZh from 'iview/dist/locale/zh-CN';
 import enLocale from './en'
 import zhLocale from './zh'
 
 Vue.use(VueI18n)
+Vue.locale = () => {}
 
 const messages = {
   en: {
     ...enLocale,
-    ...elementEnLocale
+    ...iviewEn
   },
   zh: {
     ...zhLocale,
-    ...elementZhLocale
+    ...iviewZh
   }
 }
 
-const i18n = new VueI18n({ 
+const i18n = new VueI18n({
   // set locale
   // options: en or zh
-  locale: 'zh',
+  locale: Cookies.get('language') || 'zh',
   // set locale messages
   messages
 })

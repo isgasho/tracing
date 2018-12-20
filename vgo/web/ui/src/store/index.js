@@ -1,22 +1,20 @@
+import Vue from 'vue'
 import Vuex from 'vuex'
-import app from './modules/app'
-import permission from './modules/permission'
-import tagsView from './modules/tagsView'
-import user from './modules/user'
 import misc from './modules/misc'
+import user from './modules/user'
+import apm from './modules/apm'
 import getters from './getters'
 
-// Vue.use(Vuex)
+Vue.use(Vuex)
 
 const store = new Vuex.Store({
   modules: {
-    app,
-    permission,
-    tagsView,
+    misc,
     user,
-    misc
+    apm
   },
   getters
 })
 
 export default store
+ 

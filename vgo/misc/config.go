@@ -38,6 +38,10 @@ type Config struct {
 		Acc      string
 		Pw       string
 	}
+
+	Web struct {
+		Addr string
+	}
 }
 
 // Conf ...
