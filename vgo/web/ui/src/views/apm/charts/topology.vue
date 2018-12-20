@@ -214,7 +214,6 @@ export default {
                 );
         },
         getImageUrl(src) {
-            console.log(src)
             switch (src) {
                 case 'TOMCAT':
                     return 'https://upload-images.jianshu.io/upload_images/8245841-a4fee347d775b35c.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240'    

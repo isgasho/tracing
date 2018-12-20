@@ -39,6 +39,10 @@ func (s *Web) Start() error {
 			})
 		})
 
+		e.GET("/apm/query/serviceMap", queryServiceMap)
+		e.GET("/apm/query/traces", queryTraces)
+		e.GET("/apm/query/trace", queryTrace)
+
 		e.Logger.Fatal(e.Start(misc.Conf.Web.Addr))
 	}()
 
