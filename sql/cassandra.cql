@@ -1,19 +1,19 @@
-CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'}  
+CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
 
 
 
-CREATE TYPE IF NOT EXISTS value (
-    key     int,
-    value   frozen<value>,
-);
+-- CREATE TYPE IF NOT EXISTS value (
+--     key     int,
+--     value   frozen<value>,
+-- );
 
 
-CREATE TYPE IF NOT EXISTS annotation (
-    key     int,
-    value   frozen<value>,
-);
+-- CREATE TYPE IF NOT EXISTS annotation (
+--     key     int,
+--     value   frozen<value>,
+-- );
 
 
 

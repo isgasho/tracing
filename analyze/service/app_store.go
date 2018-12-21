@@ -78,7 +78,6 @@ func (appStore *AppStore) loadAppAndCounter() error {
 	var isLive bool
 	var lastPointTime int64
 	for iter.Scan(&appName, &agentID, &startTime, &isLive, &lastPointTime) {
-
 		key, err := gAnalyze.hash.Get(appName)
 		if err != nil {
 			continue
@@ -102,6 +101,11 @@ func (appStore *AppStore) loadAppAndCounter() error {
 		agent.startTime = startTime
 		agent.isLive = isLive
 		agent.lastPointTime = lastPointTime
+	}
+
+	for _, app := range appStore.Apps {
+		wg.Add(1)
+		go gAnalyze.stats.counter(app, &wg)
 	}
 
 	wg.Wait()

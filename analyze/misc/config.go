@@ -33,8 +33,8 @@ type Config struct {
 	}
 
 	Stats struct {
-		CounterNum int
-		RouteLen   int
+		Interval int
+		Range    int
 	}
 }
 

@@ -1,6 +1,10 @@
 package service
 
 import (
+	"log"
+	"sync"
+	"time"
+
 	"github.com/mafanr/g"
 )
 
@@ -27,6 +31,20 @@ func (s *Stats) Close() error {
 	return nil
 }
 
-func (s *Stats) counter(route chan *App) {
+func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for _, agent := range app.Agents {
+		log.Println("----->>>", agent.AgentID, agent.lastPointTime, agent.startTime)
+		var queryStartTime int64
+		var queryEndTime int64
+		if agent.lastPointTime == 0 {
+			queryStartTime = agent.startTime
+		} else {
+			queryStartTime = agent.lastPointTime
+		}
+		queryEndTime = queryStartTime + 60*1000
 
+		log.Println("queryStartTime", time.Unix(0, queryStartTime*1e6).String())
+		log.Println("queryEndTime", time.Unix(0, queryEndTime*1e6).String())
+	}
 }
