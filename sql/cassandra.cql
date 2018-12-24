@@ -1,30 +1,6 @@
 CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
-
-
-
--- CREATE TYPE IF NOT EXISTS value (
---     key     int,
---     value   frozen<value>,
--- );
-
-
--- CREATE TYPE IF NOT EXISTS annotation (
---     key     int,
---     value   frozen<value>,
--- );
-
-
-
--- CREATE TABLE IF NOT EXISTS agents_test (
---     app_name            text,
---     agent_id            text,
---     agent_info          blob,
---     PRIMARY KEY (app_name, agent_id)
--- ) AND gc_grace_seconds = 10800;
-
-
 CREATE TABLE IF NOT EXISTS agents (
     app_name            text,
     agent_id            text,
@@ -41,8 +17,8 @@ CREATE TABLE IF NOT EXISTS agents (
     is_container        BOOLEAN,
     operating_env       int,
     agent_info          text,
-    PRIMARY KEY ((app_name, agent_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;
+    PRIMARY KEY (app_name, agent_id, start_time)
+) WITH gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS agent_apis (
@@ -53,8 +29,8 @@ CREATE TABLE IF NOT EXISTS agent_apis (
     api_info            text,
     line                int,
     type                int,
-    PRIMARY KEY ((app_name, agent_id, api_id),start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
+    PRIMARY KEY (app_name, agent_id, api_id, start_time)
+) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
 
 CREATE TABLE IF NOT EXISTS agent_sqls (
@@ -63,8 +39,8 @@ CREATE TABLE IF NOT EXISTS agent_sqls (
     sql_id              int,
     start_time          bigint,
     sql_info            text,
-    PRIMARY KEY ((app_name, agent_id, sql_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;
+    PRIMARY KEY (app_name, agent_id, sql_id, start_time)
+) WITH gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS agent_strs (
@@ -73,16 +49,16 @@ CREATE TABLE IF NOT EXISTS agent_strs (
     str_id              int,
     start_time          bigint,
     str_info            text,
-    PRIMARY KEY ((app_name, agent_id, str_id), start_time)
-)WITH CLUSTERING ORDER BY (start_time DESC)AND gc_grace_seconds = 10800; 
+    PRIMARY KEY (app_name, agent_id, str_id, start_time)
+)WITH gc_grace_seconds = 10800; 
 
 
 
 CREATE TABLE IF NOT EXISTS traces (
     trace_id            text,
     span_id             bigint,
-    agent_id            text,
     app_name            text,
+    agent_id            text,
     agent_start_time    bigint,
     parent_id           bigint,
     start_time          bigint,
@@ -100,8 +76,8 @@ CREATE TABLE IF NOT EXISTS traces (
     api_id              int,
     exception_info      blob,
     app_service_type    int,
-    PRIMARY KEY ((trace_id, span_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC)AND gc_grace_seconds = 10800;
+    PRIMARY KEY (trace_id, span_id, start_time)
+) WITH gc_grace_seconds = 10800;
 
 
 CREATE TABLE IF NOT EXISTS traces_chunk (
@@ -118,21 +94,27 @@ CREATE TABLE IF NOT EXISTS traces_chunk (
     PRIMARY KEY (trace_id, span_id)
 )WITH gc_grace_seconds = 10800; 
 
-CREATE TABLE IF NOT EXISTS app_names (
-    app_name        text,
-    agent_id        text,
-    PRIMARY KEY (app_name, agent_id)
-) WITH gc_grace_seconds = 10800;  
+
+-- CREATE TABLE IF NOT EXISTS app_names (
+--     app_name        text,
+--     agent_id        text,
+--     PRIMARY KEY (app_name, agent_id)
+-- ) WITH gc_grace_seconds = 10800;  
 
 
 
-CREATE TABLE IF NOT EXISTS operation_apis (
-    app_name        text,
-    agent_id        text,
-    api_id          int,
-    start_time      bigint,
-    PRIMARY KEY ((app_name, agent_id, api_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;  
+-- CREATE TABLE IF NOT EXISTS operation_apis (
+--     app_name        text,
+--     agent_id        text,
+--     api_id          int,
+--     start_time      bigint,
+--     PRIMARY KEY (app_name, agent_id, api_id, start_time)
+-- ) WITH gc_grace_seconds = 10800;  
+
+
+-- CREATE CUSTOM INDEX IF NOT EXISTS ON operation_apis (start_time) 
+--     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+--     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
 CREATE TABLE IF NOT EXISTS  app_operation_index (
@@ -140,10 +122,16 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     agent_id        text,
     api_id          int,
     start_time      bigint,
+    rpc             text,
     trace_id        text,
-    PRIMARY KEY ((app_name, agent_id, api_id), start_time)
-) WITH CLUSTERING ORDER BY (start_time DESC) AND gc_grace_seconds = 10800;  
+    PRIMARY KEY (app_name, agent_id, api_id, start_time)
+) WITH gc_grace_seconds = 10800;  
 
+
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
 
 
 CREATE TABLE IF NOT EXISTS agent_stats (
@@ -153,7 +141,7 @@ CREATE TABLE IF NOT EXISTS agent_stats (
     timestamp           bigint,
     stat_info           blob,
     PRIMARY KEY ((app_name, agent_id, start_time), timestamp)
-) WITH CLUSTERING ORDER BY (timestamp DESC) AND gc_grace_seconds = 10800; 
+) WITH gc_grace_seconds = 10800; 
 
 
 TRUNCATE  TABLE  agent_strs;

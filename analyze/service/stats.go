@@ -44,7 +44,8 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 		}
 		queryEndTime = queryStartTime + 60*1000
 
-		log.Println("queryStartTime", time.Unix(0, queryStartTime*1e6).String())
-		log.Println("queryEndTime", time.Unix(0, queryEndTime*1e6).String())
+		log.Println("queryStartTime", time.Unix(0, queryStartTime*1e6).String(), queryStartTime)
+		log.Println("queryEndTime", time.Unix(0, queryEndTime*1e6).String(), queryEndTime)
+		// query:= fmt.Sprintf("", a ...interface{})
 	}
 }

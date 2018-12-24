@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -201,11 +202,16 @@ func (s *Storage) spanStore() {
 				spansQueue = append(spansQueue, span)
 				if len(spansQueue) >= misc.Conf.Storage.SpanCacheLen {
 					// 插入
-					for _, qSapn := range spansQueue {
-						if err := s.WriteSpan(qSapn); err != nil {
+					for _, qSpan := range spansQueue {
+						if err := s.WriteSpan(qSpan); err != nil {
 							g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 							continue
 						}
+						log.Println("event.GetRPC() 1")
+						for _, event := range qSpan.GetSpanEventList() {
+							log.Println("event.GetRPC()", event.GetRPC())
+						}
+						log.Println("event.GetRPC() 2")
 					}
 					// 清空缓存
 					spansQueue = spansQueue[:0]
@@ -220,6 +226,11 @@ func (s *Storage) spanStore() {
 						g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 						continue
 					}
+					log.Println("event.GetRPC() 1")
+					for _, event := range sapn.GetSpanEventList() {
+						log.Println("event.GetRPC()", event.GetRPC(), event.GetApiId())
+					}
+					log.Println("event.GetRPC() 2")
 				}
 				// 清空缓存
 				spansQueue = spansQueue[:0]
@@ -357,6 +368,7 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 
 // writeIndexes ...
 func (s *Storage) writeIndexes(span *trace.TSpan) error {
+
 	if err := s.saveAppNameAndAPIID(span); err != nil {
 		g.L.Warn("saveAppNameAndAPIID error", zap.String("error", err.Error()))
 		return err
@@ -371,36 +383,39 @@ func (s *Storage) writeIndexes(span *trace.TSpan) error {
 // saveAppNameAndAPIID ...
 func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
 	if !gVgo.appStore.checkAndSaveAgent(span.ApplicationName, span.AgentId) {
-		insertAppAndAgentID := `
-		INSERT
-		INTO app_names(app_name, agent_id)
-		VALUES (?, ?)`
-		if err := s.session.Query(
-			insertAppAndAgentID,
-			span.ApplicationName,
-			span.AgentId,
-		).Exec(); err != nil {
-			g.L.Warn("inster app_names error", zap.String("error", err.Error()), zap.String("SQL", insertAppAndAgentID))
-			return err
-		}
+		// insertAppAndAgentID := `
+		// INSERT
+		// INTO app_names(app_name, agent_id)
+		// VALUES (?, ?)`
+		// if err := s.session.Query(
+		// 	insertAppAndAgentID,
+		// 	span.ApplicationName,
+		// 	span.AgentId,
+		// ).Exec(); err != nil {
+		// 	g.L.Warn("inster app_names error", zap.String("error", err.Error()), zap.String("SQL", insertAppAndAgentID))
+		// 	return err
+		// }
 	}
 
-	if !gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId()) {
-		insertAPIID := `
-	INSERT
-	INTO operation_apis(app_name, agent_id, api_id, start_time)
-	VALUES (?, ?, ?, ?)`
-		if err := s.session.Query(
-			insertAPIID,
-			span.ApplicationName,
-			span.AgentId,
-			span.GetApiId(),
-			span.StartTime,
-		).Exec(); err != nil {
-			g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
-			return err
-		}
-	}
+	gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId())
+
+	// if !gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId()) {
+	// if true {
+	// 	insertAPIID := `
+	// INSERT
+	// INTO operation_apis(app_name, agent_id, api_id, start_time)
+	// VALUES (?, ?, ?, ?)`
+	// 	if err := s.session.Query(
+	// 		insertAPIID,
+	// 		span.ApplicationName,
+	// 		span.AgentId,
+	// 		span.GetApiId(),
+	// 		span.StartTime,
+	// 	).Exec(); err != nil {
+	// 		g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -408,8 +423,8 @@ func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
 func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 	insertOperIndex := `
 	INSERT
-	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id)
-	VALUES (?, ?, ?, ?, ?)`
+	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id, rpc)
+	VALUES (?, ?, ?, ?, ?, ?)`
 	if err := s.session.Query(
 		insertOperIndex,
 		span.ApplicationName,
@@ -417,6 +432,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		span.GetApiId(),
 		span.StartTime,
 		span.TransactionId,
+		span.GetRPC(),
 	).Exec(); err != nil {
 		g.L.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", insertOperIndex))
 		return err
