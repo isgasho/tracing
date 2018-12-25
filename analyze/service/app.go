@@ -5,8 +5,9 @@ import "sync"
 // App ...
 type App struct {
 	sync.RWMutex
-	AppName string
-	Agents  map[string]*Agent
+	AppName       string
+	lastCountTime int64
+	Agents        map[string]*Agent
 }
 
 // NewApp ...

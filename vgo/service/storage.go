@@ -382,6 +382,20 @@ func (s *Storage) writeIndexes(span *trace.TSpan) error {
 
 // saveAppNameAndAPIID ...
 func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
+	// if !gVgo.appStore.checkApp(span.ApplicationName) {
+	// 	insertApp := `
+	// 	INSERT
+	// 	INTO apps(app_name)
+	// 	VALUES (?)`
+	// 	if err := s.session.Query(
+	// 		insertApp,
+	// 		span.ApplicationName,
+	// 	).Exec(); err != nil {
+	// 		g.L.Warn("inster apps error", zap.String("error", err.Error()), zap.String("SQL", insertApp))
+	// 		return err
+	// 	}
+	// }
+
 	if !gVgo.appStore.checkAndSaveAgent(span.ApplicationName, span.AgentId) {
 		// insertAppAndAgentID := `
 		// INSERT

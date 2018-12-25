@@ -52,12 +52,18 @@ func (appStore *AppStore) Close() error {
 
 // LoadAppAndCounter ...
 func (appStore *AppStore) LoadAppAndCounter() {
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(time.Duration(misc.Conf.Analyze.LoadAppInterval) * time.Second)
 	for {
 		select {
 		case <-ticker.C:
-			if err := appStore.loadAppAndCounter(); err != nil {
+			if err := appStore.loadApp(); err != nil {
 				g.L.Warn("loadApp", zap.String("error", err.Error()))
+				break
+			}
+
+			if err := gAnalyze.stats.Counter(); err != nil {
+				g.L.Warn("Counter", zap.String("error", err.Error()))
+				break
 			}
 			break
 		}
@@ -65,24 +71,22 @@ func (appStore *AppStore) LoadAppAndCounter() {
 }
 
 // loadApp ...
-func (appStore *AppStore) loadAppAndCounter() error {
-	query := fmt.Sprintf("SELECT app_name, agent_id, start_time, is_live, last_point_time FROM agents ; ")
-	iter := appStore.db.Session.Query(query).Iter()
+func (appStore *AppStore) loadApp() error {
 
-	defer iter.Close()
+	query := fmt.Sprintf("SELECT app_name, last_count_time FROM apps; ")
+	iterApp := appStore.db.Session.Query(query).Iter()
+	defer iterApp.Close()
 
-	var wg sync.WaitGroup
+	var appName string
+	var lastCountTime int64
 
-	var appName, agentID string
-	var startTime int64
-	var isLive bool
-	var lastPointTime int64
-	for iter.Scan(&appName, &agentID, &startTime, &isLive, &lastPointTime) {
+	for iterApp.Scan(&appName, &lastCountTime) {
 		key, err := gAnalyze.hash.Get(appName)
 		if err != nil {
 			continue
 		}
 
+		// 集群模式只做hash出来属于自己节点的APP
 		if !strings.EqualFold(key, misc.Conf.Cluster.Name) {
 			continue
 		}
@@ -92,23 +96,16 @@ func (appStore *AppStore) loadAppAndCounter() error {
 			app = NewApp(appName)
 			appStore.storeApp(app)
 		}
-		agent, isExist := app.getAgent(agentID)
-		if !isExist {
-			agent = NewAgent(agentID)
-			app.storeAgent(agent)
+
+		// 从 agent_stat 中取最早的启动时间记录
+		if lastCountTime == 0 {
+			queryStartTime := `SELECT start_time  FROM agent_stats  WHERE app_name=? LIMIT 1;`
+			iterStartTime := appStore.db.Session.Query(queryStartTime, app.AppName).Iter()
+			iterStartTime.Scan(&lastCountTime)
+			iterStartTime.Close()
 		}
-
-		agent.startTime = startTime
-		agent.isLive = isLive
-		agent.lastPointTime = lastPointTime
+		app.lastCountTime = lastCountTime
 	}
-
-	for _, app := range appStore.Apps {
-		wg.Add(1)
-		go gAnalyze.stats.counter(app, &wg)
-	}
-
-	wg.Wait()
 
 	return nil
 }

@@ -16,6 +16,7 @@ type Config struct {
 	}
 
 	Analyze struct {
+		LoadAppInterval int
 	}
 
 	Cassandra struct {
@@ -34,7 +35,7 @@ type Config struct {
 
 	Stats struct {
 		Interval int
-		Range    int
+		Range    int64
 	}
 }
 

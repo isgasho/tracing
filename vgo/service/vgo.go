@@ -12,17 +12,14 @@ import (
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
 
-	"github.com/mafanr/vgo/vgo/stats"
-
 	"github.com/mafanr/vgo/vgo/web"
 	"go.uber.org/zap"
 )
 
 // Vgo ...
 type Vgo struct {
-	stats    *stats.Stats // 离线计算
-	storage  *Storage     // 存储
-	pinpoint *Pinpoint    // 处理pinpoint 数据
+	storage  *Storage  // 存储
+	pinpoint *Pinpoint // 处理pinpoint 数据
 	web      *web.Web
 	appStore *AppStore
 }
@@ -32,7 +29,6 @@ var gVgo *Vgo
 // New ...
 func New() *Vgo {
 	gVgo = &Vgo{
-		stats:    stats.New(),
 		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
 		web:      web.New(),
@@ -72,12 +68,6 @@ func (v *Vgo) init() error {
 	// start web ser
 	if err := v.web.Start(); err != nil {
 		g.L.Warn("init:v.web.Start", zap.String("error", err.Error()))
-		return err
-	}
-
-	// start stats
-	if err := v.stats.Start(); err != nil {
-		g.L.Warn("init:v.stats.Start", zap.String("error", err.Error()))
 		return err
 	}
 

@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS agents (
     version             text,
     start_time          bigint,
     end_time            bigint,
-    last_point_time     bigint,
     is_live             BOOLEAN,
     is_container        BOOLEAN,
     operating_env       int,
@@ -95,26 +94,11 @@ CREATE TABLE IF NOT EXISTS traces_chunk (
 )WITH gc_grace_seconds = 10800; 
 
 
--- CREATE TABLE IF NOT EXISTS app_names (
---     app_name        text,
---     agent_id        text,
---     PRIMARY KEY (app_name, agent_id)
--- ) WITH gc_grace_seconds = 10800;  
-
-
-
--- CREATE TABLE IF NOT EXISTS operation_apis (
---     app_name        text,
---     agent_id        text,
---     api_id          int,
---     start_time      bigint,
---     PRIMARY KEY (app_name, agent_id, api_id, start_time)
--- ) WITH gc_grace_seconds = 10800;  
-
-
--- CREATE CUSTOM INDEX IF NOT EXISTS ON operation_apis (start_time) 
---     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
---     WITH OPTIONS = {'mode': 'SPARSE'};
+CREATE TABLE IF NOT EXISTS apps (
+    app_name        text,
+    last_count_time BIGINT,
+    PRIMARY KEY (app_name)
+) WITH gc_grace_seconds = 10800;  
 
 
 CREATE TABLE IF NOT EXISTS  app_operation_index (
@@ -140,9 +124,13 @@ CREATE TABLE IF NOT EXISTS agent_stats (
     start_time          bigint,
     timestamp           bigint,
     stat_info           blob,
-    PRIMARY KEY ((app_name, agent_id, start_time), timestamp)
+    PRIMARY KEY (app_name, agent_id, start_time, timestamp)
 ) WITH gc_grace_seconds = 10800; 
 
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON agent_stats (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
 
 TRUNCATE  TABLE  agent_strs;
 TRUNCATE  TABLE  agent_stats;
@@ -150,10 +138,11 @@ TRUNCATE  TABLE  traces_chunk;
 TRUNCATE  TABLE  agents;
 TRUNCATE  TABLE  traces;
 TRUNCATE  TABLE  agent_apis;
-TRUNCATE  TABLE  operation_apis;
+-- TRUNCATE  TABLE  operation_apis;
 TRUNCATE  TABLE  agent_sqls;
 TRUNCATE  TABLE  app_operation_index;
-TRUNCATE  TABLE  app_names;
+-- TRUNCATE  TABLE  app_names;
+TRUNCATE  TABLE  apps;
             
 DROP  TABLE  agent_strs;
 DROP  TABLE  agent_stats;
@@ -161,10 +150,11 @@ DROP  TABLE  traces_chunk;
 DROP  TABLE  agents;
 DROP  TABLE  traces;
 DROP  TABLE  agent_apis;
-DROP  TABLE  operation_apis;
+-- DROP  TABLE  operation_apis;
 DROP  TABLE  agent_sqls;
 DROP  TABLE  app_operation_index;
-DROP  TABLE  app_names;       
+-- DROP  TABLE  app_names;   
+DROP  TABLE  apps;    
 
 -- CREATE TABLE IF NOT EXISTS operation_apis (
 --     app_name        text,
@@ -172,3 +162,25 @@ DROP  TABLE  app_names;
 --     api_id          int,
 --     PRIMARY KEY ((app_name, agent_id), api_id)
 -- );
+
+
+-- CREATE TABLE IF NOT EXISTS app_names (
+--     app_name        text,
+--     agent_id        text,
+--     PRIMARY KEY (app_name, agent_id)
+-- ) WITH gc_grace_seconds = 10800;  
+
+
+-- CREATE TABLE IF NOT EXISTS operation_apis (
+--     app_name        text,
+--     agent_id        text,
+--     api_id          int,
+--     start_time      bigint,
+--     PRIMARY KEY (app_name, agent_id, api_id, start_time)
+-- ) WITH gc_grace_seconds = 10800;  
+
+
+-- CREATE CUSTOM INDEX IF NOT EXISTS ON operation_apis (start_time) 
+--     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+--     WITH OPTIONS = {'mode': 'SPARSE'};
+

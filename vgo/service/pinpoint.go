@@ -41,6 +41,21 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
+
+				if !gVgo.appStore.checkApp(agentInfo.AppName) {
+					insertApp := `
+					INSERT
+					INTO apps(app_name)
+					VALUES (?)`
+					if err := gVgo.storage.session.Query(
+						insertApp,
+						agentInfo.AppName,
+					).Exec(); err != nil {
+						g.L.Warn("inster apps error", zap.String("error", err.Error()), zap.String("SQL", insertApp))
+						return err
+					}
+				}
+
 				if err := gVgo.storage.AgentStore(agentInfo); err != nil {
 					g.L.Warn("dealUpload:storage.AgentStore", zap.String("error", err.Error()))
 					return err

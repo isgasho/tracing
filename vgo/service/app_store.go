@@ -55,6 +55,12 @@ func NewAppStore() *AppStore {
 		Apps: make(map[string]*App),
 	}
 }
+func (appStore *AppStore) checkApp(appName string) bool {
+	appStore.RLock()
+	_, ok := appStore.Apps[appName]
+	appStore.RUnlock()
+	return ok
+}
 
 func (appStore *AppStore) checkAndSaveAgent(appName, agentID string) bool {
 	appStore.RLock()
