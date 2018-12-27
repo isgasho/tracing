@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -207,11 +206,6 @@ func (s *Storage) spanStore() {
 							g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 							continue
 						}
-						log.Println("event.GetRPC() 1")
-						for _, event := range qSpan.GetSpanEventList() {
-							log.Println("event.GetRPC()", event.GetRPC())
-						}
-						log.Println("event.GetRPC() 2")
 					}
 					// 清空缓存
 					spansQueue = spansQueue[:0]
@@ -226,11 +220,6 @@ func (s *Storage) spanStore() {
 						g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 						continue
 					}
-					log.Println("event.GetRPC() 1")
-					for _, event := range sapn.GetSpanEventList() {
-						log.Println("event.GetRPC()", event.GetRPC(), event.GetApiId())
-					}
-					log.Println("event.GetRPC() 2")
 				}
 				// 清空缓存
 				spansQueue = spansQueue[:0]
@@ -437,8 +426,8 @@ func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
 func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 	insertOperIndex := `
 	INSERT
-	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id, rpc)
-	VALUES (?, ?, ?, ?, ?, ?)`
+	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id, rpc, span_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?)`
 	if err := s.session.Query(
 		insertOperIndex,
 		span.ApplicationName,
@@ -447,6 +436,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		span.StartTime,
 		span.TransactionId,
 		span.GetRPC(),
+		span.GetSpanId(),
 	).Exec(); err != nil {
 		g.L.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", insertOperIndex))
 		return err

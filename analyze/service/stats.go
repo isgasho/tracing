@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"sync"
 
 	"github.com/mafanr/g"
@@ -33,7 +32,6 @@ func (s *Stats) Close() error {
 
 func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 	defer wg.Done()
-
 	// 如果最后一次计算点为0，那么放弃本次计算
 	if app.lastCountTime == 0 {
 		return
@@ -44,27 +42,17 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 
 	queryStartTime = app.lastCountTime
 	queryEndTime = app.lastCountTime + misc.Conf.Stats.Range*1000
-
-	queryTraceID := `SELECT trace_id FROM app_operation_index WHERE app_name=? and start_time>=? and start_time<=?;`
+	es := GetElements(queryStartTime, queryEndTime)
+	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and start_time>? and start_time<=?;`
 	iterTraceID := gAnalyze.appStore.db.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
+
 	var traceID string
-	for iterTraceID.Scan(&traceID) {
-		log.Println("------------------>>>>", traceID)
+	var spanID int64
+	for iterTraceID.Scan(&traceID, &spanID) {
+		spanCounter(traceID, spanID, es)
 	}
 	iterTraceID.Close()
 }
-
-// func HourTimestamp() int64 {
-// 	now := time.Now()
-// 	timestamp := now.Unix() - int64(now.Second()) - int64((60 * now.Minute()))
-// 	fmt.Println(timestamp, time.Unix(timestamp, 0), now.Unix())
-// 	return timestamp
-// }
-
-// type Counter struct {
-// }
-
-// type
 
 // Counter ...
 func (s *Stats) Counter() error {

@@ -77,19 +77,6 @@ func (cluster *Cluster) Start() error {
 		g.L.Panic("Cluster Join", zap.Error(err))
 	}
 
-	// Ask for members of the cluster
-
-	// go func() {
-	// 	for {
-	// 		fmt.Println("-------------start--------------")
-	// 		for _, member := range list.Members() {
-	// 			fmt.Printf("Member: %s %s\n", member.Name, member.Addr)
-	// 		}
-	// 		fmt.Println("-------------end--------------")
-	// 		time.Sleep(time.Second * 3)
-	// 	}
-	// }()
-
 	return nil
 }
 

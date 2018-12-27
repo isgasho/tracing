@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     start_time      bigint,
     rpc             text,
     trace_id        text,
+    span_id         bigint,
     PRIMARY KEY (app_name, agent_id, api_id, start_time)
 ) WITH gc_grace_seconds = 10800;  
 
@@ -132,17 +133,77 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON agent_stats (start_time)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
+
+CREATE TABLE IF NOT EXISTS  rpc_record (
+    app_name        text,
+    start_time      bigint,
+    url             text,
+    elapsed         int,
+    max_elapsed     int,
+    min_elapsed     int,
+    average_elapsed int,
+    count           int,
+    err_count       int,
+    PRIMARY KEY (app_name, url, start_time)
+) WITH gc_grace_seconds = 10800;  
+
+
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_record (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+CREATE TABLE IF NOT EXISTS rpc_details_record (
+    app_name        text,
+    url             text,
+    start_time      bigint,
+    class_name      text,
+    method_name     text,
+    ser_type        text,
+    elapsed         int,
+    ratio_elapsed   FLOAT,
+    max_elapsed     int,
+    min_elapsed     int,
+    average_elapsed int,
+    count           int,
+    err_count       int,
+    PRIMARY KEY (app_name, url, start_time, class_name, method_name)
+) WITH gc_grace_seconds = 10800;  
+
+-- CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_details_record (start_time) 
+--     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+--     WITH OPTIONS = {'mode': 'SPARSE'};
+
+CREATE TABLE IF NOT EXISTS sql_record (
+    app_name        text,
+    sql             text,
+    start_time      bigint,
+    elapsed         int,
+    max_elapsed     int,
+    min_elapsed     int,
+    average_elapsed int,
+    count           int,
+    err_count       int,
+    PRIMARY KEY (app_name, sql, start_time)
+) WITH gc_grace_seconds = 10800;  
+
+-- CREATE CUSTOM INDEX IF NOT EXISTS ON sql_record (start_time) 
+--     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+--     WITH OPTIONS = {'mode': 'SPARSE'};
+
 TRUNCATE  TABLE  agent_strs;
 TRUNCATE  TABLE  agent_stats;
 TRUNCATE  TABLE  traces_chunk;
 TRUNCATE  TABLE  agents;
 TRUNCATE  TABLE  traces;
 TRUNCATE  TABLE  agent_apis;
--- TRUNCATE  TABLE  operation_apis;
 TRUNCATE  TABLE  agent_sqls;
 TRUNCATE  TABLE  app_operation_index;
--- TRUNCATE  TABLE  app_names;
 TRUNCATE  TABLE  apps;
+TRUNCATE  TABLE rpc_record;
+TRUNCATE  TABLE rpc_details_record;
+TRUNCATE  TABLE sql_record;
             
 DROP  TABLE  agent_strs;
 DROP  TABLE  agent_stats;
@@ -150,11 +211,12 @@ DROP  TABLE  traces_chunk;
 DROP  TABLE  agents;
 DROP  TABLE  traces;
 DROP  TABLE  agent_apis;
--- DROP  TABLE  operation_apis;
 DROP  TABLE  agent_sqls;
 DROP  TABLE  app_operation_index;
--- DROP  TABLE  app_names;   
 DROP  TABLE  apps;    
+DROP  TABLE rpc_record;
+DROP  TABLE rpc_details_record;
+DROP  TABLE sql_record;
 
 -- CREATE TABLE IF NOT EXISTS operation_apis (
 --     app_name        text,
