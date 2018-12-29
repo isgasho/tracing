@@ -21,9 +21,8 @@ CREATE TABLE IF NOT EXISTS agents (
 
 
 
-CREATE TABLE IF NOT EXISTS agent_apis (
+CREATE TABLE IF NOT EXISTS app_apis (
     app_name            text,
-    agent_id            text,
     api_id              int,
     start_time          bigint,
     api_info            text,
@@ -33,34 +32,22 @@ CREATE TABLE IF NOT EXISTS agent_apis (
 ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
 
--- CREATE TABLE IF NOT EXISTS apis (
---     api_id              int,
---     api_info            text,
---     line                int,
---     type                int,
---     PRIMARY KEY (api_id)
--- ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
-
-
-
-CREATE TABLE IF NOT EXISTS agent_sqls (
+CREATE TABLE IF NOT EXISTS app_sqls (
     app_name            text,
-    agent_id            text,
     sql_id              int,
     start_time          bigint,
     sql_info            text,
-    PRIMARY KEY (app_name, agent_id, sql_id, start_time)
+    PRIMARY KEY (app_name, sql_id)
 ) WITH gc_grace_seconds = 10800;
 
 
-CREATE TABLE IF NOT EXISTS agent_strs (
+CREATE TABLE IF NOT EXISTS app_strs (
     app_name            text,
-    agent_id            text,
     str_id              int,
     start_time          bigint,
     str_info            text,
-    PRIMARY KEY (app_name, agent_id, str_id, start_time)
+    PRIMARY KEY (app_name, str_id)
 )WITH gc_grace_seconds = 10800; 
 
 
@@ -204,32 +191,35 @@ CREATE TABLE IF NOT EXISTS sql_record (
 --     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
 --     WITH OPTIONS = {'mode': 'SPARSE'};
 
-TRUNCATE  TABLE  agent_strs;
+TRUNCATE  TABLE  app_strs;
 TRUNCATE  TABLE  agent_stats;
 TRUNCATE  TABLE  traces_chunk;
 TRUNCATE  TABLE  agents;
 TRUNCATE  TABLE  traces;
-TRUNCATE  TABLE  agent_apis;
-TRUNCATE  TABLE  agent_sqls;
+TRUNCATE  TABLE  app_apis;
+TRUNCATE  TABLE  app_sqls;
 TRUNCATE  TABLE  app_operation_index;
 TRUNCATE  TABLE  apps;
-TRUNCATE  TABLE rpc_record;
-TRUNCATE  TABLE rpc_details_record;
-TRUNCATE  TABLE sql_record;
-TRUNCATE  TABLE apis;
-            
-DROP  TABLE  agent_strs;
+TRUNCATE  TABLE  rpc_record;
+TRUNCATE  TABLE  rpc_details_record;
+TRUNCATE  TABLE  sql_record;
+-- TRUNCATE  TABLE apis;
+
+
+DROP  TABLE  app_strs;
 DROP  TABLE  agent_stats;
 DROP  TABLE  traces_chunk;
 DROP  TABLE  agents;
 DROP  TABLE  traces;
-DROP  TABLE  agent_apis;
-DROP  TABLE  agent_sqls;
+DROP  TABLE  app_apis;
+DROP  TABLE  app_sqls;
 DROP  TABLE  app_operation_index;
-DROP  TABLE  apps;    
-DROP  TABLE rpc_record;
-DROP  TABLE rpc_details_record;
-DROP  TABLE sql_record;
+DROP  TABLE  apps;
+DROP  TABLE  rpc_record;
+DROP  TABLE  rpc_details_record;
+DROP  TABLE  sql_record;
+-- DROP  TABLE  apis;
+ 
 
 -- CREATE TABLE IF NOT EXISTS operation_apis (
 --     app_name        text,

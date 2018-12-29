@@ -150,24 +150,20 @@ func (p *Pinpoint) DealTCPRequestResponse(packet *util.PinpointData, message []b
 		}
 		break
 	case *trace.TSqlMetaData:
-		if err := gVgo.storage.AgentSQLStore(packet.AppName, packet.AgentID, m); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentSQLStore", zap.String("error", err.Error()))
+		if err := gVgo.storage.AppSQLStore(packet.AppName, m); err != nil {
+			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AppSQLStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TApiMetaData:
-		if err := gVgo.storage.AgentAPIStore(packet.AppName, packet.AgentID, m); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentAPIStore", zap.String("error", err.Error()))
+		if err := gVgo.storage.AppAPIStore(packet.AppName, m); err != nil {
+			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AppAPIStore", zap.String("error", err.Error()))
 			return err
 		}
-		// if err := gVgo.storage.APIStore(m); err != nil {
-		// 	g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentAPIStore", zap.String("error", err.Error()))
-		// 	return err
-		// }
 		break
 	case *trace.TStringMetaData:
-		if err := gVgo.storage.AgentStringStore(packet.AppName, packet.AgentID, m); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentStringStore", zap.String("error", err.Error()))
+		if err := gVgo.storage.AppStringStore(packet.AppName, m); err != nil {
+			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AppStringStore", zap.String("error", err.Error()))
 			return err
 		}
 		break

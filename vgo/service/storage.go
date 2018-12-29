@@ -129,22 +129,21 @@ func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64
 	return nil
 }
 
-// AgentAPIStore ...
-func (s *Storage) AgentAPIStore(appName, agentID string, apiInfo *trace.TApiMetaData) error {
+// AppAPIStore ...
+func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error {
 
-	agentAPIInsert := `INSERT INTO agent_apis (app_name, agent_id, api_id, start_time, api_info, line, type) 
-	VALUES (?, ?, ?, ?, ?, ?, ?);`
+	appAPIInsert := `INSERT INTO app_apis (app_name,  api_id, start_time, api_info, line, type) 
+	VALUES (?, ?, ?, ?, ?, ?);`
 	if err := s.session.Query(
-		agentAPIInsert,
+		appAPIInsert,
 		appName,
-		agentID,
 		apiInfo.ApiId,
 		apiInfo.AgentStartTime,
 		apiInfo.ApiInfo,
 		apiInfo.GetLine(),
 		apiInfo.GetType(),
 	).Exec(); err != nil {
-		g.L.Warn("AgentAPIStore error", zap.String("error", err.Error()), zap.String("SQL", agentAPIInsert))
+		g.L.Warn("AppAPIStore error", zap.String("error", err.Error()), zap.String("SQL", appAPIInsert))
 		return err
 	}
 
@@ -169,34 +168,32 @@ func (s *Storage) APIStore(apiInfo *trace.TApiMetaData) error {
 	return nil
 }
 
-// AgentSQLStore ...
-func (s *Storage) AgentSQLStore(appName, agentID string, sqlInfo *trace.TSqlMetaData) error {
+// AppSQLStore ...
+func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error {
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))
-	agentSQLInsert := `INSERT INTO agent_sqls (app_name, agent_id, sql_id, start_time, sql_info) 
-	VALUES (?, ?, ?, ?, ?);`
+	appSQLInsert := `INSERT INTO app_sqls (app_name, sql_id, start_time, sql_info) 
+	VALUES (?, ?, ?, ?);`
 	if err := s.session.Query(
-		agentSQLInsert,
+		appSQLInsert,
 		appName,
-		agentID,
 		sqlInfo.SqlId,
 		sqlInfo.AgentStartTime,
 		newSQL,
 	).Exec(); err != nil {
-		g.L.Warn("AgentSQLStore error", zap.String("error", err.Error()), zap.String("SQL", agentSQLInsert))
+		g.L.Warn("AppSQLStore error", zap.String("error", err.Error()), zap.String("SQL", appSQLInsert))
 		return err
 	}
 
 	return nil
 }
 
-// AgentStringStore ...
-func (s *Storage) AgentStringStore(appName, agentID string, strInfo *trace.TStringMetaData) error {
-	agentStrInsert := `INSERT INTO agent_strs (app_name, agent_id, str_id, start_time, str_info) 
-	VALUES (?, ?, ?, ?, ?);`
+// AppStringStore ...
+func (s *Storage) AppStringStore(appName string, strInfo *trace.TStringMetaData) error {
+	agentStrInsert := `INSERT INTO app_strs (app_name, str_id, start_time, str_info) 
+	VALUES (?, ?, ?, ?);`
 	if err := s.session.Query(
 		agentStrInsert,
 		appName,
-		agentID,
 		strInfo.StringId,
 		strInfo.AgentStartTime,
 		strInfo.StringValue,
