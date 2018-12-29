@@ -26,14 +26,14 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 	var spanEventList []byte
 	var isErr int
 	var agentID string
-	var agentTtartTime int64
-	for iterTrace.Scan(&agentTtartTime, &startTime, &rpc, &elapsed, &serviceType, &parentAppName, &parentAppType, &spanEventList, &isErr, &agentID) {
+	var appName string
+	for iterTrace.Scan(&appName, &startTime, &rpc, &elapsed, &serviceType, &parentAppName, &parentAppType, &spanEventList, &isErr, &agentID) {
 		index, _ := ModMs2Min(startTime)
 		var spanEvents []*trace.TSpanEvent
 		json.Unmarshal(spanEventList, &spanEvents)
 		if e, ok := es[index]; ok {
 			e.urls.urlCounter(rpc, elapsed, isErr)
-			e.events.eventsCounter(traceID, spanID, agentID, agentTtartTime, spanEvents)
+			e.events.eventsCounter(spanEvents)
 		}
 	}
 

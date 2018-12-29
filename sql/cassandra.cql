@@ -156,9 +156,8 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_record (start_time)
 CREATE TABLE IF NOT EXISTS rpc_details_record (
     app_name        text,
     url             text,
+    api_id          int,
     start_time      bigint,
-    class_name      text,
-    method_name     text,
     ser_type        text,
     elapsed         int,
     ratio_elapsed   FLOAT,
@@ -167,7 +166,7 @@ CREATE TABLE IF NOT EXISTS rpc_details_record (
     average_elapsed int,
     count           int,
     err_count       int,
-    PRIMARY KEY (app_name, url, start_time, class_name, method_name)
+    PRIMARY KEY (app_name, url, start_time, api_id)
 ) WITH gc_grace_seconds = 10800;  
 
 -- CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_details_record (start_time) 
