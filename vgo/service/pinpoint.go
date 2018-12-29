@@ -160,6 +160,10 @@ func (p *Pinpoint) DealTCPRequestResponse(packet *util.PinpointData, message []b
 			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentAPIStore", zap.String("error", err.Error()))
 			return err
 		}
+		// if err := gVgo.storage.APIStore(m); err != nil {
+		// 	g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentAPIStore", zap.String("error", err.Error()))
+		// 	return err
+		// }
 		break
 	case *trace.TStringMetaData:
 		if err := gVgo.storage.AgentStringStore(packet.AppName, packet.AgentID, m); err != nil {

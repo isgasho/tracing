@@ -151,6 +151,24 @@ func (s *Storage) AgentAPIStore(appName, agentID string, apiInfo *trace.TApiMeta
 	return nil
 }
 
+// APIStore ...
+func (s *Storage) APIStore(apiInfo *trace.TApiMetaData) error {
+	APIInsert := `INSERT INTO apis (api_id, api_info, line, type) 
+	VALUES (?, ?, ?, ?);`
+	if err := s.session.Query(
+		APIInsert,
+		apiInfo.ApiId,
+		apiInfo.ApiInfo,
+		apiInfo.GetLine(),
+		apiInfo.GetType(),
+	).Exec(); err != nil {
+		g.L.Warn("APIStore error", zap.String("error", err.Error()), zap.String("SQL", APIInsert))
+		return err
+	}
+
+	return nil
+}
+
 // AgentSQLStore ...
 func (s *Storage) AgentSQLStore(appName, agentID string, sqlInfo *trace.TSqlMetaData) error {
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))

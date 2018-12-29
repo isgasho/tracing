@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS agents (
 ) WITH gc_grace_seconds = 10800;
 
 
+
 CREATE TABLE IF NOT EXISTS agent_apis (
     app_name            text,
     agent_id            text,
@@ -28,8 +29,19 @@ CREATE TABLE IF NOT EXISTS agent_apis (
     api_info            text,
     line                int,
     type                int,
-    PRIMARY KEY (app_name, agent_id, api_id, start_time)
+    PRIMARY KEY (app_name, api_id)
 ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
+
+
+-- CREATE TABLE IF NOT EXISTS apis (
+--     api_id              int,
+--     api_info            text,
+--     line                int,
+--     type                int,
+--     PRIMARY KEY (api_id)
+-- ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
+
+
 
 
 CREATE TABLE IF NOT EXISTS agent_sqls (
@@ -204,6 +216,7 @@ TRUNCATE  TABLE  apps;
 TRUNCATE  TABLE rpc_record;
 TRUNCATE  TABLE rpc_details_record;
 TRUNCATE  TABLE sql_record;
+TRUNCATE  TABLE apis;
             
 DROP  TABLE  agent_strs;
 DROP  TABLE  agent_stats;
@@ -245,4 +258,19 @@ DROP  TABLE sql_record;
 -- CREATE CUSTOM INDEX IF NOT EXISTS ON operation_apis (start_time) 
 --     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
 --     WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+
+
+
+-- CREATE TABLE IF NOT EXISTS agent_apis (
+--     app_name            text,
+--     agent_id            text,
+--     api_id              int,
+--     start_time          bigint,
+--     api_info            text,
+--     line                int,
+--     type                int,
+--     PRIMARY KEY (app_name, agent_id, api_id, start_time)
+-- ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
