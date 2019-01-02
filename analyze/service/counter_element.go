@@ -6,18 +6,20 @@ import (
 
 // Element ...
 type Element struct {
-	urls   *SpanURLs
-	events *SpanEvents
-	jvm    *JVM
-	api    *API
-	FUNC   *FUNC
+	urls       *SpanURLs
+	events     *SpanEvents
+	exceptions *SpanExceptions
+	jvm        *JVM
+	api        *API
+	FUNC       *FUNC
 }
 
 // NewElement ...
 func NewElement() *Element {
 	return &Element{
-		urls:   NewSpanURLs(),
-		events: NewSpanEvents(),
+		urls:       NewSpanURLs(),
+		events:     NewSpanEvents(),
+		exceptions: NewSpanExceptions(),
 		// api:  NewAPI(),
 		// FUNC: NewFUNC(),
 	}

@@ -1,8 +1,6 @@
 package service
 
 import (
-	"log"
-
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 )
 
@@ -14,19 +12,59 @@ type SpanEvents struct {
 var gCounterQueryAPI string = `SELECT api_info FROM agent_apis WHERE api_id=? 
 		and agent_id=? and app_name=? and start_time=?;`
 
-func (spanEvents *SpanEvents) eventsCounter(events []*trace.TSpanEvent) error {
+func (spanEvents *SpanEvents) eventsCounter(events []*trace.TSpanEvent, chunkEvents []*trace.TSpanEvent) error {
 	for _, event := range events {
 		api, ok := spanEvents.spanEvents[event.GetApiId()]
 		if !ok {
 			api = NewSpanEvent()
 			spanEvents.spanEvents[event.GetApiId()] = api
 		}
-		// event.SpanId
-		log.Println("event.StartElapsed", event.StartElapsed)
-		log.Println("event.EndElapsed", event.EndElapsed)
 		api.count++
-		// api.elapsed += event.EndElapsed
+		elapsed := int(event.EndElapsed - event.StartElapsed)
+		api.elapsed += elapsed
+		api.serType = int(event.ServiceType)
+		if elapsed > api.maxElapsed {
+			api.maxElapsed = api.elapsed
+		}
+
+		if api.minElapsed == 0 || api.minElapsed > elapsed {
+			api.minElapsed = elapsed
+		}
+
+		// 是否有异常抛出
+		if event.GetExceptionInfo() != nil {
+			api.errCount++
+		}
+
+		api.averageElapsed = api.elapsed / api.count
 	}
+
+	for _, event := range chunkEvents {
+		api, ok := spanEvents.spanEvents[event.GetApiId()]
+		if !ok {
+			api = NewSpanEvent()
+			spanEvents.spanEvents[event.GetApiId()] = api
+		}
+		api.count++
+		elapsed := int(event.EndElapsed - event.StartElapsed)
+		api.elapsed += elapsed
+		api.serType = int(event.ServiceType)
+		if elapsed > api.maxElapsed {
+			api.maxElapsed = api.elapsed
+		}
+
+		if api.minElapsed == 0 || api.minElapsed > elapsed {
+			api.minElapsed = elapsed
+		}
+
+		// 是否有异常抛出"
+		if event.GetExceptionInfo() != nil {
+			api.errCount++
+		}
+
+		api.averageElapsed = api.elapsed / api.count
+	}
+
 	return nil
 }
 

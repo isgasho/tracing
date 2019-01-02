@@ -5,12 +5,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mafanr/g"
+	"go.uber.org/zap"
+
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 )
 
 var gCounterQuerySpan string = `SELECT agent_start_time, start_time, rpc, elapsed,  service_type, parent_app_name,
 	parent_app_type, span_event_list, err, agent_id
 	FROM traces WHERE trace_id=? AND span_id=?;`
+
+var gChunkEventsIterTrace string = `SELECT span_event_list FROM traces_chunk WHERE trace_id=? AND  span_id=?;`
 
 // spanCounter ...
 func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
@@ -27,13 +32,40 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 	var isErr int
 	var agentID string
 	var appName string
+
+	var chunkEvents []*trace.TSpanEvent
+
+	{
+		var spanChunkEventList []byte
+		iterChunkEvents := gAnalyze.appStore.db.Session.Query(gChunkEventsIterTrace, traceID, spanID).Iter()
+
+		iterChunkEvents.Scan(&spanChunkEventList)
+		iterChunkEvents.Close()
+
+		if len(spanChunkEventList) == 0 {
+			goto DoSpan
+		}
+		err := json.Unmarshal(spanChunkEventList, &chunkEvents)
+		if err != nil {
+			g.L.Warn("json.Unmarshal error", zap.String("error", err.Error()))
+		}
+
+	}
+
+DoSpan:
 	for iterTrace.Scan(&appName, &startTime, &rpc, &elapsed, &serviceType, &parentAppName, &parentAppType, &spanEventList, &isErr, &agentID) {
 		index, _ := ModMs2Min(startTime)
 		var spanEvents []*trace.TSpanEvent
-		json.Unmarshal(spanEventList, &spanEvents)
+		err := json.Unmarshal(spanEventList, &spanEvents)
+		if err != nil {
+			g.L.Warn("json.Unmarshal error", zap.String("error", err.Error()))
+			continue
+		}
+
 		if e, ok := es[index]; ok {
 			e.urls.urlCounter(rpc, elapsed, isErr)
-			e.events.eventsCounter(spanEvents)
+			e.events.eventsCounter(spanEvents, chunkEvents)
+			// e.exceptions.exceptionCounter(urlStr string, elapsed int, isError int)
 		}
 	}
 
@@ -47,6 +79,7 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 	// }
 
 	iterTrace.Close()
+
 	return nil
 }
 
