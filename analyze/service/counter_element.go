@@ -9,6 +9,7 @@ type Element struct {
 	urls       *SpanURLs
 	events     *SpanEvents
 	exceptions *SpanExceptions
+	stats      *AgentStats
 	jvm        *JVM
 	api        *API
 	FUNC       *FUNC
@@ -20,6 +21,7 @@ func NewElement() *Element {
 		urls:       NewSpanURLs(),
 		events:     NewSpanEvents(),
 		exceptions: NewSpanExceptions(),
+		stats:      NewAgentStats(),
 		// api:  NewAPI(),
 		// FUNC: NewFUNC(),
 	}

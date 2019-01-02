@@ -56,9 +56,9 @@ func (analyze *Analyze) Start() error {
 		g.L.Fatal("Start blink", zap.String("error", err.Error()))
 	}
 
-	if err := analyze.stats.Start(); err != nil {
-		g.L.Fatal("Start stats", zap.String("error", err.Error()))
-	}
+	// if err := analyze.stats.Start(); err != nil {
+	// 	g.L.Fatal("Start stats", zap.String("error", err.Error()))
+	// }
 
 	g.L.Info("Start ok!")
 	return nil

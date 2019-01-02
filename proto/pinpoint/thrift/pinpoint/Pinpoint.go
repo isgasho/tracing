@@ -9,8 +9,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/command"
 	"reflect"
+
+	"github.com/mafanr/vgo/proto/pinpoint/thrift/command"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
 )

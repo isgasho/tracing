@@ -1,0 +1,99 @@
+package service
+
+import (
+	"fmt"
+
+	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/proto/pinpoint/thrift"
+	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
+	"go.uber.org/zap"
+)
+
+// AgentStats ...
+type AgentStats struct {
+	cpus    map[int64]*CPULoad
+	memorys map[int64]*JvmMemory
+}
+
+// NewAgentStats ...
+func NewAgentStats() *AgentStats {
+	return &AgentStats{
+		cpus:    make(map[int64]*CPULoad),
+		memorys: make(map[int64]*JvmMemory),
+	}
+}
+
+func (agentStats *AgentStats) statsCounter(index int64, stats []*pinpoint.TAgentStat) error {
+	for _, stat := range stats {
+		cpu, ok := agentStats.cpus[index]
+		if !ok {
+			cpu = NewCPULoad()
+			agentStats.cpus[index] = cpu
+		}
+
+		memory, ok := agentStats.memorys[index]
+		if !ok {
+			memory = NewJvmMemory()
+			agentStats.memorys[index] = memory
+		}
+
+		cpu.Jvm += stat.CpuLoad.GetJvmCpuLoad()
+		cpu.System += stat.CpuLoad.GetSystemCpuLoad()
+
+		memory.HeapUsed += stat.Gc.GetJvmMemoryHeapUsed()
+		memory.NonHeap += stat.Gc.GetJvmMemoryNonHeapUsed()
+	}
+
+	return nil
+}
+
+// CPULoad ...
+type CPULoad struct {
+	Jvm    float64
+	System float64
+}
+
+// NewCPULoad ...
+func NewCPULoad() *CPULoad {
+	return &CPULoad{}
+}
+
+// JvmMemory ...
+type JvmMemory struct {
+	HeapUsed int64
+	NonHeap  int64
+}
+
+// NewJvmMemory ...
+func NewJvmMemory() *JvmMemory {
+	return &JvmMemory{}
+}
+
+var gQueryAgentStat string = `SELECT timestamp, stat_info  FROM agent_stats WHERE app_name=? AND  agent_id=? and timestamp>? and timestamp<=?;`
+
+// statsCounter ...
+func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) error {
+	for _, agent := range app.Agents {
+		iterAgentStat := gAnalyze.appStore.db.Session.Query(gQueryAgentStat, app.AppName, agent.AgentID, startTime, endTime).Iter()
+		var timestamp int64
+		var statInfo []byte
+		for iterAgentStat.Scan(&timestamp, &statInfo) {
+			index, _ := ModMs2Min(startTime)
+			if e, ok := es[index]; ok {
+				tStruct := thrift.Deserialize(statInfo)
+				switch m := tStruct.(type) {
+				case *pinpoint.TAgentStat:
+					e.stats.statsCounter(index, []*pinpoint.TAgentStat{m})
+					break
+				case *pinpoint.TAgentStatBatch:
+					e.stats.statsCounter(index, m.AgentStats)
+					break
+				default:
+					g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
+				}
+			}
+		}
+		iterAgentStat.Close()
+	}
+	return nil
+}

@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -73,7 +72,7 @@ func (appStore *AppStore) LoadAppAndCounter() {
 // loadApp ...
 func (appStore *AppStore) loadApp() error {
 
-	query := fmt.Sprintf("SELECT app_name, last_count_time FROM apps; ")
+	query := `SELECT app_name, last_count_time FROM apps; `
 	iterApp := appStore.db.Session.Query(query).Iter()
 	defer iterApp.Close()
 
@@ -105,6 +104,25 @@ func (appStore *AppStore) loadApp() error {
 			iterStartTime.Close()
 		}
 		app.lastCountTime = lastCountTime
+
+		// load agents
+		queryAgents := `SELECT agent_id, is_live FROM agents WHERE app_name=?;`
+		agentsIter := appStore.db.Session.Query(queryAgents, appName).Iter()
+
+		var agentID string
+		var isLive bool
+		for agentsIter.Scan(&agentID, &isLive) {
+			if isLive {
+				agent, isExist := app.getAgent(agentID)
+				if !isExist {
+					agent = NewAgent(agentID)
+					app.storeAgent(agent)
+				}
+			} else {
+				app.delAgent(agentID)
+			}
+		}
+		agentsIter.Close()
 	}
 
 	return nil

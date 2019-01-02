@@ -124,11 +124,11 @@ CREATE TABLE IF NOT EXISTS agent_stats (
     start_time          bigint,
     timestamp           bigint,
     stat_info           blob,
-    PRIMARY KEY (app_name, agent_id, start_time, timestamp)
+    PRIMARY KEY (app_name, agent_id, timestamp)
 ) WITH gc_grace_seconds = 10800; 
 
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON agent_stats (start_time) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON agent_stats (timestamp) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
