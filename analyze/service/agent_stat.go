@@ -39,9 +39,10 @@ func (agentStats *AgentStats) statsCounter(index int64, stats []*pinpoint.TAgent
 
 		cpu.Jvm += stat.CpuLoad.GetJvmCpuLoad()
 		cpu.System += stat.CpuLoad.GetSystemCpuLoad()
-
+		cpu.count++
 		memory.HeapUsed += stat.Gc.GetJvmMemoryHeapUsed()
 		memory.NonHeap += stat.Gc.GetJvmMemoryNonHeapUsed()
+		memory.count++
 	}
 
 	return nil
@@ -51,6 +52,7 @@ func (agentStats *AgentStats) statsCounter(index int64, stats []*pinpoint.TAgent
 type CPULoad struct {
 	Jvm    float64
 	System float64
+	count  int
 }
 
 // NewCPULoad ...
@@ -62,6 +64,7 @@ func NewCPULoad() *CPULoad {
 type JvmMemory struct {
 	HeapUsed int64
 	NonHeap  int64
+	count    int
 }
 
 // NewJvmMemory ...
@@ -94,6 +97,26 @@ func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) err
 			}
 		}
 		iterAgentStat.Close()
+	}
+	for key, e := range es {
+		cpu, ok := e.stats.cpus[key]
+		if ok {
+			if cpu != nil {
+				if cpu.count != 0 {
+					cpu.Jvm = cpu.Jvm / float64(cpu.count)
+					cpu.System = cpu.System / float64(cpu.count)
+				}
+			}
+		}
+		memcury, ok := e.stats.memorys[key]
+		if ok {
+			if memcury != nil {
+				if memcury.count != 0 {
+					memcury.HeapUsed = memcury.HeapUsed / int64(memcury.count)
+					memcury.NonHeap = memcury.NonHeap / int64(memcury.count)
+				}
+			}
+		}
 	}
 	return nil
 }

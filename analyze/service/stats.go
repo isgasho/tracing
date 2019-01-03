@@ -55,31 +55,6 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 
 	statsCounter(app, queryStartTime, queryEndTime, es)
 
-	// queryAgentStat := `SELECT timestamp, stat_info  FROM agent_stats WHERE app_name=? AND  agent_id=? and timestamp>? and timestamp<=?;`
-	// for _, agent := range app.Agents {
-	// 	iterAgentStat := gAnalyze.appStore.db.Session.Query(queryAgentStat, app.AppName, agent.AgentID, queryStartTime, queryEndTime).Iter()
-	// 	var timestamp int64
-	// 	var statInfo []byte
-	// 	for iterAgentStat.Scan(&timestamp, &statInfo) {
-	// 		tStruct := thrift.Deserialize(statInfo)
-	// 		switch m := tStruct.(type) {
-	// 		case *pinpoint.TAgentStat:
-	// 			log.Println("*pinpoint.TAgentStat", m)
-
-	// 			break
-	// 		case *pinpoint.TAgentStatBatch:
-	// 			log.Println("*pinpoint.TAgentStatBatch", m)
-	// 			for _, stat := range m.AgentStats {
-	// 				log.Println("stat.Gc ---->>>", stat.Gc)
-	// 			}
-	// 			break
-	// 		default:
-	// 			g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
-	// 		}
-	// 	}
-	// 	iterAgentStat.Close()
-	// }
-
 }
 
 // Counter ...
