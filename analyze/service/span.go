@@ -65,6 +65,7 @@ DoSpan:
 		if e, ok := es[index]; ok {
 			e.urls.urlCounter(rpc, elapsed, isErr)
 			e.events.eventsCounter(spanEvents, chunkEvents)
+			e.sqls.sqlCounter(spanEvents, chunkEvents)
 			// e.exceptions.exceptionCounter(urlStr string, elapsed int, isError int)
 		}
 	}

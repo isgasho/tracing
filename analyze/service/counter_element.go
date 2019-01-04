@@ -10,9 +10,7 @@ type Element struct {
 	events     *SpanEvents
 	exceptions *SpanExceptions
 	stats      *AgentStats
-	jvm        *JVM
-	api        *API
-	FUNC       *FUNC
+	sqls       *SpanSQLs
 }
 
 // NewElement ...
@@ -22,8 +20,7 @@ func NewElement() *Element {
 		events:     NewSpanEvents(),
 		exceptions: NewSpanExceptions(),
 		stats:      NewAgentStats(),
-		// api:  NewAPI(),
-		// FUNC: NewFUNC(),
+		sqls:       NewSpanSQLs(),
 	}
 }
 
@@ -39,31 +36,4 @@ func GetElements(startTime, endTime int64) map[int64]*Element {
 	}
 
 	return es
-}
-
-// JVM ...
-type JVM struct {
-}
-
-// NewJVM ...
-func NewJVM() *JVM {
-	return &JVM{}
-}
-
-// API ...
-type API struct {
-}
-
-// NewAPI ...
-func NewAPI() *API {
-	return &API{}
-}
-
-// FUNC ...
-type FUNC struct {
-}
-
-// NewFUNC ...
-func NewFUNC() *FUNC {
-	return &FUNC{}
 }
