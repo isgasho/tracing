@@ -11,6 +11,7 @@ import (
 
 // AgentStats ...
 type AgentStats struct {
+	agentID string
 	cpus    map[int64]*CPULoad
 	memorys map[int64]*JvmMemory
 }
@@ -23,7 +24,10 @@ func NewAgentStats() *AgentStats {
 	}
 }
 
-func (agentStats *AgentStats) statsCounter(index int64, stats []*pinpoint.TAgentStat) error {
+func (agentStats *AgentStats) statsCounter(agentID string, index int64, stats []*pinpoint.TAgentStat) error {
+	if len(agentStats.agentID) == 0 {
+		agentStats.agentID = agentID
+	}
 	for _, stat := range stats {
 		cpu, ok := agentStats.cpus[index]
 		if !ok {
@@ -45,6 +49,52 @@ func (agentStats *AgentStats) statsCounter(index int64, stats []*pinpoint.TAgent
 		memory.count++
 	}
 
+	return nil
+}
+
+var gInserStatRecord string = ``
+
+// if err := gAnalyze.db.Session.Query(gInserStatRecord,
+// 	app.AppName,
+// 	sqlID,
+// 	recordTime,
+// 	sql.elapsed,
+// 	sql.maxElapsed,
+// 	sql.minElapsed,
+// 	sql.averageElapsed, sql.count,
+// 	sql.averageElapsed,
+// ).Exec(); err != nil {
+// 	g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserStatRecord))
+// }
+
+var gInsertCPULoadRecord string = `INSERT INTO cpu_load_record (app_name, agent_id, start_time, jvm, system) VALUES (?,?,?,?,?);`
+var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_record (app_name , agent_id , start_time , heap_used , non_heap ) VALUES (?,?,?,?,?);`
+
+// sqlRecord ...
+func (agentStats *AgentStats) statRecord(app *App, recordTime int64) error {
+	for index, cpu := range agentStats.cpus {
+		if err := gAnalyze.db.Session.Query(gInsertCPULoadRecord,
+			app.AppName,
+			agentStats.agentID,
+			index,
+			cpu.Jvm,
+			cpu.System,
+		).Exec(); err != nil {
+			g.L.Warn("statRecord error", zap.String("error", err.Error()), zap.String("SQL", gInsertCPULoadRecord))
+		}
+	}
+
+	for index, memory := range agentStats.memorys {
+		if err := gAnalyze.db.Session.Query(gInsertJVMMemoryRecord,
+			app.AppName,
+			agentStats.agentID,
+			index,
+			memory.HeapUsed,
+			memory.NonHeap,
+		).Exec(); err != nil {
+			g.L.Warn("statRecord error", zap.String("error", err.Error()), zap.String("SQL", gInsertJVMMemoryRecord))
+		}
+	}
 	return nil
 }
 
@@ -81,15 +131,15 @@ func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) err
 		var timestamp int64
 		var statInfo []byte
 		for iterAgentStat.Scan(&timestamp, &statInfo) {
-			index, _ := ModMs2Min(startTime)
+			index, _ := ModMs2Min(timestamp)
 			if e, ok := es[index]; ok {
 				tStruct := thrift.Deserialize(statInfo)
 				switch m := tStruct.(type) {
 				case *pinpoint.TAgentStat:
-					e.stats.statsCounter(index, []*pinpoint.TAgentStat{m})
+					e.stats.statsCounter(agent.AgentID, index, []*pinpoint.TAgentStat{m})
 					break
 				case *pinpoint.TAgentStatBatch:
-					e.stats.statsCounter(index, m.AgentStats)
+					e.stats.statsCounter(agent.AgentID, index, m.AgentStats)
 					break
 				default:
 					g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))

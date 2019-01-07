@@ -2,9 +2,11 @@ package service
 
 import (
 	"sync"
+	"time"
 
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/analyze/misc"
+	"go.uber.org/zap"
 )
 
 // Stats 离线计算
@@ -42,6 +44,12 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 
 	queryStartTime = app.lastCountTime
 	queryEndTime = app.lastCountTime + misc.Conf.Stats.Range*1000
+
+	// 结束时间要比当前时间少三分钟，这样可以确保数据准确性
+	if (queryEndTime + 180*1000) >= time.Now().UnixNano()/1e6 {
+		return
+	}
+
 	es := GetElements(queryStartTime, queryEndTime)
 	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and start_time>? and start_time<=?;`
 	iterTraceID := gAnalyze.appStore.db.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
@@ -55,6 +63,17 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 
 	statsCounter(app, queryStartTime, queryEndTime, es)
 
+	// @TODO记录计算结果
+	for recordTime, e := range es {
+		spanCounterRecord(app, recordTime, e)
+	}
+
+	// @TODO
+	// 记录计算时间到表
+	if err := gAnalyze.db.Session.Query(gUpdateLastCounterTime, queryEndTime, app.AppName).Exec(); err != nil {
+		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", gUpdateLastCounterTime))
+		return
+	}
 }
 
 // Counter ...

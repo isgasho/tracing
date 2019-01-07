@@ -1,7 +1,9 @@
 package service
 
 import (
+	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
+	"go.uber.org/zap"
 )
 
 // SpanSQLs ...
@@ -79,6 +81,27 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 					sql.averageElapsed = sql.elapsed / sql.count
 				}
 			}
+		}
+	}
+	return nil
+}
+
+var gInserSQLRecord string = `INSERT INTO sql_record (app_name, sql, start_time, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?);`
+
+// sqlRecord ...
+func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {
+	for sqlID, sql := range spanSQLs.sqls {
+		if err := gAnalyze.db.Session.Query(gInserSQLRecord,
+			app.AppName,
+			sqlID,
+			recordTime,
+			sql.elapsed,
+			sql.maxElapsed,
+			sql.minElapsed,
+			sql.averageElapsed, sql.count,
+			sql.averageElapsed,
+		).Exec(); err != nil {
+			g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserSQLRecord))
 		}
 	}
 	return nil

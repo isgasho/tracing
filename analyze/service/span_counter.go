@@ -17,6 +17,8 @@ var gCounterQuerySpan string = `SELECT agent_start_time, start_time, rpc, elapse
 
 var gChunkEventsIterTrace string = `SELECT span_event_list FROM traces_chunk WHERE trace_id=? AND  span_id=?;`
 
+var gUpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app_name=?;`
+
 // spanCounter ...
 func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
@@ -64,20 +66,11 @@ DoSpan:
 
 		if e, ok := es[index]; ok {
 			e.urls.urlCounter(rpc, elapsed, isErr)
-			e.events.eventsCounter(spanEvents, chunkEvents)
+			e.events.eventsCounter(rpc, spanEvents, chunkEvents)
 			e.sqls.sqlCounter(spanEvents, chunkEvents)
 			// e.exceptions.exceptionCounter(urlStr string, elapsed int, isError int)
 		}
 	}
-
-	// for _, v := range es {
-	// 	if v.urls != nil {
-	// 		for uk, uv := range v.urls.urls {
-	// 			log.Println(uk, uv)
-	// 		}
-	// 	}
-	// 	// log.Println(v.urls)
-	// }
 
 	iterTrace.Close()
 
@@ -94,4 +87,12 @@ func ModMs2Min(ms int64) (int64, error) {
 	t := time.Unix(0, nsec)
 
 	return t.Unix() - int64(t.Second()), nil
+}
+
+func spanCounterRecord(app *App, recordTime int64, e *Element) error {
+	e.urls.urlRecord(app, recordTime)
+	e.events.eventRecord(app, recordTime)
+	e.sqls.sqlRecord(app, recordTime)
+	e.stats.statRecord(app, recordTime)
+	return nil
 }

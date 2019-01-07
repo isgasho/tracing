@@ -158,7 +158,7 @@ CREATE TABLE IF NOT EXISTS rpc_details_record (
     url             text,
     api_id          int,
     start_time      bigint,
-    ser_type        text,
+    ser_type        int,
     elapsed         int,
     ratio_elapsed   FLOAT,
     max_elapsed     int,
@@ -169,13 +169,13 @@ CREATE TABLE IF NOT EXISTS rpc_details_record (
     PRIMARY KEY (app_name, url, start_time, api_id)
 ) WITH gc_grace_seconds = 10800;  
 
--- CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_details_record (start_time) 
---     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
---     WITH OPTIONS = {'mode': 'SPARSE'};
+CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_details_record (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
 
 CREATE TABLE IF NOT EXISTS sql_record (
     app_name        text,
-    sql             text,
+    sql             int,
     start_time      bigint,
     elapsed         int,
     max_elapsed     int,
@@ -186,9 +186,35 @@ CREATE TABLE IF NOT EXISTS sql_record (
     PRIMARY KEY (app_name, sql, start_time)
 ) WITH gc_grace_seconds = 10800;  
 
--- CREATE CUSTOM INDEX IF NOT EXISTS ON sql_record (start_time) 
---     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
---     WITH OPTIONS = {'mode': 'SPARSE'};
+CREATE CUSTOM INDEX IF NOT EXISTS ON sql_record (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+CREATE TABLE IF NOT EXISTS cpu_load_record (
+    app_name        text,
+    agent_id        text,
+    start_time      bigint,
+    jvm             double,
+    System          double,
+    PRIMARY KEY (app_name, agent_id, start_time)
+) WITH gc_grace_seconds = 10800;  
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON cpu_load_record (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+CREATE TABLE IF NOT EXISTS jvm_memory_record (
+    app_name        text,
+    agent_id        text,
+    start_time      bigint,
+    heap_used       bigint,
+    non_heap        bigint,
+    PRIMARY KEY (app_name, agent_id, start_time)
+) WITH gc_grace_seconds = 10800;  
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_memory_record (start_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
 
 TRUNCATE  TABLE  app_strs;
 TRUNCATE  TABLE  agent_stats;

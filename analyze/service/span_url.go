@@ -1,5 +1,10 @@
 package service
 
+import (
+	"github.com/mafanr/g"
+	"go.uber.org/zap"
+)
+
 // SpanURLs ...
 type SpanURLs struct {
 	urls map[string]*SpanURL
@@ -34,6 +39,29 @@ func (spanUrls *SpanURLs) urlCounter(urlStr string, elapsed int, isError int) er
 	}
 
 	url.averageElapsed = url.elapsed / url.count
+	return nil
+}
+
+var gInserRPCRecord string = `INSERT INTO rpc_record (app_name, start_time, url, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count)
+ VALUES (?,?,?,?,?,?,?,?,?);`
+
+// urlRecord ...
+func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
+	for urlStr, url := range spanUrls.urls {
+		if err := gAnalyze.db.Session.Query(gInserRPCRecord,
+			app.AppName,
+			recordTime,
+			urlStr,
+			url.elapsed,
+			url.maxElapsed,
+			url.minElapsed,
+			url.averageElapsed,
+			url.count,
+			url.errCount,
+		).Exec(); err != nil {
+			g.L.Warn("urlRecord error", zap.String("error", err.Error()))
+		}
+	}
 	return nil
 }
 

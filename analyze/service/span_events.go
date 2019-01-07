@@ -1,18 +1,24 @@
 package service
 
 import (
+	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
+	"go.uber.org/zap"
 )
 
 // SpanEvents ...
 type SpanEvents struct {
+	rpc        string
 	spanEvents map[int32]*SpanEvent
 }
 
 var gCounterQueryAPI string = `SELECT api_info FROM agent_apis WHERE api_id=? 
 		and agent_id=? and app_name=? and start_time=?;`
 
-func (spanEvents *SpanEvents) eventsCounter(events []*trace.TSpanEvent, chunkEvents []*trace.TSpanEvent) error {
+func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEvent, chunkEvents []*trace.TSpanEvent) error {
+	if len(spanEvents.rpc) == 0 {
+		spanEvents.rpc = rpc
+	}
 	for _, event := range events {
 		api, ok := spanEvents.spanEvents[event.GetApiId()]
 		if !ok {
@@ -20,7 +26,7 @@ func (spanEvents *SpanEvents) eventsCounter(events []*trace.TSpanEvent, chunkEve
 			spanEvents.spanEvents[event.GetApiId()] = api
 		}
 		api.count++
-		elapsed := int(event.EndElapsed - event.StartElapsed)
+		elapsed := int(event.EndElapsed)
 		api.elapsed += elapsed
 		api.serType = int(event.ServiceType)
 		if elapsed > api.maxElapsed {
@@ -65,6 +71,30 @@ func (spanEvents *SpanEvents) eventsCounter(events []*trace.TSpanEvent, chunkEve
 		api.averageElapsed = api.elapsed / api.count
 	}
 
+	return nil
+}
+
+var gInserRPCDetailsRecord string = ` INSERT INTO rpc_details_record (app_name, url, start_time, api_id, ser_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
+
+// eventRecord ...
+func (spanEvents *SpanEvents) eventRecord(app *App, recordTime int64) error {
+	for apiID, spanEvent := range spanEvents.spanEvents {
+		if err := gAnalyze.db.Session.Query(gInserRPCDetailsRecord,
+			app.AppName,
+			spanEvents.rpc,
+			recordTime,
+			apiID,
+			spanEvent.serType,
+			spanEvent.elapsed,
+			spanEvent.maxElapsed,
+			spanEvent.minElapsed,
+			spanEvent.averageElapsed,
+			spanEvent.count,
+			spanEvent.errCount,
+		).Exec(); err != nil {
+			g.L.Warn("eventRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserRPCDetailsRecord))
+		}
+	}
 	return nil
 }
 
