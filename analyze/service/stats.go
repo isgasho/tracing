@@ -52,7 +52,7 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 
 	es := GetElements(queryStartTime, queryEndTime)
 	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and start_time>? and start_time<=?;`
-	iterTraceID := gAnalyze.appStore.db.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
+	iterTraceID := gAnalyze.appStore.cql.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
 	defer iterTraceID.Close()
 
 	var traceID string
@@ -70,7 +70,7 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 
 	// @TODO
 	// 记录计算时间到表
-	if err := gAnalyze.db.Session.Query(gUpdateLastCounterTime, queryEndTime, app.AppName).Exec(); err != nil {
+	if err := gAnalyze.cql.Session.Query(gUpdateLastCounterTime, queryEndTime, app.AppName).Exec(); err != nil {
 		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", gUpdateLastCounterTime))
 		return
 	}

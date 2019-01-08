@@ -79,7 +79,7 @@ var gInserRPCDetailsRecord string = ` INSERT INTO rpc_details_record (app_name, 
 // eventRecord ...
 func (spanEvents *SpanEvents) eventRecord(app *App, recordTime int64) error {
 	for apiID, spanEvent := range spanEvents.spanEvents {
-		if err := gAnalyze.db.Session.Query(gInserRPCDetailsRecord,
+		if err := gAnalyze.cql.Session.Query(gInserRPCDetailsRecord,
 			app.AppName,
 			spanEvents.rpc,
 			recordTime,

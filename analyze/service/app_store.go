@@ -13,7 +13,7 @@ import (
 // AppStore ...
 type AppStore struct {
 	sync.RWMutex
-	db   *g.Cassandra
+	cql  *g.Cassandra
 	Apps map[string]*App
 }
 
@@ -31,9 +31,9 @@ func (appStore *AppStore) getApp(appName string) (*App, bool) {
 }
 
 // NewAppStore ...
-func NewAppStore(db *g.Cassandra) *AppStore {
+func NewAppStore(cql *g.Cassandra) *AppStore {
 	return &AppStore{
-		db:   db,
+		cql:  cql,
 		Apps: make(map[string]*App),
 	}
 }
@@ -73,7 +73,7 @@ func (appStore *AppStore) LoadAppAndCounter() {
 func (appStore *AppStore) loadApp() error {
 
 	query := `SELECT app_name, last_count_time FROM apps; `
-	iterApp := appStore.db.Session.Query(query).Iter()
+	iterApp := appStore.cql.Session.Query(query).Iter()
 	defer iterApp.Close()
 
 	var appName string
@@ -99,7 +99,7 @@ func (appStore *AppStore) loadApp() error {
 		// 从 agent_stat 中取最早的启动时间记录
 		if lastCountTime == 0 {
 			queryStartTime := `SELECT start_time  FROM agent_stats  WHERE app_name=? LIMIT 1;`
-			iterStartTime := appStore.db.Session.Query(queryStartTime, app.AppName).Iter()
+			iterStartTime := appStore.cql.Session.Query(queryStartTime, app.AppName).Iter()
 			iterStartTime.Scan(&lastCountTime)
 			iterStartTime.Close()
 		}
@@ -107,7 +107,7 @@ func (appStore *AppStore) loadApp() error {
 
 		// load agents
 		queryAgents := `SELECT agent_id, is_live FROM agents WHERE app_name=?;`
-		agentsIter := appStore.db.Session.Query(queryAgents, appName).Iter()
+		agentsIter := appStore.cql.Session.Query(queryAgents, appName).Iter()
 
 		var agentID string
 		var isLive bool

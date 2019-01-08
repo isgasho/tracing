@@ -16,7 +16,7 @@ import (
 
 // Storage ...
 type Storage struct {
-	session       *gocql.Session
+	cql           *gocql.Session
 	spanChan      chan *trace.TSpan
 	spanChunkChan chan *trace.TSpanChunk
 }
@@ -44,7 +44,7 @@ func (s *Storage) Init() error {
 		g.L.Warn("Start:cluster.CreateSession", zap.String("error", err.Error()))
 		return err
 	}
-	s.session = session
+	s.cql = session
 	return nil
 }
 
@@ -69,7 +69,7 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 		pid, version, start_time, end_time, is_live, is_container, operating_env) 
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		agentInsert,
 		agentInfo.AppName,
 		agentInfo.AgentID,
@@ -96,7 +96,7 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 func (s *Storage) AgentInfoStore(appName, agentID string, startTime int64, agentInfo []byte) error {
 	agentInofInsert := `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 
 	VALUES ( ?, ?, ?, ?);`
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		agentInofInsert,
 		appName,
 		agentID,
@@ -115,7 +115,7 @@ func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64
 	agentOfflineInsert := `INSERT INTO agents (app_name, agent_id, start_time, end_time, is_live) 
 	VALUES ( ?, ?, ?, ?, ?);`
 
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		agentOfflineInsert,
 		appName,
 		agentID,
@@ -134,7 +134,7 @@ func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error
 
 	appAPIInsert := `INSERT INTO app_apis (app_name,  api_id, start_time, api_info, line, type) 
 	VALUES (?, ?, ?, ?, ?, ?);`
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		appAPIInsert,
 		appName,
 		apiInfo.ApiId,
@@ -154,7 +154,7 @@ func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error
 func (s *Storage) APIStore(apiInfo *trace.TApiMetaData) error {
 	APIInsert := `INSERT INTO apis (api_id, api_info, line, type) 
 	VALUES (?, ?, ?, ?);`
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		APIInsert,
 		apiInfo.ApiId,
 		apiInfo.ApiInfo,
@@ -173,7 +173,7 @@ func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))
 	appSQLInsert := `INSERT INTO app_sqls (app_name, sql_id, start_time, sql_info) 
 	VALUES (?, ?, ?, ?);`
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		appSQLInsert,
 		appName,
 		sqlInfo.SqlId,
@@ -191,7 +191,7 @@ func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error
 func (s *Storage) AppStringStore(appName string, strInfo *trace.TStringMetaData) error {
 	agentStrInsert := `INSERT INTO app_strs (app_name, str_id, start_time, str_info) 
 	VALUES (?, ?, ?, ?);`
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		agentStrInsert,
 		appName,
 		strInfo.StringId,
@@ -310,7 +310,7 @@ func (s *Storage) writeSpan(span *trace.TSpan) error {
 	spanEvenlist, _ := json.Marshal(span.GetSpanEventList())
 	exceptioninfo, _ := json.Marshal(span.GetExceptionInfo())
 
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		insertSpan,
 		span.TransactionId,
 		span.SpanId,
@@ -350,7 +350,7 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	spanEvenlist, _ := json.Marshal(spanChunk.GetSpanEventList())
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		insertSpanChunk,
 		spanChunk.TransactionId,
 		spanChunk.SpanId,
@@ -443,7 +443,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 	INSERT
 	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id, rpc, span_id)
 	VALUES (?, ?, ?, ?, ?, ?, ?)`
-	if err := s.session.Query(
+	if err := s.cql.Query(
 		insertOperIndex,
 		span.ApplicationName,
 		span.AgentId,
@@ -462,7 +462,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 
 // writeAgentStatBatch ....
 func (s *Storage) writeAgentStatBatch(appName, agentID string, agentStatBatch *pinpoint.TAgentStatBatch, infoB []byte) error {
-	batchInsert := s.session.NewBatch(gocql.UnloggedBatch)
+	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
 	var insertAgentStatBatch string
 	if misc.Conf.Storage.AgentStatUseTTL {
 		insertAgentStatBatch = `
@@ -495,7 +495,7 @@ func (s *Storage) writeAgentStatBatch(appName, agentID string, agentStatBatch *p
 		}
 	}
 
-	if err := s.session.ExecuteBatch(batchInsert); err != nil {
+	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
 		g.L.Warn("writeAgentStatBatch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
 		return err
 	}
@@ -510,7 +510,7 @@ func (s *Storage) writeAgentStat(appName, agentID string, agentStat *pinpoint.TA
 	INSERT
 	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
 	VALUES (?, ?, ?, ?, ?) USING TTL ?;`
-		if err := s.session.Query(
+		if err := s.cql.Query(
 			insertAgentStat,
 			appName,
 			agentID,
@@ -527,7 +527,7 @@ func (s *Storage) writeAgentStat(appName, agentID string, agentStat *pinpoint.TA
 	INSERT
 	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
 	VALUES (?, ?, ?, ?, ?);`
-		if err := s.session.Query(
+		if err := s.cql.Query(
 			insertAgentStat,
 			appName,
 			agentID,

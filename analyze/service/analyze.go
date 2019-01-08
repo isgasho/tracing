@@ -9,7 +9,7 @@ import (
 
 // Analyze ...
 type Analyze struct {
-	db       *g.Cassandra
+	cql      *g.Cassandra
 	stats    *Stats
 	blink    *Blink
 	appStore *AppStore
@@ -24,7 +24,7 @@ func New() *Analyze {
 	analyze := &Analyze{
 		stats:   NewStats(),
 		blink:   NewBlink(),
-		db:      g.NewCassandra(),
+		cql:     g.NewCassandra(),
 		cluster: NewCluster(),
 		hash:    g.NewHash(),
 	}
@@ -41,11 +41,11 @@ func (analyze *Analyze) Start() error {
 		g.L.Fatal("Start cluster.Start", zap.String("error", err.Error()))
 	}
 
-	if err := analyze.db.Init(misc.Conf.Cassandra.NumConns, misc.Conf.Cassandra.Keyspace, misc.Conf.Cassandra.Cluster); err != nil {
+	if err := analyze.cql.Init(misc.Conf.Cassandra.NumConns, misc.Conf.Cassandra.Keyspace, misc.Conf.Cassandra.Cluster); err != nil {
 		g.L.Fatal("Start Init", zap.String("error", err.Error()))
 	}
 
-	appStore := NewAppStore(analyze.db)
+	appStore := NewAppStore(analyze.cql)
 	analyze.appStore = appStore
 
 	if err := analyze.appStore.Start(); err != nil {
@@ -75,8 +75,8 @@ func (analyze *Analyze) Close() error {
 		analyze.stats.Close()
 	}
 
-	if analyze.db != nil {
-		analyze.db.Close()
+	if analyze.cql != nil {
+		analyze.cql.Close()
 	}
 
 	g.L.Info("Close ok!")

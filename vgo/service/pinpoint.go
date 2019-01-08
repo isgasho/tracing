@@ -47,7 +47,7 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 					INSERT
 					INTO apps(app_name)
 					VALUES (?)`
-					if err := gVgo.storage.session.Query(
+					if err := gVgo.storage.cql.Query(
 						insertApp,
 						agentInfo.AppName,
 					).Exec(); err != nil {

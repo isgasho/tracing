@@ -22,7 +22,7 @@ var gUpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app
 // spanCounter ...
 func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
-	iterTrace := gAnalyze.appStore.db.Session.Query(gCounterQuerySpan, traceID, spanID).Iter()
+	iterTrace := gAnalyze.appStore.cql.Session.Query(gCounterQuerySpan, traceID, spanID).Iter()
 
 	var startTime int64
 	var rpc string
@@ -39,7 +39,7 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
 	{
 		var spanChunkEventList []byte
-		iterChunkEvents := gAnalyze.appStore.db.Session.Query(gChunkEventsIterTrace, traceID, spanID).Iter()
+		iterChunkEvents := gAnalyze.appStore.cql.Session.Query(gChunkEventsIterTrace, traceID, spanID).Iter()
 
 		iterChunkEvents.Scan(&spanChunkEventList)
 		iterChunkEvents.Close()

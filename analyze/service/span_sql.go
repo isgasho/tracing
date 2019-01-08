@@ -91,7 +91,7 @@ var gInserSQLRecord string = `INSERT INTO sql_record (app_name, sql, start_time,
 // sqlRecord ...
 func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {
 	for sqlID, sql := range spanSQLs.sqls {
-		if err := gAnalyze.db.Session.Query(gInserSQLRecord,
+		if err := gAnalyze.cql.Session.Query(gInserSQLRecord,
 			app.AppName,
 			sqlID,
 			recordTime,

@@ -73,7 +73,7 @@ var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_record (app_name , a
 // sqlRecord ...
 func (agentStats *AgentStats) statRecord(app *App, recordTime int64) error {
 	for index, cpu := range agentStats.cpus {
-		if err := gAnalyze.db.Session.Query(gInsertCPULoadRecord,
+		if err := gAnalyze.cql.Session.Query(gInsertCPULoadRecord,
 			app.AppName,
 			agentStats.agentID,
 			index,
@@ -85,7 +85,7 @@ func (agentStats *AgentStats) statRecord(app *App, recordTime int64) error {
 	}
 
 	for index, memory := range agentStats.memorys {
-		if err := gAnalyze.db.Session.Query(gInsertJVMMemoryRecord,
+		if err := gAnalyze.cql.Session.Query(gInsertJVMMemoryRecord,
 			app.AppName,
 			agentStats.agentID,
 			index,
@@ -127,7 +127,7 @@ var gQueryAgentStat string = `SELECT timestamp, stat_info  FROM agent_stats WHER
 // statsCounter ...
 func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) error {
 	for _, agent := range app.Agents {
-		iterAgentStat := gAnalyze.appStore.db.Session.Query(gQueryAgentStat, app.AppName, agent.AgentID, startTime, endTime).Iter()
+		iterAgentStat := gAnalyze.appStore.cql.Session.Query(gQueryAgentStat, app.AppName, agent.AgentID, startTime, endTime).Iter()
 		var timestamp int64
 		var statInfo []byte
 		for iterAgentStat.Scan(&timestamp, &statInfo) {

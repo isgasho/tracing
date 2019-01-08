@@ -48,7 +48,7 @@ var gInserRPCRecord string = `INSERT INTO rpc_record (app_name, start_time, url,
 // urlRecord ...
 func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
 	for urlStr, url := range spanUrls.urls {
-		if err := gAnalyze.db.Session.Query(gInserRPCRecord,
+		if err := gAnalyze.cql.Session.Query(gInserRPCRecord,
 			app.AppName,
 			recordTime,
 			urlStr,
