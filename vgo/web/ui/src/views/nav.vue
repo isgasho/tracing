@@ -100,7 +100,7 @@ export default {
     // position: fixed;
     top: 6px;
     left: 0;
-    z-index: 1018;
+    z-index: 100;
     background-color: #474747;
     box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
 }

@@ -26,7 +26,7 @@
           </div>
        </Col>
        <Col span="14" offset="1">
-        <trace :graphData="JSON.parse(tracesData)" style='height: 49vh' @selTraces="selectTraces"></trace>
+        <trace :graphData="tracesData" style='height: 49vh' @selTraces="selectTraces"></trace>
        </Col>
     </Row>
 
@@ -45,6 +45,82 @@
           <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="selectedTraces" class="margin-top-15" @on-row-click="showTrace"></Table>
         </div>
         </div>
+
+    <!-- 链路展示Modal -->
+    <Modal v-model="traceVisible" :footer-hide="true" :z-index="500" fullscreen>
+        <div slot="header" style="padding-top:5px;padding-bottom:0px;border-bottom:none">
+            <div class="font-size-16" style="font-weight:bold">{{$store.state.apm.appName}} : {{selectedTrace.url}}</div>
+            <div  style="margin-top:13px;font-weight:bold;font-size:12px">
+              <span class="meta-word">
+                时间:
+              </span>
+              {{selectedTrace.showTime}}
+
+              <span class="meta-word margin-left-10">
+                耗时:
+              </span>
+              {{selectedTrace.elapsed}}ms
+
+              <span class="meta-word margin-left-10">
+                链路ID:
+              </span>
+              {{selectedTrace.traceId}}
+
+              <span class="meta-word margin-left-10">
+                服务器ID:
+              </span>
+              {{selectedTrace.agentId}}
+            </div>
+        </div>
+
+        <div class="padding-top-5 trace-pane">
+          <Row>
+            <Col span="10" class="title split-border">方法(点击具体方法名可查看详情)</Col>
+            <Col span="5"  class="title split-border">参数</Col>
+            <Col span="3" class="title split-border">耗时(ms)</Col>
+            <Col span="3" class="title split-border">API</Col>
+            <Col span="3" class="title">所属应用</Col>
+          </Row>
+          <div  class="body">
+            <Row v-for="r in traceData.value" v-show="isShow(r)" class="hover-cursor" @click.native="spanDetail(r)" :class="classObject(r)" >
+              <Col span="10" class="item split-border" :style="{paddingLeft:r.paddingLeft+'px'}"> {{getMethod(r.method)}}</Col>
+              <Col span="5"  class="item split-border"> {{r.params}}</Col>
+              <Col span="3" class="item split-border">{{r.self}}</Col>
+              <Col span="3" class="item split-border"> {{r.api}}</Col>
+              <Col span="3" class="item">{{r.agentName}}</Col>
+            </Row>
+          </div>
+        </div>
+    </Modal>
+
+    <Drawer :title="selItem.method" :closable="false" v-model="isItemSel" :styles="{'z-index':2000}" width=40>
+        <Form :label-width="80">
+          <FormItem label="发生时间">
+              {{selItem.startTimeStr}}
+          </FormItem>
+          <FormItem label="耗时(ms)">
+              {{selItem.self}}
+          </FormItem>
+          <FormItem label="应用名">
+              {{selItem.agentName}}
+          </FormItem>
+          <FormItem label="服务器">
+              {{selItem.agentId}}
+          </FormItem>
+           <FormItem label="Class">
+              {{selItem.class}}
+          </FormItem>
+           <FormItem label="Api">
+              {{selItem.api}}
+          </FormItem>
+          <FormItem label="参数">
+              {{selItem.params}}
+          </FormItem>
+          <FormItem label="层级(Debug)">
+              {{selItem.name}}
+          </FormItem>
+      </Form>
+    </Drawer>
   </div>   
 </template>
 
@@ -56,8 +132,8 @@ export default {
   components: {trace},
   data () {
     return {
-      tracesData: null,
-      traceData: null,
+      tracesData: [],
+      traceData: {},
        resultLimit: 20,
       selectedTraces: [],
 
@@ -89,15 +165,51 @@ export default {
         ],
 
       selSucCount: 0,
-      selErrCount: 0
+      selErrCount: 0,
+
+      traceVisible: false,
+
+      selectedTrace: {},
+
+       split1: 0.3,
+       selItem: {},
+       isItemSel: false,
+       collapseList: []
     }
   },
   watch: {
   },
   computed: {
-
+    
   },
   methods: {
+    isShow(r) {
+      // 对于collapseList中的每个值，判断当前行是否在它的子树中，若在，则不显示，跳出循环
+      // 若当前name是以collapseList的值为前缀，说明在子树中
+      for (var i=0;i<this.collapseList.length;i++) {
+        var j = r.name.indexOf(this.collapseList[i]);
+        if(j == 0){
+          return false
+        }
+      }
+      return true
+    },
+    spanDetail(r) {
+      this.selItem = r
+      this.isItemSel = true
+    },
+    classObject: function (r) {
+      var o = {}
+      o[r.name] = true
+      if (r.classStyle == 'error') {
+        o['error'] = true
+      }
+      return o
+    },
+    getMethod(s) {
+      var i = s.split('(')
+      return i[0]
+    },
     rowClassName (row, index) {
                 if (row.errCode == 1) {
                     return 'error-trace';
@@ -107,15 +219,20 @@ export default {
             },
     selectTraces(t) {
       this.selectedTraces = t
+      var ec = 0,sc = 0
       for (var i=0;i<t.length;i++) {
         if (t[i].errCode==1) {
-          this.selErrCount++
+          ec+=1
         } else {
-          this.selSucCount++
+          sc+=1
         }
       }
+
+      this.selErrCount = ec
+      this.selSucCount = sc
     },
     showTrace(t) {
+      this.selectedTrace = t
       // 查询trace详情
       request({
         url: '/apm/query/trace',
@@ -124,8 +241,10 @@ export default {
           traceId : t.traceId
         }
     }).then(res => {
-      this.traceData = res.data.data
-      console.log(JSON.parse(this.traceData))
+      this.traceData = JSON.parse(res.data.data)
+      this.traceVisible = true
+      console.log(this.selectedTrace)
+      console.log(this.traceData)
     })
     }
   },
@@ -136,7 +255,7 @@ export default {
         params: {
         }
     }).then(res => {
-      this.tracesData = res.data.data
+      this.tracesData = JSON.parse(res.data.data)
     })
   }
 }
@@ -146,6 +265,38 @@ export default {
 
 <style lang="less" scoped> 
 @import "../../theme/gvar.less";
+.meta-word {
+  margin-right:4px;
+}
+
+.trace-pane {
+  .title {
+    font-size: 15px;
+    background: #f3f3f3;
+    padding-left:5px;
+    padding-top:6px;
+    padding-bottom:6px
+  }
+  .body {
+    .item {
+      padding-left:7px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      overflow: hidden;
+      text-overflow:ellipsis;
+      white-space: nowrap;
+      font-size:12px;
+      // line-height: 20px;
+      // height: 30px;
+    }
+    .error {
+      color: #d62727;
+    }
+    .hover-cursor:hover {
+      background-color: #ebf7ff !important
+    }
+  }
+}
 </style>
 
 <style>
@@ -156,4 +307,10 @@ export default {
     .ivu-table td:hover {
       cursor: pointer;
     }
+
+.custom-trigger {
+  cursor:col-resize;
+}
 </style>
+
+
