@@ -34,8 +34,10 @@ type Config struct {
 	}
 
 	Stats struct {
-		Interval int
-		Range    int64
+		Interval         int
+		Range            int64
+		SatisfactionTime int
+		TolerateTime     int
 	}
 }
 

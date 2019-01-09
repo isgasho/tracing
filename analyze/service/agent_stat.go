@@ -67,11 +67,12 @@ var gInserStatRecord string = ``
 // 	g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserStatRecord))
 // }
 
-var gInsertCPULoadRecord string = `INSERT INTO cpu_load_record (app_name, agent_id, start_time, jvm, system) VALUES (?,?,?,?,?);`
-var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_record (app_name , agent_id , start_time , heap_used , non_heap ) VALUES (?,?,?,?,?);`
+var gInsertCPULoadRecord string = `INSERT INTO cpu_load_stats (app_name, agent_id, input_date, jvm, system) VALUES (?,?,?,?,?);`
+var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_stats (app_name , agent_id , input_date , heap_used , non_heap ) VALUES (?,?,?,?,?);`
 
 // sqlRecord ...
 func (agentStats *AgentStats) statRecord(app *App, recordTime int64) error {
+
 	for index, cpu := range agentStats.cpus {
 		if err := gAnalyze.cql.Session.Query(gInsertCPULoadRecord,
 			app.AppName,
@@ -124,6 +125,7 @@ func NewJvmMemory() *JvmMemory {
 
 var gQueryAgentStat string = `SELECT timestamp, stat_info  FROM agent_stats WHERE app_name=? AND  agent_id=? and timestamp>? and timestamp<=?;`
 
+// SELECT timestamp, stat_info  FROM agent_stats WHERE app_name='AAA' AND  agent_id='AAA1' and timestamp>1547009635072 and timestamp<=1547009695072;
 // statsCounter ...
 func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) error {
 	for _, agent := range app.Agents {

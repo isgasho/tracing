@@ -102,6 +102,8 @@ func (appStore *AppStore) loadApp() error {
 			iterStartTime := appStore.cql.Session.Query(queryStartTime, app.AppName).Iter()
 			iterStartTime.Scan(&lastCountTime)
 			iterStartTime.Close()
+			newMin, _ := ModMs2Min(lastCountTime)
+			lastCountTime = newMin * 1000
 		}
 		app.lastCountTime = lastCountTime
 

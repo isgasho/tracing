@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/analyze/misc"
 	"go.uber.org/zap"
 )
 
@@ -39,11 +40,18 @@ func (spanUrls *SpanURLs) urlCounter(urlStr string, elapsed int, isError int) er
 	}
 
 	url.averageElapsed = url.elapsed / url.count
+
+	if elapsed < misc.Conf.Stats.SatisfactionTime {
+		url.satisfactionCount++
+	} else if elapsed > misc.Conf.Stats.TolerateTime {
+		url.tolerateCount++
+	}
+
 	return nil
 }
 
-var gInserRPCRecord string = `INSERT INTO rpc_record (app_name, start_time, url, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count)
- VALUES (?,?,?,?,?,?,?,?,?);`
+var gInserRPCRecord string = `INSERT INTO rpc_stats (app_name, input_date, url, total_elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count, satisfaction, tolerate)
+ VALUES (?,?,?,?,?,?,?,?,?,?,?);`
 
 // urlRecord ...
 func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
@@ -58,6 +66,8 @@ func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
 			url.averageElapsed,
 			url.count,
 			url.errCount,
+			url.satisfactionCount,
+			url.tolerateCount,
 		).Exec(); err != nil {
 			g.L.Warn("urlRecord error", zap.String("error", err.Error()))
 		}
@@ -67,12 +77,14 @@ func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
 
 // SpanURL ...
 type SpanURL struct {
-	averageElapsed int
-	elapsed        int
-	count          int
-	errCount       int
-	minElapsed     int
-	maxElapsed     int
+	averageElapsed    int
+	elapsed           int
+	count             int
+	errCount          int
+	minElapsed        int
+	maxElapsed        int
+	satisfactionCount int
+	tolerateCount     int
 }
 
 // NewSpanURL ...

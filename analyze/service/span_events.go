@@ -13,7 +13,7 @@ type SpanEvents struct {
 }
 
 var gCounterQueryAPI string = `SELECT api_info FROM agent_apis WHERE api_id=? 
-		and agent_id=? and app_name=? and start_time=?;`
+		and agent_id=? and app_name=? and input_date=?;`
 
 func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEvent, chunkEvents []*trace.TSpanEvent) error {
 	if len(spanEvents.rpc) == 0 {
@@ -74,7 +74,7 @@ func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEve
 	return nil
 }
 
-var gInserRPCDetailsRecord string = ` INSERT INTO rpc_details_record (app_name, url, start_time, api_id, ser_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
+var gInserRPCDetailsRecord string = ` INSERT INTO rpc_details_stats (app_name, url, input_date, api_id, ser_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
 
 // eventRecord ...
 func (spanEvents *SpanEvents) eventRecord(app *App, recordTime int64) error {

@@ -132,7 +132,7 @@ func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64
 // AppAPIStore ...
 func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error {
 
-	appAPIInsert := `INSERT INTO app_apis (app_name,  api_id, start_time, api_info, line, type) 
+	appAPIInsert := `INSERT INTO app_apis (app_name, api_id, start_time, api_info, line, type) 
 	VALUES (?, ?, ?, ?, ?, ?);`
 	if err := s.cql.Query(
 		appAPIInsert,
@@ -302,10 +302,11 @@ func (s *Storage) writeSpan(span *trace.TSpan) error {
 	insertSpan := `
 	INSERT
 	INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
-		start_time, elapsed, rpc, service_type, end_point, remote_addr, annotations, err,
+		insert_date, elapsed, rpc, service_type, end_point, remote_addr, annotations, err,
 		span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, api_id)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
+	// @TODO 转码优化
 	annotations, _ := json.Marshal(span.GetAnnotations())
 	spanEvenlist, _ := json.Marshal(span.GetSpanEventList())
 	exceptioninfo, _ := json.Marshal(span.GetExceptionInfo())
@@ -441,7 +442,7 @@ func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
 func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 	insertOperIndex := `
 	INSERT
-	INTO app_operation_index(app_name, agent_id, api_id, start_time, trace_id, rpc, span_id)
+	INTO app_operation_index(app_name, agent_id, api_id, insert_date, trace_id, rpc, span_id)
 	VALUES (?, ?, ?, ?, ?, ?, ?)`
 	if err := s.cql.Query(
 		insertOperIndex,

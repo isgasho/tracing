@@ -86,7 +86,7 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 	return nil
 }
 
-var gInserSQLRecord string = `INSERT INTO sql_record (app_name, sql, start_time, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?);`
+var gInserSQLRecord string = `INSERT INTO sql_stats (app_name, sql, input_date, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?);`
 
 // sqlRecord ...
 func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {

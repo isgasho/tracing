@@ -46,12 +46,13 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 	queryEndTime = app.lastCountTime + misc.Conf.Stats.Range*1000
 
 	// 结束时间要比当前时间少三分钟，这样可以确保数据准确性
-	if (queryEndTime + 180*1000) >= time.Now().UnixNano()/1e6 {
+	if (queryEndTime + 3*60*1000) >= time.Now().UnixNano()/1e6 {
+		// log.Println("上次计算时间间隔太短,等待")
 		return
 	}
 
 	es := GetElements(queryStartTime, queryEndTime)
-	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and start_time>? and start_time<=?;`
+	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and insert_date>? and insert_date<=?;`
 	iterTraceID := gAnalyze.appStore.cql.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
 	defer iterTraceID.Close()
 
@@ -74,6 +75,7 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", gUpdateLastCounterTime))
 		return
 	}
+	app.lastCountTime = queryEndTime
 }
 
 // Counter ...

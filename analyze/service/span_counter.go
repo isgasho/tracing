@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/mafanr/g"
@@ -11,7 +12,7 @@ import (
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 )
 
-var gCounterQuerySpan string = `SELECT agent_start_time, start_time, rpc, elapsed,  service_type, parent_app_name,
+var gCounterQuerySpan string = `SELECT agent_start_time, insert_date, rpc, elapsed,  service_type, parent_app_name,
 	parent_app_type, span_event_list, err, agent_id
 	FROM traces WHERE trace_id=? AND span_id=?;`
 
@@ -53,6 +54,8 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 		}
 
 	}
+
+	log.Println(traceID, spanID)
 
 DoSpan:
 	for iterTrace.Scan(&appName, &startTime, &rpc, &elapsed, &serviceType, &parentAppName, &parentAppType, &spanEventList, &isErr, &agentID) {
