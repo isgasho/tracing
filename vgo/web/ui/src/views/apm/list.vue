@@ -9,6 +9,7 @@
        <Row style="padding:0 10px;" class="split-border-bottom no-border">
           <Col span="17" class="split-border-right">
             <span class="padding-bottom-5 font-size-18">应用列表</span>
+            <span class="font-size-12">过去5分钟</span>
              <Select v-model="selApps" filterable multiple style="width:300px;border:none;float:right;margin-right:20px" placeholder="过滤应用">
                 <Option v-for="item in appNames" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -47,18 +48,6 @@ export default {
   data () {
     return {
         appNames: [
-            {
-                value: '1',
-                label: 'Vgo'
-            },
-            {
-                value: '2',
-                label: 'APM'
-            },
-            {
-                value: '3',
-                label: 'Caac'
-            }
         ],
         selApps: [],
 
@@ -68,40 +57,23 @@ export default {
                 key: 'name'
             },
             {
+                title: '请求总数',
+                key: 'count',
+            },
+            {
                 title: 'Apdex',
                 key: 'apdex'
             },
             {
                 title: '响应时间(ms)',
-                key: 'resp_time'
+                key: 'average_elapsed'
             },
             {
                 title: '错误率',
-                key: 'error'
+                key: 'error_percent'
             },
         ],
         appList: [
-            {
-                id: 1,
-                name: "Vgo",
-                apdex: 1,
-                resp_time: 1000,
-                error: "0%"
-            },
-            {
-                id: 2,
-                name: "APM",
-                apdex: 0.9,
-                resp_time: 220,
-                error: "0%"
-            },
-            {
-                id: 3,
-                name: "Caac",
-                apdex: 0.7,
-                resp_time: 986,
-                error: "0%"
-            }
         ],
 
         totalApps: 3
@@ -120,7 +92,17 @@ export default {
       }
   },
   mounted() {
-
+      // 加载APPS
+       request({
+        url: '/apm/query/appList',
+        method: 'GET',
+        params: {
+          
+        }
+    }).then(res => {
+      this.appList = res.data.data
+      console.log(res.data)
+    })
   }
 }
 </script>
