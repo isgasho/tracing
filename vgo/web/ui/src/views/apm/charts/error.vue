@@ -22,11 +22,24 @@ export default {
     height: {
       type: String,
       default: '200px'
+    },
+     dateList: {
+        type: Array,
+        default: []
+    },
+    valueList: {
+        type: Array,
+        default: []
     }
   },
   data() {
     return {
       chart: null
+    }
+  },
+  watch: {
+    dateList(val) {
+      this.initChart()
     }
   },
   mounted() {
@@ -69,7 +82,7 @@ export default {
         axisTick: {
             show: false
         },
-        data: ['13:00', '13:05', '13:10', '13:15', '13:20', '13:25', '13:30', '13:35', '13:40', '13:45', '13:50', '13:55']
+        data: this.dateList
     }],
     grid: {
             left: '4%',
@@ -84,7 +97,7 @@ export default {
         axisTick: {
             show: false
         },
-
+		max:100,
         axisLabel: {
             margin: 10
         },
@@ -96,7 +109,7 @@ export default {
         }
     }],
     series: [ {
-        name: '联通',
+        name: '',
         type: 'line',
         stack: '总量',
         smooth: true,
@@ -138,7 +151,7 @@ export default {
                 shadowBlur: 10
             }
         },
-        data: [220, 182, 325, 145, 122, 191, 134, 150, 120, 110, 165, 122]
+        data: this.valueList
     }, ]
 };
       this.chart.setOption(option)

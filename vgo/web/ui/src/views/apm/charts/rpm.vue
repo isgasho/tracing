@@ -22,11 +22,24 @@ export default {
     height: {
       type: String,
       default: '200px'
+    },
+     dateList: {
+        type: Array,
+        default: []
+    },
+    valueList: {
+        type: Array,
+        default: []
     }
   },
   data() {
     return {
       chart: null
+    }
+  },
+  watch: {
+    dateList(val) {
+      this.initChart()
     }
   },
   mounted() {
@@ -54,6 +67,9 @@ export default {
               x: 'center',
           },
     tooltip: {
+      trigger: 'axis', 
+            axisPointer: {
+            }
 		},
 		   grid: {
             left: '4%',
@@ -78,13 +94,11 @@ export default {
 				 },
 			 },
 			 axisTick: { show: false,},
-			data: ['6.1', '6.2', '6.3', '6.4', '6.5', '6.6', '6.7'],
+			data: this.dateList,
 		}],
 		yAxis: [{
             name: '单位（rpm）',
 			type: 'value',
-			min: 0,
-			max:140,
 			splitNumber: 7,
 // 			splitLine: {
 // 				 show: true,
@@ -103,17 +117,23 @@ export default {
 			 axisTick: { show: false,},  
 		}],
 		series: [{
-			name: '异常流量',
+			name: '',
 			type: 'line',
 			smooth: true, //是否平滑曲线显示
-// 			symbol:'circle',  // 默认是空心圆（中间是白色的），改成实心圆
+			symbol:'circle',  // 默认是空心圆（中间是白色的），改成实心圆
 			symbolSize:0,
 			
 			lineStyle: {
 				normal: {
 					color: "#3deaff"   // 线条颜色
 				}
-			},
+      },
+       itemStyle: {
+                normal: {
+                    color: '#3deaff',
+                    borderColor:'#e48b4c'
+                },
+            },
 			areaStyle: { //区域填充样式
                 normal: {
                  //线性渐变，前4个参数分别是x0,y0,x2,y2(范围0~1);相当于图形包围盒中的百分比。如果最后一个参数是‘true’，则该四个值是绝对像素位置。
@@ -126,7 +146,7 @@ export default {
                  shadowBlur: 20 //shadowBlur设图形阴影的模糊大小。配合shadowColor,shadowOffsetX/Y, 设置图形的阴影效果。
              }
          },
-			data: [90, 105, 84, 125, 110, 92, 98]
+			data: this.valueList
 		}]
 };
       this.chart.setOption(option)

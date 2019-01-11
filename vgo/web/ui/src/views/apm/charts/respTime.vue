@@ -22,11 +22,25 @@ export default {
     height: {
       type: String,
       default: '200px'
+    },
+
+    dateList: {
+        type: Array,
+        default: []
+    },
+    valueList: {
+        type: Array,
+        default: []
     }
   },
   data() {
     return {
       chart: null
+    }
+  },
+  watch: {
+    dateList(val) {
+      this.initChart()
     }
   },
   mounted() {
@@ -41,16 +55,8 @@ export default {
   },
   methods: {
     initChart() {
-        var dateList = ["2018-12-06 12:45:00","2018-12-06 12:47:00","2018-12-06 12:49:00","2018-12-06 12:51:00",
-      "2018-12-06 12:53:00","2018-12-06 12:55:00","2018-12-06 12:57:00","2018-12-06 12:59:00","2018-12-06 13:01:00",
-      "2018-12-06 13:03:00","2018-12-06 13:05:00","2018-12-06 13:07:00","2018-12-06 13:09:00","2018-12-06 13:11:00",
-      "2018-12-06 13:13:00","2018-12-06 13:15:00","2018-12-06 13:17:00","2018-12-06 13:19:00","2018-12-06 13:21:00",
-      "2018-12-06 13:23:00","2018-12-06 13:25:00","2018-12-06 13:27:00","2018-12-06 13:29:00","2018-12-06 13:31:00",
-      "2018-12-06 13:33:00","2018-12-06 13:35:00","2018-12-06 13:37:00","2018-12-06 13:39:00","2018-12-06 13:41:00",
-      "2018-12-06 13:43:00"]
-      var valueList = [356,355,341,373,349,362,342,363,298,332,325,353,334,355,345,268,378,336,424,371,364,364,347,283,
-      302,306,349,316,358,360]
-
+        console.log(this.dateList)
+        console.log(this.valueList)
       this.chart = echarts.init(document.getElementById(this.id))
       var option = {
         backgroundColor: '#fff',
@@ -79,7 +85,7 @@ export default {
             boundaryGap: false,
             axisLine: {
             },
-            data: dateList
+            data: this.dateList
         }],
         yAxis: [{
             type: 'value',
@@ -130,7 +136,7 @@ export default {
                     borderColor:'#e48b4c'
                 },
             },
-            data: valueList,
+            data: this.valueList,
         } ]
     };
       this.chart.setOption(option)

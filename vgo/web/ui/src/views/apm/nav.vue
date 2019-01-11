@@ -1,14 +1,14 @@
 <template>
   <div class="apm-nav">
       <Row style="line-height:22px">
-          <Col span="3" style="border-right: 1px solid #d2d2d2;border-bottom:3px solid #e0ebd1" class="padding-left-20 left-nav margin-top-5">
+          <Col span="3" style="border-right: 1px solid #d2d2d2;border-bottom:3px solid #e0ebd1;height:67px" class="padding-left-20 left-nav margin-top-5">
              <div class="color-primary font-size-16 padding-top-15 hover-cursor">应用设定</div>
              <div class="padding-bottom-5">{{$store.state.apm.appName}}</div>
           </Col>
-          <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;">
-            <div class="color-primary font-size-16 padding-top-15 hover-cursor">时间设定</div>
-            <div class="padding-bottom-5">2018-12-05 00:00 - 2018-12-06 00:00</div>
-             <!-- <DatePicker type="datetimerange" format="yyyy-MM-dd HH:mm" placeholder="Select date and time(Excluding seconds)" style="width: 280px"></DatePicker> -->
+          <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:67px">
+            <div class="color-primary font-size-16 padding-top-15 hover-cursor">
+              <DatePicker :split-panels=true  confirm type="datetimerange" :options="options1" :value="JSON.parse($store.state.apm.selDate)"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" :clearable=false :editable=false></DatePicker>
+            </div>
           </Col>
       </Row>
 
@@ -40,7 +40,65 @@ export default {
       level: {},
 
       path : '',
-      selItem : ''
+      selItem : '',
+
+      selDate: [],
+      options1: {
+        disabledDate (date) {
+                        return date && date.valueOf() > Date.now() + 86400000
+        },
+          shortcuts: [
+             {
+                  text: '30m',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 1800 * 1000),d];
+                  }
+              },
+             {
+                  text: '1h',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 3600 * 1000),d];
+                  }
+              },
+              {
+                  text: '3h',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 3600 * 1000 *3) ,d];
+                  }
+              },
+               {
+                  text: '6h',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 3600 * 1000 *3) ,d];
+                  }
+              },
+              {
+                  text: '1d',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 3600 * 1000 * 24),d];
+                  }
+              },
+              {
+                  text: '3d',
+                  value () {
+                     var d = new Date()
+                      return [new Date(d.getTime() - 3600 * 1000 * 24*3),d];
+                  }
+              },
+              {
+                  text: '7d',
+                  value () {
+                      var d = new Date()
+                      return [new Date(d.getTime() - 3600 * 1000 * 24*7),d];
+                  }
+              }
+          ]
+      }
     }
   },
   watch: {
@@ -51,6 +109,14 @@ export default {
   computed: {
   },
   methods: {
+    changeDate(date) {
+      this.selDate = date
+    },
+    confirmDate() {
+      if (this.selDate != undefined) {
+         this.$store.dispatch('setSelDate', JSON.stringify(this.selDate))
+      }
+    },
     selectItem(i) {
       this.$router.push('/apm/' + i)
     },
@@ -70,9 +136,35 @@ export default {
       this.initItem()
   }
 }
+
+function defaultDate() {
+  var d = new Date()
+  var dates = [new Date(d.getTime() - 3600 * 1000),d]
+  return dates
+}
 </script>
 
 <style lang="less">
+.ivu-date-picker {
+  .ivu-picker-panel-sidebar {
+    text-align: center;
+    padding-top: 11px;
+    .ivu-picker-panel-shortcut {
+      margin-top: 5px;
+    }
+    .ivu-picker-panel-shortcut:hover {
+      cursor: pointer
+    }
+  }
+  .ivu-picker-panel-sidebar::before {
+    content : '距离当前';
+    font-size: 12px;
+    color: #c5c8ce
+  }
+  .ivu-picker-panel-sidebar:hover {
+    cursor: auto  
+  }
+}
 
 </style>
 

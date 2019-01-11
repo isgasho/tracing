@@ -1,17 +1,17 @@
 <template>
-  <div class="app-containe padding-top-10" style="overflow-y:scroll;overflow-x:none;max-height:100vh;background-color:white">
+  <div class="app-containe padding-top-10" style="overflow-y:scroll;overflow-x:none;background-color:white">
      <Row :gutter="20">
          <Col span="12">
-            <respTime width="100%" height="400px" id="apm-resp"></respTime>
+            <respTime width="100%" height="400px" id="apm-resp" :dateList="dateList" :valueList="elapsedList"></respTime>
          </Col>
          <Col span="11">
-            <apdex width="100%" height="410px" id="apm-apdex"></apdex>
+            <apdex width="100%" height="410px" id="apm-apdex" :dateList="dateList" :valueList="apdexList"></apdex>
          </Col>
      </Row>
      <Row :gutter="20">
         <Col span="10">
-              <error width="100%" height="300px" id="apm-error"></error>
-             <rpm width="100%" height="300px" id="apm-rpm"></rpm>
+              <error width="100%" height="300px" id="apm-error" :dateList="dateList" :valueList="errorList"></error>
+             <rpm width="100%" height="300px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
          </Col>
           <Col span="5" offset="1" style="padding:8px 10px;padding-left:20px">
                 <div class="font-size-18">应用动态</div>
@@ -28,7 +28,7 @@
           </Col>
           <Col span="7" style="padding:8px 10px;padding-left:20px">
                 <div class="font-size-18">慢事务列表</div>
-                <Table :columns="trLabels" class="margin-top-10" @on-row-click="gotoApp"></Table>
+                <Table :columns="trLabels" class="margin-top-10"></Table>
           </Col>
      </Row>
   </div>
@@ -55,15 +55,44 @@ export default {
                 key: 'resp_time'
             }
         ],
+        dateList: [],
+        countList: [],
+        elapsedList: [],
+        errorList: [],
+        apdexList: []
     }
   },
   watch: {
+    "$store.state.apm.selDate"() {
+            this.initDash()
+    }
   },
   computed: {
   },
   methods: {
+      initDash() {
+          console.log("init dash")
+        // 加载当前APP的dashbord数据
+        request({
+            url: '/apm/query/appDash',
+            method: 'GET',
+            params: {
+                app_name: this.$store.state.apm.appName,
+                start: JSON.parse(this.$store.state.apm.selDate)[0],
+                end: JSON.parse(this.$store.state.apm.selDate)[1],
+            }
+        }).then(res => {   
+            console.log(res.data) 
+            this.dateList = res.data.data.timeline
+            this.countList = res.data.data.count_list
+            this.elapsedList = res.data.data.elapsed_list
+            this.errorList = res.data.data.error_list
+            this.apdexList = res.data.data.apdex_list
+        })
+      }
   },
   mounted() {
+    this.initDash()
   }
 }
 </script>

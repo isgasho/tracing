@@ -15,7 +15,8 @@ import (
 // 后台服务
 // Stats 离线计算
 type Web struct {
-	Cql *gocql.Session
+	Cql   *gocql.Session
+	cache *cache
 }
 
 // New ...
@@ -25,11 +26,12 @@ func New() *Web {
 
 // Start ...
 func (s *Web) Start() error {
+	// 初始化内部缓存
+	s.cache = &cache{}
 	// 初始化Cql连接
 	// connect to the cluster
 	cluster := gocql.NewCluster(misc.Conf.Storage.Cluster...)
 	cluster.Keyspace = misc.Conf.Storage.Keyspace
-	cluster.Consistency = gocql.Quorum
 	//设置连接池的数量,默认是2个（针对每一个host,都建立起NumConns个连接）
 	cluster.NumConns = misc.Conf.Storage.NumConns
 
@@ -47,6 +49,9 @@ func (s *Web) Start() error {
 			AllowCredentials: true,
 		}))
 
+		e.Pre(middleware.RemoveTrailingSlash())
+		e.Use(middleware.GzipWithConfig(middleware.GzipConfig{Level: 5}))
+
 		// 回调相关
 		//同步回调接口
 		e.POST("/login", func(c echo.Context) error {
@@ -59,7 +64,8 @@ func (s *Web) Start() error {
 		// 应用查询接口
 		//查询应用列表
 		e.GET("/apm/query/appList", s.appList)
-		//根据搜索条件，查询应用
+		//获取指定应用的一段时间内的状态
+		e.GET("/apm/query/appDash", s.appDash)
 
 		e.GET("/apm/query/serviceMap", queryServiceMap)
 		e.GET("/apm/query/traces", queryTraces)
@@ -69,7 +75,7 @@ func (s *Web) Start() error {
 	}()
 
 	go func() {
-		config := newrelic.NewConfig("vgo-web", "fb07ffe86ca0ab409e91faae48e13b253e87be23")
+		config := newrelic.NewConfig("vgo-web", "466303c9e1313f95479b013acfb24be89d2e86d2")
 		app, err := newrelic.NewApplication(config)
 		if err != nil {
 			g.L.Fatal("start relic apm error", zap.Error(err))
