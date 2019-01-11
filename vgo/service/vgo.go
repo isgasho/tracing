@@ -47,20 +47,20 @@ func (v *Vgo) Start() error {
 		return err
 	}
 
-	// if err := v.storage.Init(); err != nil {
-	// 	g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
-	// 	return err
-	// }
+	if err := v.storage.Init(); err != nil {
+		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+		return err
+	}
 
-	// if err := v.storage.Start(); err != nil {
-	// 	g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
-	// 	return err
-	// }
+	if err := v.storage.Start(); err != nil {
+		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+		return err
+	}
 
-	// if err := v.init(); err != nil {
-	// 	g.L.Fatal("Start:v.init", zap.String("error", err.Error()))
-	// 	return err
-	// }
+	if err := v.init(); err != nil {
+		g.L.Fatal("Start:v.init", zap.String("error", err.Error()))
+		return err
+	}
 
 	return nil
 }
