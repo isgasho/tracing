@@ -20,6 +20,12 @@ type Config struct {
 		AgentTimeout int
 	}
 
+	Etcd struct {
+		Addrs     []string
+		Dltimeout int
+		WatchKey  string
+	}
+
 	Storage struct {
 		Cluster           []string
 		Keyspace          string

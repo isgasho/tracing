@@ -33,6 +33,15 @@ type Config struct {
 		HostUseTime bool
 	}
 
+	Etcd struct {
+		Addrs      []string
+		Dltimeout  int
+		ReportDir  string
+		ReportTime int
+		WatchDir   string
+		TTL        int64
+	}
+
 	Stats struct {
 		Interval         int
 		Range            int64

@@ -9,12 +9,15 @@ import (
 
 // Analyze ...
 type Analyze struct {
-	cql      *g.Cassandra
-	stats    *Stats
-	blink    *Blink
-	appStore *AppStore
-	cluster  *Cluster
-	hash     *g.Hash
+	cql         *g.Cassandra
+	stats       *Stats
+	blink       *Blink
+	appStore    *AppStore
+	hash        *g.Hash
+	etcd        *Etcd
+	analyzes    map[string]string
+	clusterName string
+	// cluster  *Cluster
 }
 
 var gAnalyze *Analyze
@@ -22,11 +25,13 @@ var gAnalyze *Analyze
 // New ...
 func New() *Analyze {
 	analyze := &Analyze{
-		stats:   NewStats(),
-		blink:   NewBlink(),
-		cql:     g.NewCassandra(),
-		cluster: NewCluster(),
-		hash:    g.NewHash(),
+		stats:    NewStats(),
+		blink:    NewBlink(),
+		cql:      g.NewCassandra(),
+		hash:     g.NewHash(),
+		etcd:     NewEtcd(),
+		analyzes: make(map[string]string),
+		// cluster: NewCluster(),
 	}
 	gAnalyze = analyze
 	return analyze
@@ -37,9 +42,13 @@ func (analyze *Analyze) Start() error {
 
 	g.L.Info("Conf", zap.Any("conf", misc.Conf))
 
-	if err := analyze.cluster.Start(); err != nil {
-		g.L.Fatal("Start cluster.Start", zap.String("error", err.Error()))
+	if err := analyze.etcd.Start(); err != nil {
+		g.L.Fatal("Start etcd.Start", zap.String("error", err.Error()))
 	}
+
+	// if err := analyze.cluster.Start(); err != nil {
+	// 	g.L.Fatal("Start cluster.Start", zap.String("error", err.Error()))
+	// }
 
 	if err := analyze.cql.Init(misc.Conf.Cassandra.NumConns, misc.Conf.Cassandra.Keyspace, misc.Conf.Cassandra.Cluster); err != nil {
 		g.L.Fatal("Start Init", zap.String("error", err.Error()))
@@ -55,10 +64,6 @@ func (analyze *Analyze) Start() error {
 	if err := analyze.blink.Start(); err != nil {
 		g.L.Fatal("Start blink", zap.String("error", err.Error()))
 	}
-
-	// if err := analyze.stats.Start(); err != nil {
-	// 	g.L.Fatal("Start stats", zap.String("error", err.Error()))
-	// }
 
 	g.L.Info("Start ok!")
 	return nil

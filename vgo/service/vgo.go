@@ -22,6 +22,7 @@ type Vgo struct {
 	pinpoint *Pinpoint // 处理pinpoint 数据
 	web      *web.Web
 	appStore *AppStore
+	etcd     *Etcd
 }
 
 var gVgo *Vgo
@@ -33,6 +34,7 @@ func New() *Vgo {
 		pinpoint: NewPinpoint(),
 		web:      web.New(),
 		appStore: NewAppStore(),
+		etcd:     NewEtcd(),
 	}
 	return gVgo
 }
@@ -40,20 +42,25 @@ func New() *Vgo {
 // Start ...
 func (v *Vgo) Start() error {
 
-	if err := v.storage.Init(); err != nil {
-		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+	if err := v.etcd.Start(); err != nil {
+		g.L.Fatal("Start:etcd.Start", zap.String("error", err.Error()))
 		return err
 	}
 
-	if err := v.storage.Start(); err != nil {
-		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
-		return err
-	}
+	// if err := v.storage.Init(); err != nil {
+	// 	g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+	// 	return err
+	// }
 
-	if err := v.init(); err != nil {
-		g.L.Fatal("Start:v.init", zap.String("error", err.Error()))
-		return err
-	}
+	// if err := v.storage.Start(); err != nil {
+	// 	g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+	// 	return err
+	// }
+
+	// if err := v.init(); err != nil {
+	// 	g.L.Fatal("Start:v.init", zap.String("error", err.Error()))
+	// 	return err
+	// }
 
 	return nil
 }

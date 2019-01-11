@@ -1,86 +1,75 @@
 package service
 
-import (
-	"os"
-	"time"
+// // Cluster ...
+// type Cluster struct {
+// }
 
-	"github.com/hashicorp/memberlist"
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/analyze/misc"
+// type eventDelegate struct {
+// }
 
-	"go.uber.org/zap"
-)
+// // NotifyJoin is invoked when a node is detected to have joined.
+// // The Node argument must not be modified.
+// func (e *eventDelegate) NotifyJoin(n *memberlist.Node) {
+// 	gAnalyze.hash.Add(n.Name)
+// 	g.L.Info("NotifyJoin", zap.String("name", n.Name))
+// }
 
-// Cluster ...
-type Cluster struct {
-}
+// // NotifyLeave is invoked when a node is detected to have left.
+// // The Node argument must not be modified.
+// func (e *eventDelegate) NotifyLeave(n *memberlist.Node) {
+// 	gAnalyze.hash.Remove(n.Name)
+// 	g.L.Info("NotifyLeave", zap.String("name", n.Name))
+// }
 
-type eventDelegate struct {
-}
+// func (e *eventDelegate) NotifyUpdate(n *memberlist.Node) {
+// 	g.L.Info("NotifyUpdate", zap.String("name", n.Name))
+// }
 
-// NotifyJoin is invoked when a node is detected to have joined.
-// The Node argument must not be modified.
-func (e *eventDelegate) NotifyJoin(n *memberlist.Node) {
-	gAnalyze.hash.Add(n.Name)
-	g.L.Info("NotifyJoin", zap.String("name", n.Name))
-}
+// // NewCluster ...
+// func NewCluster() *Cluster {
+// 	return &Cluster{}
+// }
 
-// NotifyLeave is invoked when a node is detected to have left.
-// The Node argument must not be modified.
-func (e *eventDelegate) NotifyLeave(n *memberlist.Node) {
-	gAnalyze.hash.Remove(n.Name)
-	g.L.Info("NotifyLeave", zap.String("name", n.Name))
-}
+// // Start ...
+// func (cluster *Cluster) Start() error {
 
-func (e *eventDelegate) NotifyUpdate(n *memberlist.Node) {
-	g.L.Info("NotifyUpdate", zap.String("name", n.Name))
-}
+// 	config := memberlist.DefaultLocalConfig()
 
-// NewCluster ...
-func NewCluster() *Cluster {
-	return &Cluster{}
-}
+// 	host, err := os.Hostname()
+// 	if err != nil {
+// 		g.L.Fatal("get host name", zap.String("error", err.Error()))
+// 	}
 
-// Start ...
-func (cluster *Cluster) Start() error {
+// 	if misc.Conf.Cluster.HostUseTime {
+// 		config.Name = host + time.Now().UTC().String()
+// 	} else {
+// 		config.Name = host
+// 	}
 
-	config := memberlist.DefaultLocalConfig()
+// 	misc.Conf.Cluster.Name = config.Name
+// 	gAnalyze.hash.Add(config.Name)
 
-	host, err := os.Hostname()
-	if err != nil {
-		g.L.Fatal("get host name", zap.String("error", err.Error()))
-	}
+// 	config.BindAddr = misc.Conf.Cluster.Addr
+// 	config.BindPort = misc.Conf.Cluster.Port
 
-	if misc.Conf.Cluster.HostUseTime {
-		config.Name = host + time.Now().UTC().String()
-	} else {
-		config.Name = host
-	}
+// 	config.AdvertiseAddr = misc.Conf.Cluster.Addr
+// 	config.AdvertisePort = misc.Conf.Cluster.Port
+// 	config.Events = &eventDelegate{}
 
-	misc.Conf.Cluster.Name = config.Name
-	gAnalyze.hash.Add(config.Name)
+// 	list, err := memberlist.Create(config)
+// 	if err != nil {
+// 		g.L.Panic("Cluster Start", zap.Error(err))
+// 	}
 
-	config.BindAddr = misc.Conf.Cluster.Addr
-	config.BindPort = misc.Conf.Cluster.Port
+// 	_, err = list.Join(misc.Conf.Cluster.Seeds)
+// 	if err != nil {
+// 		g.L.Panic("Cluster Join", zap.Error(err))
+// 	}
 
-	config.AdvertiseAddr = misc.Conf.Cluster.Addr
-	config.AdvertisePort = misc.Conf.Cluster.Port
-	config.Events = &eventDelegate{}
+// 	return nil
+// }
 
-	list, err := memberlist.Create(config)
-	if err != nil {
-		g.L.Panic("Cluster Start", zap.Error(err))
-	}
-
-	_, err = list.Join(misc.Conf.Cluster.Seeds)
-	if err != nil {
-		g.L.Panic("Cluster Join", zap.Error(err))
-	}
-
-	return nil
-}
-
-// Close ...
-func (cluster *Cluster) Close() error {
-	return nil
-}
+// // Close ...
+// func (cluster *Cluster) Close() error {
+// 	return nil
+// }

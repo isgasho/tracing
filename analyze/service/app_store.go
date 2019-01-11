@@ -86,7 +86,7 @@ func (appStore *AppStore) loadApp() error {
 		}
 
 		// 集群模式只做hash出来属于自己节点的APP
-		if !strings.EqualFold(key, misc.Conf.Cluster.Name) {
+		if !strings.EqualFold(key, gAnalyze.clusterName) {
 			continue
 		}
 
