@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS agents (
     is_container        BOOLEAN,
     operating_env       int,
     agent_info          text,
-    PRIMARY KEY (app_name, agent_id, start_time)
+    PRIMARY KEY (app_name, agent_id)
 ) WITH gc_grace_seconds = 10800;
 
 
@@ -24,7 +24,6 @@ CREATE TABLE IF NOT EXISTS agents (
 CREATE TABLE IF NOT EXISTS app_apis (
     app_name            text,
     api_id              int,
-    start_time          bigint,
     api_info            text,
     line                int,
     type                int,
@@ -36,16 +35,15 @@ CREATE TABLE IF NOT EXISTS app_apis (
 CREATE TABLE IF NOT EXISTS app_sqls (
     app_name            text,
     sql_id              int,
-    start_time          bigint,
     sql_info            text,
     PRIMARY KEY (app_name, sql_id)
 ) WITH gc_grace_seconds = 10800;
 
 
+
 CREATE TABLE IF NOT EXISTS app_strs (
     app_name            text,
     str_id              int,
-    start_time          bigint,
     str_info            text,
     PRIMARY KEY (app_name, str_id)
 )WITH gc_grace_seconds = 10800; 
@@ -104,14 +102,12 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     app_name        text,
     agent_id        text,
     api_id          int,
-    insert_date      bigint,
+    insert_date     bigint,
     rpc             text,
     trace_id        text,
     span_id         bigint,
     PRIMARY KEY (app_name, agent_id, api_id, insert_date)
 ) WITH gc_grace_seconds = 10800;  
-
-
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (insert_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
@@ -192,7 +188,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON sql_stats (input_date)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
-CREATE TABLE IF NOT EXISTS cpu_load_stats (
+CREATE TABLE IF NOT EXISTS jvm_cpu_stats (
     app_name        text,
     agent_id        text,
     input_date      bigint,
@@ -201,7 +197,7 @@ CREATE TABLE IF NOT EXISTS cpu_load_stats (
     PRIMARY KEY (app_name, agent_id, input_date)
 ) WITH gc_grace_seconds = 10800;  
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON cpu_load_stats (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_cpu_stats (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
@@ -231,7 +227,7 @@ TRUNCATE  TABLE  rpc_stats;
 TRUNCATE  TABLE  rpc_details_stats;
 TRUNCATE  TABLE  sql_stats;
 TRUNCATE  TABLE  jvm_memory_stats;
-TRUNCATE  TABLE  cpu_load_stats;
+TRUNCATE  TABLE  jvm_cpu_stats;
 
 -- TRUNCATE  TABLE apis;
 
@@ -249,7 +245,7 @@ DROP  TABLE  rpc_stats;
 DROP  TABLE  rpc_details_stats;
 DROP  TABLE  sql_stats;
 DROP  TABLE  jvm_memory_stats;
-DROP  TABLE  cpu_load_stats;
+DROP  TABLE  jvm_cpu_stats;
 
 -- DROP  TABLE  apis;
  
@@ -297,3 +293,19 @@ DROP  TABLE  cpu_load_stats;
 --     PRIMARY KEY (app_name, agent_id, api_id, start_time)
 -- ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
+
+-- CREATE TABLE IF NOT EXISTS  app_url_index (
+--     app_name        text,
+--     url_id          bigint,
+--     insert_date     bigint,
+--     agent_id        text,
+--     api_id          int,
+--     rpc             text,
+--     trace_id        text,
+--     span_id         bigint,
+--     PRIMARY KEY (app_name, url_id, insert_date)
+-- ) WITH gc_grace_seconds = 10800;  
+
+-- CREATE CUSTOM INDEX IF NOT EXISTS ON app_url_index (insert_date) 
+--     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+--     WITH OPTIONS = {'mode': 'SPARSE'};

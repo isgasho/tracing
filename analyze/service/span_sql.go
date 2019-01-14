@@ -31,7 +31,7 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 						spanSQLs.sqls[an.GetValue().GetIntValue()] = sql
 					}
 					sql.count++
-					elapsed := int(event.EndElapsed - event.StartElapsed)
+					elapsed := int(event.EndElapsed)
 					sql.elapsed += elapsed
 					if elapsed > sql.maxElapsed {
 						sql.maxElapsed = sql.elapsed
@@ -63,7 +63,7 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 						spanSQLs.sqls[an.GetValue().GetIntValue()] = sql
 					}
 					sql.count++
-					elapsed := int(event.EndElapsed - event.StartElapsed)
+					elapsed := int(event.EndElapsed)
 					sql.elapsed += elapsed
 					if elapsed > sql.maxElapsed {
 						sql.maxElapsed = sql.elapsed
