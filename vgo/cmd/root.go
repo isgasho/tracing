@@ -16,13 +16,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/vgo/misc"
 	"github.com/mafanr/vgo/vgo/service"
 	"go.uber.org/zap"
-	"os"
-	"os/signal"
-	"syscall"
 
 	"github.com/spf13/cobra"
 )

@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -17,8 +18,9 @@ import (
 // 后台服务
 // Stats 离线计算
 type Web struct {
-	Cql   *gocql.Session
-	cache *cache
+	Cql      *gocql.Session
+	cache    *cache
+	sessions *sync.Map
 }
 
 // New ...
@@ -49,6 +51,9 @@ func (s *RetryPolicy) GetRetryType(err error) gocql.RetryType {
 
 // Start ...
 func (s *Web) Start() error {
+	// 用户登录session
+	s.sessions = &sync.Map{}
+
 	// 初始化内部缓存
 	s.cache = &cache{}
 	// 初始化Cql连接
@@ -81,26 +86,21 @@ func (s *Web) Start() error {
 
 		// 回调相关
 		//同步回调接口
-		e.POST("/login", func(c echo.Context) error {
-			return c.JSON(http.StatusOK, g.Result{
-				Status: http.StatusOK,
-				Data:   "hello login",
-			})
-		})
+		e.POST("/apm/web/login", s.login)
 
 		// 应用查询接口
 		//查询应用列表
-		e.GET("/apm/query/appList", s.appList)
+		e.GET("/apm/web/appList", s.appList)
 		//获取指定应用的一段时间内的状态
-		e.GET("/apm/query/appDash", s.appDash)
+		e.GET("/apm/web/appDash", s.appDash)
 		//查询所有的app名
-		e.GET("/apm/query/appNames", s.appNames)
+		e.GET("/apm/web/appNames", s.appNames)
 		//查询所有服务器名
-		e.GET("/apm/query/agentList", s.agentList)
+		e.GET("/apm/web/agentList", s.agentList)
 
-		e.GET("/apm/query/serviceMap", queryServiceMap)
-		e.GET("/apm/query/traces", queryTraces)
-		e.GET("/apm/query/trace", queryTrace)
+		e.GET("/apm/web/serviceMap", queryServiceMap)
+		e.GET("/apm/web/traces", queryTraces)
+		e.GET("/apm/web/trace", queryTrace)
 
 		e.Logger.Fatal(e.Start(misc.Conf.Web.Addr))
 	}()

@@ -15,34 +15,21 @@ type Config struct {
 		AdminToken string
 	}
 
-	Vgo struct {
-		ListenAddr   string
-		AgentTimeout int
-	}
-
 	Etcd struct {
 		Addrs     []string
 		Dltimeout int
 		WatchKey  string
 	}
 
-	Storage struct {
-		Cluster           []string
-		Keyspace          string
-		NumConns          int
-		SpanCacheLen      int // 缓存长度
-		SpanChunkCacheLen int //
-		SpanStoreInterval int // 毫秒
-		AgentStatUseTTL   bool
-		AgentStatTTL      int64
+	Login struct {
+		SsoLogin  string
+		SsoLogout string
 	}
 
-	Mysql struct {
-		Addr     string
-		Port     string
-		Database string
-		Acc      string
-		Pw       string
+	Storage struct {
+		Cluster  []string
+		Keyspace string
+		NumConns int
 	}
 
 	Web struct {
