@@ -71,7 +71,7 @@ func (web *Web) appList(c echo.Context) error {
 	fmt.Println("query from database:", napps)
 
 	if err := iter.Close(); err != nil {
-		log.Println("close iter error:", err)
+		log.Println("close iter error:", err, web.Cql.Closed())
 	}
 	// 	// 更新缓存
 	// 	if len(napps) > 0 {
@@ -136,7 +136,6 @@ func (web *Web) appDash(c echo.Context) error {
 	// 读取相应数据，按照时间填到对应的桶中
 	q := `SELECT total_elapsed,count,err_count,satisfaction,tolerate,input_date FROM rpc_stats WHERE app_name = ? and input_date > ? and input_date < ? `
 	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
-	defer iter.Close()
 
 	// apps := make(map[string]*AppStat)
 	var count int
@@ -155,6 +154,10 @@ func (web *Web) appDash(c echo.Context) error {
 		app.errCount += float64(errCount)
 		app.satisfaction += float64(satisfaction)
 		app.tolerate += float64(tolerate)
+	}
+
+	if err := iter.Close(); err != nil {
+		log.Println("close iter error:", err, web.Cql.Closed())
 	}
 
 	// 对每个桶里的数据进行计算
@@ -202,6 +205,51 @@ func (web *Web) appDash(c echo.Context) error {
 			ApdexList:   apdexList,
 			ErrorList:   errorList,
 		},
+	})
+}
+
+func (web *Web) appNames(c echo.Context) error {
+	q := `SELECT app_name FROM apps `
+	iter := web.Cql.Query(q).Iter()
+
+	appNames := make([]string, 0)
+	var appName string
+	for iter.Scan(&appName) {
+		appNames = append(appNames, appName)
+	}
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   appNames,
+	})
+}
+
+type AgentStat struct {
+	AgentID     string `json:"agent_id"`
+	HostName    string `json:"host_name"`
+	IsLive      bool   `json:"is_live"`
+	IsContainer bool   `json:"is_container"`
+}
+
+func (web *Web) agentList(c echo.Context) error {
+	appName := c.FormValue("app_name")
+	q := `SELECT agent_id,host_name,is_live,is_container FROM agents WHERE app_name=?`
+	iter := web.Cql.Query(q, appName).Iter()
+
+	var agentID, hostName string
+	var isLive, isContainer bool
+
+	agents := make([]*AgentStat, 0)
+	for iter.Scan(&agentID, &hostName, &isLive, &isContainer) {
+		agents = append(agents, &AgentStat{
+			AgentID:     agentID,
+			HostName:    hostName,
+			IsLive:      isLive,
+			IsContainer: isContainer,
+		})
+	}
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   agents,
 	})
 }
 

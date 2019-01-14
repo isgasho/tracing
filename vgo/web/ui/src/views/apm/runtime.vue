@@ -1,10 +1,7 @@
 <template>
   <div>
-            <Tabs value="name1" :animated=false>
-                <TabPane label="Open incidents" name="name1">标签一的内容</TabPane>
-                <TabPane label="All incidents" name="name2">标签二的内容</TabPane>
-            </Tabs>
-      </div>   
+          
+  </div>   
 </template>
 
 <script>

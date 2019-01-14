@@ -9,11 +9,11 @@
          </Col>
      </Row>
      <Row :gutter="20">
-        <Col span="10">
+        <Col span="9">
               <error width="100%" height="300px" id="apm-error" :dateList="dateList" :valueList="errorList"></error>
              <rpm width="100%" height="300px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
          </Col>
-          <Col span="5" offset="1" style="padding:8px 10px;padding-left:20px">
+          <Col span="6" offset="1" style="padding:8px 10px;padding-left:20px">
                 <div class="font-size-18">应用动态</div>
                 <div class="margin-top-10 card-tab">
                     <Button type="primary" ghost>告警通知</Button>
@@ -26,9 +26,9 @@
                    恭喜，当前没有任何告警
                </div>
           </Col>
-          <Col span="7" style="padding:8px 10px;padding-left:20px">
-                <div class="font-size-18">慢事务列表</div>
-                <Table :columns="trLabels" class="margin-top-10"></Table>
+          <Col span="8" style="padding:8px 10px;padding-left:20px">
+                <div class="font-size-18">服务器列表</div>
+                <Table :columns="trLabels" :data="agentList"  class="margin-top-10"></Table>
           </Col>
      </Row>
   </div>
@@ -47,23 +47,56 @@ export default {
     return {
         trLabels: [
             {
-                title: '接口名',
-                key: 'name'
+                title: '服务器名',
+                key: 'host_name'
             },
             {
-                title: '响应时间(ms)',
-                key: 'resp_time'
+                title: '是否容器',
+                key: 'is_container',
+                width: 100,
+            },
+            {
+                title: '运行状态',
+                key: 'is_live',
+                width:100,
+                render: (h, params) => {
+                    if (params.row.is_live) {
+                          return h('div', [
+                                h('Tag', {
+                                    props: {
+                                        type: 'dot',
+                                        size:"small",
+                                        color: "success"
+                                    }
+                                })
+                            ]);
+                    }
+                       return h('div', [
+                                h('Tag', {
+                                    props: {
+                                        type: 'dot',
+                                        size:"small",
+                                        color: "warning"
+                                    }
+                                })
+                        ]);     
+                 }
             }
         ],
         dateList: [],
         countList: [],
         elapsedList: [],
         errorList: [],
-        apdexList: []
+        apdexList: [],
+
+        agentList: []
     }
   },
   watch: {
     "$store.state.apm.selDate"() {
+            this.initDash()
+    },
+    "$store.state.apm.appName"() {
             this.initDash()
     }
   },
@@ -71,7 +104,6 @@ export default {
   },
   methods: {
       initDash() {
-          console.log("init dash")
         // 加载当前APP的dashbord数据
         request({
             url: '/apm/query/appDash',
@@ -82,12 +114,22 @@ export default {
                 end: JSON.parse(this.$store.state.apm.selDate)[1],
             }
         }).then(res => {   
-            console.log(res.data) 
             this.dateList = res.data.data.timeline
             this.countList = res.data.data.count_list
             this.elapsedList = res.data.data.elapsed_list
             this.errorList = res.data.data.error_list
             this.apdexList = res.data.data.apdex_list
+        })
+
+        request({
+            url: '/apm/query/agentList',
+            method: 'GET',
+            params: {
+                app_name: this.$store.state.apm.appName
+            }
+        }).then(res => {   
+            this.agentList = res.data.data
+            console.log(this.agentList)
         })
       }
   },
@@ -98,7 +140,13 @@ export default {
 </script>
 
 <style lang="less">
-
+.ivu-tag.ivu-tag-dot {
+    border:none !important;
+    background: transparent !important
+}
+.ivu-tag.ivu-tag-dot:hover {
+    background:transparent !important;
+}
 </style>
 
 <style lang="less" scoped> 

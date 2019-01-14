@@ -30,10 +30,11 @@ export default new Router({
             { path: '/apm/interface', component: () => import('@/views/apm/interface')},
             { path: '/apm/exception', component: () => import('@/views/apm/exception')}
           ]
-        },
+        }
       ]
     },
-
+    { path: '/login', component: () => import('@/views/login/index')},
+    { path: '/callback', component: () => import('@/views/login/callback')},
     
 
     { path: '/404', component: () => import('@/views/errorPage/page404')},

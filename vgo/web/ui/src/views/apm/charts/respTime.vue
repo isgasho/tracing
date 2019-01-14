@@ -55,8 +55,6 @@ export default {
   },
   methods: {
     initChart() {
-        console.log(this.dateList)
-        console.log(this.valueList)
       this.chart = echarts.init(document.getElementById(this.id))
       var option = {
         backgroundColor: '#fff',

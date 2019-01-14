@@ -2,8 +2,12 @@
   <div class="apm-nav">
       <Row style="line-height:22px">
           <Col span="3" style="border-right: 1px solid #d2d2d2;border-bottom:3px solid #e0ebd1;height:67px" class="padding-left-20 left-nav margin-top-5">
-             <div class="color-primary font-size-16 padding-top-15 hover-cursor">应用设定</div>
-             <div class="padding-bottom-5">{{$store.state.apm.appName}}</div>
+             <div  style="margin-top:20px" class="no-border">
+              <span>
+                <Select v-model="$store.state.apm.appName" style="width:180px" @on-change="selAppName" filterable>
+                  <Option v-for="item in appNames" :value="item" :key="item">{{ item }}</Option>
+                </Select>
+              </span></div>
           </Col>
           <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:67px">
             <div class="color-primary font-size-16 padding-top-15 hover-cursor">
@@ -43,6 +47,9 @@ export default {
       selItem : '',
 
       selDate: [],
+
+      appNames: [],
+
       options1: {
         disabledDate (date) {
                         return date && date.valueOf() > Date.now() + 86400000
@@ -109,6 +116,9 @@ export default {
   computed: {
   },
   methods: {
+    selAppName(appName) {
+      this.$store.dispatch('setAPPName', appName)
+    },
     changeDate(date) {
       this.selDate = date
     },
@@ -121,6 +131,7 @@ export default {
       this.$router.push('/apm/' + i)
     },
     initItem() {
+       this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
         this.items = ['monitoring','dashboard','tracing','serviceMap','runtime','profiling','thread','memory','stats','database','interface','exception']
         this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2, profiling:1,thread:2,memory:2,stats:1,database:2,interface:2,exception:2}
@@ -130,6 +141,16 @@ export default {
             stats: '数据统计', 
             database:'数据库', interface:'访问接口', exception:'错误异常'}
         this.selItem = this.path.split('/')[2]
+        // 加载app名列表
+         request({
+            url: '/apm/query/appNames',
+            method: 'GET',
+            params: {
+            }
+        }).then(res => {   
+            this.appNames = res.data.data 
+            console.log(this.appNames)
+        })
     }
   },
   mounted() {
@@ -163,6 +184,10 @@ function defaultDate() {
   }
   .ivu-picker-panel-sidebar:hover {
     cursor: auto  
+  }
+
+  input {
+      border:none;
   }
 }
 
