@@ -12,7 +12,6 @@ import (
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
 
-	"github.com/mafanr/vgo/vgo/web"
 	"go.uber.org/zap"
 )
 
@@ -20,7 +19,6 @@ import (
 type Vgo struct {
 	storage  *Storage  // 存储
 	pinpoint *Pinpoint // 处理pinpoint 数据
-	web      *web.Web
 	appStore *AppStore
 	etcd     *Etcd
 }
@@ -32,7 +30,6 @@ func New() *Vgo {
 	gVgo = &Vgo{
 		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
-		web:      web.New(),
 		appStore: NewAppStore(),
 		etcd:     NewEtcd(),
 	}
@@ -69,12 +66,6 @@ func (v *Vgo) init() error {
 	// init mysql
 	if err := v.initMysql(); err != nil {
 		g.L.Warn("init:v.initMysql", zap.String("error", err.Error()))
-		return err
-	}
-
-	// start web ser
-	if err := v.web.Start(); err != nil {
-		g.L.Warn("init:v.web.Start", zap.String("error", err.Error()))
 		return err
 	}
 
