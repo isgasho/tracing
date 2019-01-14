@@ -67,7 +67,7 @@ var gInserStatRecord string = ``
 // 	g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserStatRecord))
 // }
 
-var gInsertCPULoadRecord string = `INSERT INTO cpu_load_stats (app_name, agent_id, input_date, jvm, system) VALUES (?,?,?,?,?);`
+var gInsertCPULoadRecord string = `INSERT INTO jvm_cpu_stats (app_name, agent_id, input_date, jvm, system) VALUES (?,?,?,?,?);`
 var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_stats (app_name , agent_id , input_date , heap_used , non_heap ) VALUES (?,?,?,?,?);`
 
 // sqlRecord ...

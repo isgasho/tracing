@@ -55,10 +55,29 @@ func NewAppStore() *AppStore {
 		Apps: make(map[string]*App),
 	}
 }
+
+var gCheckApp string = `SELECT count(*) FROM apps WHERE app_name = ?;`
+
 func (appStore *AppStore) checkApp(appName string) bool {
 	appStore.RLock()
 	_, ok := appStore.Apps[appName]
 	appStore.RUnlock()
+	if !ok {
+		iter := gVgo.storage.cql.Query(gCheckApp, appName).Iter()
+		var count int
+		iter.Scan(&count)
+		iter.Close()
+		if count == 0 {
+			return false
+		}
+
+		appStore.Lock()
+		app := NewApp()
+		app.AppName = appName
+		appStore.Apps[appName] = app
+		appStore.Unlock()
+		return true
+	}
 	return ok
 }
 

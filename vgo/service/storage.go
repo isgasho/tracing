@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -69,6 +70,8 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 		pid, version, start_time, end_time, is_live, is_container, operating_env) 
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
+	log.Println("	agentInfo.IsContainer,	agentInfo.IsContainer,	agentInfo.IsContainer,	agentInfo.IsContainer,", agentInfo.IsContainer)
+
 	if err := s.cql.Query(
 		agentInsert,
 		agentInfo.AppName,
@@ -112,14 +115,13 @@ func (s *Storage) AgentInfoStore(appName, agentID string, startTime int64, agent
 // AgentOffline ...
 func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64, isLive bool) error {
 
-	agentOfflineInsert := `INSERT INTO agents (app_name, agent_id, start_time, end_time, is_live) 
-	VALUES ( ?, ?, ?, ?, ?);`
+	agentOfflineInsert := `INSERT INTO agents (app_name, agent_id, end_time, is_live) 
+	VALUES ( ?, ?, ?, ?);`
 
 	if err := s.cql.Query(
 		agentOfflineInsert,
 		appName,
 		agentID,
-		startTime,
 		endTime,
 		isLive,
 	).Exec(); err != nil {
@@ -132,13 +134,12 @@ func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64
 // AppAPIStore ...
 func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error {
 
-	appAPIInsert := `INSERT INTO app_apis (app_name, api_id, start_time, api_info, line, type) 
-	VALUES (?, ?, ?, ?, ?, ?);`
+	appAPIInsert := `INSERT INTO app_apis (app_name, api_id, api_info, line, type) 
+	VALUES (?, ?, ?, ?, ?);`
 	if err := s.cql.Query(
 		appAPIInsert,
 		appName,
 		apiInfo.ApiId,
-		apiInfo.AgentStartTime,
 		apiInfo.ApiInfo,
 		apiInfo.GetLine(),
 		apiInfo.GetType(),
@@ -171,13 +172,12 @@ func (s *Storage) APIStore(apiInfo *trace.TApiMetaData) error {
 // AppSQLStore ...
 func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error {
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))
-	appSQLInsert := `INSERT INTO app_sqls (app_name, sql_id, start_time, sql_info) 
-	VALUES (?, ?, ?, ?);`
+	appSQLInsert := `INSERT INTO app_sqls (app_name, sql_id, sql_info) 
+	VALUES (?, ?, ?);`
 	if err := s.cql.Query(
 		appSQLInsert,
 		appName,
 		sqlInfo.SqlId,
-		sqlInfo.AgentStartTime,
 		newSQL,
 	).Exec(); err != nil {
 		g.L.Warn("AppSQLStore error", zap.String("error", err.Error()), zap.String("SQL", appSQLInsert))
@@ -189,13 +189,12 @@ func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error
 
 // AppStringStore ...
 func (s *Storage) AppStringStore(appName string, strInfo *trace.TStringMetaData) error {
-	agentStrInsert := `INSERT INTO app_strs (app_name, str_id, start_time, str_info) 
-	VALUES (?, ?, ?, ?);`
+	agentStrInsert := `INSERT INTO app_strs (app_name, str_id, str_info) 
+	VALUES (?, ?, ?);`
 	if err := s.cql.Query(
 		agentStrInsert,
 		appName,
 		strInfo.StringId,
-		strInfo.AgentStartTime,
 		strInfo.StringValue,
 	).Exec(); err != nil {
 		g.L.Warn("AgentStringStore error", zap.String("error", err.Error()), zap.String("SQL", agentStrInsert))
