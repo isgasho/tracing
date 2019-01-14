@@ -87,7 +87,7 @@ func (s *Web) Start() error {
 		// 回调相关
 		//同步回调接口
 		e.POST("/apm/web/login", s.login)
-
+		e.POST("/apm/web/logout", s.logout)
 		// 应用查询接口
 		//查询应用列表
 		e.GET("/apm/web/appList", s.appList)

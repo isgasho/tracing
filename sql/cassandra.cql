@@ -1,6 +1,16 @@
 CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
+CREATE TABLE IF NOT EXISTS account (
+    id               text,
+    name             text,
+    mobile           text,
+    email            text,
+    message          text,
+    PRIMARY KEY (id,name)
+) WITH gc_grace_seconds = 10800;
+
+
 CREATE TABLE IF NOT EXISTS agents (
     app_name            text,
     agent_id            text,

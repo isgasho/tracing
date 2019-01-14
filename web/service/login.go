@@ -38,6 +38,7 @@ func (web *Web) login(c echo.Context) error {
 	url := misc.Conf.Login.SsoLogin
 
 	b := requestToSso(body, url)
+	fmt.Println(string(b))
 	tokenInfo := &TokenInfo{}
 	err := json.Unmarshal(b, tokenInfo)
 	if err != nil {
