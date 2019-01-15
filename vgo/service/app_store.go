@@ -1,6 +1,7 @@
 package service
 
 import (
+	"net"
 	"sync"
 )
 
@@ -28,6 +29,7 @@ func NewApp() *App {
 type Agent struct {
 	sync.RWMutex
 	AgentID string
+	conn    net.Conn
 	Apis    map[int32]*API
 }
 

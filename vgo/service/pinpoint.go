@@ -65,6 +65,9 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 					g.L.Warn("dealUpload:conn.Write", zap.String("error", err.Error()))
 					return err
 				}
+
+				// gVgo.appStore.Apps
+
 				g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
 				break
 			case util.TypeOfAgentOffline:

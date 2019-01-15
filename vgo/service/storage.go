@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -63,17 +62,14 @@ func (s *Storage) Close() error {
 	return nil
 }
 
+var gAgentInsert string = `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip,
+	pid, version, start_time, end_time, is_live, is_container, operating_env) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+
 // AgentStore ...
 func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
-
-	agentInsert := `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip,
-		pid, version, start_time, end_time, is_live, is_container, operating_env) 
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
-
-	log.Println("	agentInfo.IsContainer,	agentInfo.IsContainer,	agentInfo.IsContainer,	agentInfo.IsContainer,", agentInfo.IsContainer)
-
-	if err := s.cql.Query(
-		agentInsert,
+	query := s.cql.Query(
+		gAgentInsert,
 		agentInfo.AppName,
 		agentInfo.AgentID,
 		agentInfo.ServiceType,
@@ -87,117 +83,129 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 		agentInfo.IsLive,
 		agentInfo.IsContainer,
 		agentInfo.OperatingEnv,
-	).Exec(); err != nil {
-		g.L.Warn("AgentStore error", zap.String("error", err.Error()), zap.String("SQL", agentInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("AgentStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
 	return nil
 }
 
+var gAgentInofInsert string = `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 
+VALUES ( ?, ?, ?, ?);`
+
 // AgentInfoStore ...
 func (s *Storage) AgentInfoStore(appName, agentID string, startTime int64, agentInfo []byte) error {
-	agentInofInsert := `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 
-	VALUES ( ?, ?, ?, ?);`
-	if err := s.cql.Query(
-		agentInofInsert,
+
+	query := s.cql.Query(
+		gAgentInofInsert,
 		appName,
 		agentID,
 		startTime,
 		string(agentInfo),
-	).Exec(); err != nil {
-		g.L.Warn("AgentInfoStore error", zap.String("error", err.Error()), zap.String("SQL", agentInofInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("AgentInfoStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 	return nil
 }
 
+var gAgentOfflineInsert string = `INSERT INTO agents (app_name, agent_id, end_time, is_live) 
+VALUES ( ?, ?, ?, ?);`
+
 // AgentOffline ...
 func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64, isLive bool) error {
-
-	agentOfflineInsert := `INSERT INTO agents (app_name, agent_id, end_time, is_live) 
-	VALUES ( ?, ?, ?, ?);`
-
-	if err := s.cql.Query(
-		agentOfflineInsert,
+	query := s.cql.Query(
+		gAgentOfflineInsert,
 		appName,
 		agentID,
 		endTime,
 		isLive,
-	).Exec(); err != nil {
-		g.L.Warn("AgentOffline error", zap.String("error", err.Error()), zap.String("SQL", agentOfflineInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("AgentOffline error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 	return nil
 }
 
+var gAppAPIInsert string = `INSERT INTO app_apis (app_name, api_id, api_info, line, type) 
+VALUES (?, ?, ?, ?, ?);`
+
 // AppAPIStore ...
 func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error {
-
-	appAPIInsert := `INSERT INTO app_apis (app_name, api_id, api_info, line, type) 
-	VALUES (?, ?, ?, ?, ?);`
-	if err := s.cql.Query(
-		appAPIInsert,
+	query := s.cql.Query(
+		gAppAPIInsert,
 		appName,
 		apiInfo.ApiId,
 		apiInfo.ApiInfo,
 		apiInfo.GetLine(),
 		apiInfo.GetType(),
-	).Exec(); err != nil {
-		g.L.Warn("AppAPIStore error", zap.String("error", err.Error()), zap.String("SQL", appAPIInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("AppAPIStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
 	return nil
 }
 
+var gAPIInsert string = `INSERT INTO apis (api_id, api_info, line, type) 
+VALUES (?, ?, ?, ?);`
+
 // APIStore ...
 func (s *Storage) APIStore(apiInfo *trace.TApiMetaData) error {
-	APIInsert := `INSERT INTO apis (api_id, api_info, line, type) 
-	VALUES (?, ?, ?, ?);`
-	if err := s.cql.Query(
-		APIInsert,
+
+	query := s.cql.Query(
+		gAPIInsert,
 		apiInfo.ApiId,
 		apiInfo.ApiInfo,
 		apiInfo.GetLine(),
 		apiInfo.GetType(),
-	).Exec(); err != nil {
-		g.L.Warn("APIStore error", zap.String("error", err.Error()), zap.String("SQL", APIInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("APIStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
 	return nil
 }
+
+var gAppSQLInsert string = `INSERT INTO app_sqls (app_name, sql_id, sql_info) 
+VALUES (?, ?, ?);`
 
 // AppSQLStore ...
 func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error {
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))
-	appSQLInsert := `INSERT INTO app_sqls (app_name, sql_id, sql_info) 
-	VALUES (?, ?, ?);`
-	if err := s.cql.Query(
-		appSQLInsert,
+	query := s.cql.Query(
+		gAppSQLInsert,
 		appName,
 		sqlInfo.SqlId,
 		newSQL,
-	).Exec(); err != nil {
-		g.L.Warn("AppSQLStore error", zap.String("error", err.Error()), zap.String("SQL", appSQLInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("AppSQLStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
 	return nil
 }
 
+var gAgentStrInsert string = `INSERT INTO app_strs (app_name, str_id, str_info) 
+VALUES (?, ?, ?);`
+
 // AppStringStore ...
 func (s *Storage) AppStringStore(appName string, strInfo *trace.TStringMetaData) error {
-	agentStrInsert := `INSERT INTO app_strs (app_name, str_id, str_info) 
-	VALUES (?, ?, ?);`
-	if err := s.cql.Query(
-		agentStrInsert,
+	query := s.cql.Query(
+		gAgentStrInsert,
 		appName,
 		strInfo.StringId,
 		strInfo.StringValue,
-	).Exec(); err != nil {
-		g.L.Warn("AgentStringStore error", zap.String("error", err.Error()), zap.String("SQL", agentStrInsert))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("AgentStringStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
@@ -296,22 +304,23 @@ func (s *Storage) WriteSpan(span *trace.TSpan) error {
 	return nil
 }
 
+var gInsertSpan string = `
+INSERT
+INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
+	insert_date, elapsed, rpc, service_type, end_point, remote_addr, annotations, err,
+	span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, api_id)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
 // writeSpan ...
 func (s *Storage) writeSpan(span *trace.TSpan) error {
-	insertSpan := `
-	INSERT
-	INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
-		insert_date, elapsed, rpc, service_type, end_point, remote_addr, annotations, err,
-		span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, api_id)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	// @TODO 转码优化
 	annotations, _ := json.Marshal(span.GetAnnotations())
 	spanEvenlist, _ := json.Marshal(span.GetSpanEventList())
 	exceptioninfo, _ := json.Marshal(span.GetExceptionInfo())
 
-	if err := s.cql.Query(
-		insertSpan,
+	query := s.cql.Query(
+		gInsertSpan,
 		span.TransactionId,
 		span.SpanId,
 		span.AgentId,
@@ -324,34 +333,36 @@ func (s *Storage) writeSpan(span *trace.TSpan) error {
 		span.ServiceType,
 		span.GetEndPoint(),
 		span.GetRemoteAddr(),
-		annotations, //span.GetAnnotations(), // 转码
+		annotations,
 		span.GetErr(),
-		spanEvenlist, // span.GetSpanEventList(), // 转码
+		spanEvenlist,
 		span.GetParentApplicationName(),
 		span.GetParentApplicationType(),
 		span.GetAcceptorHost(),
 		span.GetApplicationServiceType(),
-		exceptioninfo, // span.GetExceptionInfo(), // 转码
+		exceptioninfo,
 		span.GetApiId(),
-	).Exec(); err != nil {
-		g.L.Warn("writeSpan error", zap.String("error", err.Error()), zap.String("SQL", insertSpan))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("writeSpan error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
 	return nil
 }
 
+var gInsertSpanChunk string = `
+INSERT
+INTO traces_chunk(trace_id, span_id, agent_id, app_name, service_type, end_point,
+	span_event_list, app_service_type, key_time, version)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
 // writeSpanChunk ...
 func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
-	insertSpanChunk := `
-	INSERT
-	INTO traces_chunk(trace_id, span_id, agent_id, app_name, service_type, end_point,
-		span_event_list, app_service_type, key_time, version)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	spanEvenlist, _ := json.Marshal(spanChunk.GetSpanEventList())
-	if err := s.cql.Query(
-		insertSpanChunk,
+	query := s.cql.Query(
+		gInsertSpanChunk,
 		spanChunk.TransactionId,
 		spanChunk.SpanId,
 		spanChunk.AgentId,
@@ -362,8 +373,9 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 		spanChunk.GetApplicationServiceType(),
 		spanChunk.GetKeyTime(),
 		spanChunk.Version,
-	).Exec(); err != nil {
-		g.L.Warn("writeSpanChunk error", zap.String("error", err.Error()), zap.String("SQL", insertSpanChunk))
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("writeSpanChunk error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
@@ -372,7 +384,6 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 
 // writeIndexes ...
 func (s *Storage) writeIndexes(span *trace.TSpan) error {
-
 	if err := s.saveAppNameAndAPIID(span); err != nil {
 		g.L.Warn("saveAppNameAndAPIID error", zap.String("error", err.Error()))
 		return err
@@ -386,65 +397,21 @@ func (s *Storage) writeIndexes(span *trace.TSpan) error {
 
 // saveAppNameAndAPIID ...
 func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
-	// if !gVgo.appStore.checkApp(span.ApplicationName) {
-	// 	insertApp := `
-	// 	INSERT
-	// 	INTO apps(app_name)
-	// 	VALUES (?)`
-	// 	if err := s.session.Query(
-	// 		insertApp,
-	// 		span.ApplicationName,
-	// 	).Exec(); err != nil {
-	// 		g.L.Warn("inster apps error", zap.String("error", err.Error()), zap.String("SQL", insertApp))
-	// 		return err
-	// 	}
-	// }
-
-	if !gVgo.appStore.checkAndSaveAgent(span.ApplicationName, span.AgentId) {
-		// insertAppAndAgentID := `
-		// INSERT
-		// INTO app_names(app_name, agent_id)
-		// VALUES (?, ?)`
-		// if err := s.session.Query(
-		// 	insertAppAndAgentID,
-		// 	span.ApplicationName,
-		// 	span.AgentId,
-		// ).Exec(); err != nil {
-		// 	g.L.Warn("inster app_names error", zap.String("error", err.Error()), zap.String("SQL", insertAppAndAgentID))
-		// 	return err
-		// }
-	}
-
+	gVgo.appStore.checkAndSaveAgent(span.ApplicationName, span.AgentId)
 	gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId())
-
-	// if !gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId()) {
-	// if true {
-	// 	insertAPIID := `
-	// INSERT
-	// INTO operation_apis(app_name, agent_id, api_id, start_time)
-	// VALUES (?, ?, ?, ?)`
-	// 	if err := s.session.Query(
-	// 		insertAPIID,
-	// 		span.ApplicationName,
-	// 		span.AgentId,
-	// 		span.GetApiId(),
-	// 		span.StartTime,
-	// 	).Exec(); err != nil {
-	// 		g.L.Warn("inster operation_apis error", zap.String("error", err.Error()), zap.String("SQL", insertAPIID))
-	// 		return err
-	// 	}
-	// }
 	return nil
 }
 
-// appOperationIndex ...
-func (s *Storage) appOperationIndex(span *trace.TSpan) error {
-	insertOperIndex := `
+var gInsertOperIndex string = `
 	INSERT
 	INTO app_operation_index(app_name, agent_id, api_id, insert_date, trace_id, rpc, span_id)
 	VALUES (?, ?, ?, ?, ?, ?, ?)`
-	if err := s.cql.Query(
-		insertOperIndex,
+
+// appOperationIndex ...
+func (s *Storage) appOperationIndex(span *trace.TSpan) error {
+
+	query := s.cql.Query(
+		gInsertOperIndex,
 		span.ApplicationName,
 		span.AgentId,
 		span.GetApiId(),
@@ -452,8 +419,10 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		span.TransactionId,
 		span.GetRPC(),
 		span.GetSpanId(),
-	).Exec(); err != nil {
-		g.L.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", insertOperIndex))
+	)
+
+	if err := query.Exec(); err != nil {
+		g.L.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
@@ -503,39 +472,43 @@ func (s *Storage) writeAgentStatBatch(appName, agentID string, agentStatBatch *p
 	return nil
 }
 
+var gInsertAgentStat string = `
+INSERT
+INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
+VALUES (?, ?, ?, ?, ?);`
+
+var gInsertAgentStatTTL string = `
+INSERT
+INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
+VALUES (?, ?, ?, ?, ?) USING TTL ?;`
+
 // appOperationIndex ...
 func (s *Storage) writeAgentStat(appName, agentID string, agentStat *pinpoint.TAgentStat, infoB []byte) error {
 	if misc.Conf.Storage.AgentStatUseTTL {
-		insertAgentStat := `
-	INSERT
-	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
-	VALUES (?, ?, ?, ?, ?) USING TTL ?;`
-		if err := s.cql.Query(
-			insertAgentStat,
+		query := s.cql.Query(
+			gInsertAgentStatTTL,
 			appName,
 			agentID,
 			agentStat.GetStartTimestamp(),
 			agentStat.GetTimestamp(),
 			infoB,
 			misc.Conf.Storage.AgentStatTTL,
-		).Exec(); err != nil {
-			g.L.Warn("inster writeAgentStat error", zap.String("error", err.Error()), zap.String("SQL", insertAgentStat))
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("inster writeAgentStat error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 			return err
 		}
 	} else {
-		insertAgentStat := `
-	INSERT
-	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
-	VALUES (?, ?, ?, ?, ?);`
-		if err := s.cql.Query(
-			insertAgentStat,
+		query := s.cql.Query(
+			gInsertAgentStat,
 			appName,
 			agentID,
 			agentStat.GetStartTimestamp(),
 			agentStat.GetTimestamp(),
 			infoB,
-		).Exec(); err != nil {
-			g.L.Warn("inster writeAgentStat error", zap.String("error", err.Error()), zap.String("SQL", insertAgentStat))
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("inster writeAgentStat error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 			return err
 		}
 	}
