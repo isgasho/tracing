@@ -11,7 +11,6 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/web/misc"
-	newrelic "github.com/newrelic/go-agent"
 	"go.uber.org/zap"
 )
 
@@ -90,31 +89,24 @@ func (s *Web) Start() error {
 		e.POST("/apm/web/logout", s.logout)
 		// 应用查询接口
 		//查询应用列表
-		e.GET("/apm/web/appList", s.appList)
+		e.GET("/apm/web/appList", s.appList, s.checkLogin)
 		//获取指定应用的一段时间内的状态
-		e.GET("/apm/web/appDash", s.appDash)
+		e.GET("/apm/web/appDash", s.appDash, s.checkLogin)
 		//查询所有的app名
-		e.GET("/apm/web/appNames", s.appNames)
+		e.GET("/apm/web/appNames", s.appNames, s.checkLogin)
 		//查询所有服务器名
-		e.GET("/apm/web/agentList", s.agentList)
+		e.GET("/apm/web/agentList", s.agentList, s.checkLogin)
 
-		e.GET("/apm/web/serviceMap", queryServiceMap)
-		e.GET("/apm/web/traces", queryTraces)
-		e.GET("/apm/web/trace", queryTrace)
+		e.GET("/apm/web/serviceMap", queryServiceMap, s.checkLogin)
+		e.GET("/apm/web/traces", queryTraces, s.checkLogin)
+		e.GET("/apm/web/trace", queryTrace, s.checkLogin)
+
+		// 管理员面板
+		e.GET("/apm/web/userList", s.userList, s.checkLogin)
+		e.POST("/apm/web/setAdmin", s.setAdmin, s.checkLogin)
+		e.POST("/apm/web/cancelAdmin", s.cancelAdmin, s.checkLogin)
 
 		e.Logger.Fatal(e.Start(misc.Conf.Web.Addr))
-	}()
-
-	go func() {
-		config := newrelic.NewConfig("vgo-web", "466303c9e1313f95479b013acfb24be89d2e86d2")
-		app, err := newrelic.NewApplication(config)
-		if err != nil {
-			g.L.Fatal("start relic apm error", zap.Error(err))
-		}
-		http.HandleFunc(newrelic.WrapHandleFunc(app, "/hello", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("hello world"))
-		}))
-		http.ListenAndServe(":8001", nil)
 	}()
 
 	return nil
@@ -123,4 +115,19 @@ func (s *Web) Start() error {
 // Close ...
 func (s *Web) Close() error {
 	return nil
+}
+
+func (web *Web) checkLogin(f echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		li := web.getLoginInfo(c)
+		if li == nil {
+			return c.JSON(http.StatusOK, g.Result{
+				Status:  http.StatusUnauthorized,
+				ErrCode: g.NeedLoginC,
+				Message: g.NeedLoginE,
+			})
+		}
+
+		return f(c)
+	}
 }
