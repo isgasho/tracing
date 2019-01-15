@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"net"
 	"sync"
 
@@ -58,8 +57,6 @@ func (appStore *AppStore) RemoveAgent(agentInfo *util.AgentInfo) {
 	app.Lock()
 	delete(app.Agents, agentInfo.AgentID)
 	app.Unlock()
-
-	log.Println("删除成功")
 }
 
 // NewApp ...

@@ -85,6 +85,7 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 		agentInfo.IsLive,
 		agentInfo.IsContainer,
 		agentInfo.OperatingEnv,
+		misc.Conf.Vgo.ListenAddr,
 	)
 	if err := query.Exec(); err != nil {
 		g.L.Warn("AgentStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))

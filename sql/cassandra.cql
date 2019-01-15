@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS agents (
     is_live             BOOLEAN,
     is_container        BOOLEAN,
     operating_env       int,
+    vgo_addr            text,
     agent_info          text,
     PRIMARY KEY (app_name, agent_id)
 ) WITH gc_grace_seconds = 10800;
