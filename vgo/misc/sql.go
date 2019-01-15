@@ -49,3 +49,5 @@ var InsertAgentStatTTL string = `
 	INSERT
 	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
 	VALUES (?, ?, ?, ?, ?) USING TTL ?;`
+
+var CheckApp string = `SELECT count(*) FROM apps WHERE app_name = ?;`

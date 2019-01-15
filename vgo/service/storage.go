@@ -14,6 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
+// type Storage interface {
+// 	Start() error
+// 	Close() error
+// 	AgentStore(agentInfo *util.AgentInfo) error
+// }
+
 // Storage ...
 type Storage struct {
 	cql           *gocql.Session
@@ -41,7 +47,7 @@ func (s *Storage) Init() error {
 
 	session, err := cluster.CreateSession()
 	if err != nil {
-		g.L.Warn("Start:cluster.CreateSession", zap.String("error", err.Error()))
+		g.L.Warn("CreateSession", zap.String("error", err.Error()))
 		return err
 	}
 	s.cql = session
@@ -349,21 +355,10 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 
 // writeIndexes ...
 func (s *Storage) writeIndexes(span *trace.TSpan) error {
-	if err := s.saveAppNameAndAPIID(span); err != nil {
-		g.L.Warn("saveAppNameAndAPIID error", zap.String("error", err.Error()))
-		return err
-	}
 	if err := s.appOperationIndex(span); err != nil {
 		g.L.Warn("appOperationIndex error", zap.String("error", err.Error()))
 		return err
 	}
-	return nil
-}
-
-// saveAppNameAndAPIID ...
-func (s *Storage) saveAppNameAndAPIID(span *trace.TSpan) error {
-	gVgo.appStore.checkAndSaveAgent(span.ApplicationName, span.AgentId)
-	gVgo.appStore.checkAndSaveAPIID(span.ApplicationName, span.AgentId, span.GetApiId())
 	return nil
 }
 

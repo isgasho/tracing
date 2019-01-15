@@ -34,6 +34,16 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 		}
 	}()
 
+	isRecvOffline := false
+	defer func() {
+		if !isRecvOffline {
+			// sdk客户端断线
+			gAgent.agentInfo.IsLive = false
+			gAgent.isReportAgentInfo = true
+			gAgent.agentInfo.EndTimestamp = time.Now().UnixNano() / 1e6
+		}
+	}()
+
 	reader := bufio.NewReaderSize(conn, proto.TCP_MAX_PACKET_SIZE)
 	buf := make([]byte, 2)
 	for {
@@ -194,19 +204,20 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 			break
 
 		case proto.CONTROL_CLIENT_CLOSE:
+
 			g.L.Debug("agentInfo", zap.String("type", "CONTROL_CLIENT_CLOSE"))
 			// sdk客户端断线
 			gAgent.agentInfo.IsLive = false
 			gAgent.isReportAgentInfo = true
 			gAgent.agentInfo.EndTimestamp = time.Now().UnixNano() / 1e6
 
+			isRecvOffline = true
+
 			controlClientClose := proto.NewControlClientClose()
 			if err := controlClientClose.Decode(conn, reader); err != nil {
 				g.L.Warn("controlClientClose.Decode", zap.String("error", err.Error()))
 			}
-
 			break
-
 		case proto.CONTROL_PING:
 			g.L.Debug("agentInfo", zap.String("type", "CONTROL_PING"))
 			controlPing := proto.NewControlPing()

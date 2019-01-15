@@ -27,7 +27,7 @@ func NewPinpoint() *Pinpoint {
 func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 	packet := &util.PinpointData{}
 	if err := msgpack.Unmarshal(inPacket.Payload, packet); err != nil {
-		g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
+		g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -38,7 +38,7 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 			case util.TypeOfRegister:
 				agentInfo := util.NewAgentInfo()
 				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
-					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
+					g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
 
@@ -57,12 +57,16 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 				}
 
 				if err := gVgo.storage.AgentStore(agentInfo); err != nil {
-					g.L.Warn("dealUpload:storage.AgentStore", zap.String("error", err.Error()))
+					g.L.Warn("storage.AgentStore", zap.String("error", err.Error()))
 					return err
 				}
+
+				// 内存缓存Agent信息
+				gVgo.appStore.StoreAgent(agentInfo, conn)
+
 				// 注册信息原样返回
 				if _, err := conn.Write(inPacket.Encode()); err != nil {
-					g.L.Warn("dealUpload:conn.Write", zap.String("error", err.Error()))
+					g.L.Warn("conn.Write", zap.String("error", err.Error()))
 					return err
 				}
 
@@ -71,27 +75,33 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 				g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
 				break
 			case util.TypeOfAgentOffline:
+
 				// Agent下线处理
 				agentInfo := util.NewAgentInfo()
 				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
-					g.L.Warn("dealUpload:msgpack.Unmarshal", zap.String("error", err.Error()))
+					g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
+				// 清理内存缓存Agent信息
+				gVgo.appStore.RemoveAgent(agentInfo)
+
+				// 数据库中下线标志
 				if err := gVgo.storage.AgentOffline(packet.AppName, packet.AgentID, agentInfo.StartTimestamp, agentInfo.EndTimestamp, agentInfo.IsLive); err != nil {
-					g.L.Warn("dealUpload:storage.AgentOffline", zap.String("error", err.Error()))
+					g.L.Warn("storage.AgentOffline", zap.String("error", err.Error()))
 					return err
 				}
 				// 注册信息原样返回
 				if _, err := conn.Write(inPacket.Encode()); err != nil {
-					g.L.Warn("dealUpload:conn.Write", zap.String("error", err.Error()))
+					g.L.Warn("conn.Write", zap.String("error", err.Error()))
 					return err
 				}
+
 				g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
 
 				break
 			case util.TypeOfAgentInfo, util.TypeOfSQLMetaData, util.TypeOfAPIMetaData, util.TypeOfStringMetaData:
 				if err := p.DealTCPRequestResponse(packet, value.Spans); err != nil {
-					g.L.Warn("dealUpload:p.DealTCPRequestResponse", zap.String("error", err.Error()))
+					g.L.Warn("DealTCPRequestResponse", zap.String("error", err.Error()))
 					return err
 				}
 				break
@@ -144,29 +154,29 @@ func (p *Pinpoint) DealTCPRequestResponse(packet *util.PinpointData, message []b
 	case *pinpoint.TAgentInfo:
 		agentInfo, err := json.Marshal(m)
 		if err != nil {
-			g.L.Warn("DealTCPRequestResponse:json.Marshal", zap.String("error", err.Error()))
+			g.L.Warn("json.Marshal", zap.String("error", err.Error()))
 			return err
 		}
 		if err := gVgo.storage.AgentInfoStore(packet.AppName, packet.AgentID, m.StartTimestamp, agentInfo); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AgentInfoStore", zap.String("error", err.Error()))
+			g.L.Warn("AgentInfoStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TSqlMetaData:
 		if err := gVgo.storage.AppSQLStore(packet.AppName, m); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AppSQLStore", zap.String("error", err.Error()))
+			g.L.Warn("AppSQLStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TApiMetaData:
 		if err := gVgo.storage.AppAPIStore(packet.AppName, m); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AppAPIStore", zap.String("error", err.Error()))
+			g.L.Warn("AppAPIStore", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TStringMetaData:
 		if err := gVgo.storage.AppStringStore(packet.AppName, m); err != nil {
-			g.L.Warn("DealTCPRequestResponse:gVgo.storage.AppStringStore", zap.String("error", err.Error()))
+			g.L.Warn("AppStringStore", zap.String("error", err.Error()))
 			return err
 		}
 		break

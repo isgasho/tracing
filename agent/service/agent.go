@@ -173,6 +173,7 @@ func (a *Agent) reportAgentInfo() {
 				g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.syncRead", zap.String("error", err.Error()))
 				continue
 			}
+
 			// 上报成功无须上报
 			a.isReportAgentInfo = false
 			a.isReportAgentInfoSuccess = true

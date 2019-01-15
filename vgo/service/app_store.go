@@ -1,8 +1,12 @@
 package service
 
 import (
+	"log"
 	"net"
 	"sync"
+
+	"github.com/mafanr/vgo/util"
+	"github.com/mafanr/vgo/vgo/misc"
 )
 
 // AppStore ...
@@ -16,6 +20,46 @@ type App struct {
 	sync.RWMutex
 	AppName string
 	Agents  map[string]*Agent
+}
+
+// StoreAgent ...
+func (appStore *AppStore) StoreAgent(agentInfo *util.AgentInfo, conn net.Conn) {
+	appStore.Lock()
+	app, ok := appStore.Apps[agentInfo.AppName]
+	if !ok {
+		app = NewApp()
+		app.AppName = agentInfo.AppName
+		appStore.Apps[agentInfo.AppName] = app
+	}
+	appStore.Unlock()
+
+	app.Lock()
+	agent, ok := app.Agents[agentInfo.AgentID]
+	if !ok {
+		agent = NewAgent()
+		agent.AgentID = agentInfo.AgentID
+		app.Agents[agentInfo.AgentID] = agent
+	}
+	agent.conn = conn
+	app.Unlock()
+
+	return
+}
+
+// RemoveAgent ...
+func (appStore *AppStore) RemoveAgent(agentInfo *util.AgentInfo) {
+	appStore.RLock()
+	app, ok := appStore.Apps[agentInfo.AppName]
+	appStore.RUnlock()
+	if !ok {
+		return
+	}
+
+	app.Lock()
+	delete(app.Agents, agentInfo.AgentID)
+	app.Unlock()
+
+	log.Println("删除成功")
 }
 
 // NewApp ...
@@ -58,14 +102,12 @@ func NewAppStore() *AppStore {
 	}
 }
 
-var gCheckApp string = `SELECT count(*) FROM apps WHERE app_name = ?;`
-
 func (appStore *AppStore) checkApp(appName string) bool {
 	appStore.RLock()
 	_, ok := appStore.Apps[appName]
 	appStore.RUnlock()
 	if !ok {
-		iter := gVgo.storage.cql.Query(gCheckApp, appName).Iter()
+		iter := gVgo.storage.cql.Query(misc.CheckApp, appName).Iter()
 		var count int
 		iter.Scan(&count)
 		iter.Close()

@@ -11,7 +11,6 @@ import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/util"
 	"github.com/mafanr/vgo/vgo/misc"
-
 	"go.uber.org/zap"
 )
 
@@ -78,8 +77,8 @@ func (v *Vgo) init() error {
 func (v *Vgo) initMysql() error {
 	return nil
 	// init sql
-	g.InitMysql(misc.Conf.Mysql.Acc, misc.Conf.Mysql.Pw, misc.Conf.Mysql.Addr, misc.Conf.Mysql.Port, misc.Conf.Mysql.Database)
-	return nil
+	// g.InitMysql(misc.Conf.Mysql.Acc, misc.Conf.Mysql.Pw, misc.Conf.Mysql.Addr, misc.Conf.Mysql.Port, misc.Conf.Mysql.Database)
+	// return nil
 }
 
 func (v *Vgo) acceptAgent() error {
@@ -123,7 +122,7 @@ func (v *Vgo) agentWork(conn net.Conn) {
 	for {
 		select {
 		case <-quitC:
-			g.L.Info("Quit")
+			g.L.Debug("Quit")
 			return
 		case packet, ok := <-packetC:
 			if ok {
