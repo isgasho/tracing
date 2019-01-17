@@ -4,7 +4,7 @@ const apm = {
   state: {
     appid:  Cookies.get('apm-appid') || '',
     appName:  Cookies.get('apm-appName') || '',
-    selDate: Cookies.get('sel-date') || JSON.stringify([new Date((new Date()).getTime() - 3600 * 1000).toLocaleString('chinese',{hour12:false}).replace(/\//g,'-'),new Date().toLocaleString('chinese',{hour12:false}).replace(/\//g,'-')])
+    selDate:  getDate()
   },
 
   mutations: {
@@ -35,4 +35,12 @@ const apm = {
   }
 }
 
+function getDate() {
+  var d = Cookies.get('sel-date')
+  if (d == '' || d == '[]') {
+    return JSON.stringify([new Date((new Date()).getTime() - 3600 * 1000).toLocaleString('chinese',{hour12:false}).replace(/\//g,'-'),new Date().toLocaleString('chinese',{hour12:false}).replace(/\//g,'-')])
+  }
+
+  return d
+}
 export default apm

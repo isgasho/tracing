@@ -1,7 +1,7 @@
 @import '~iview/src/styles/index.less';
 @import './gvar.less';
 
-@font-family: Roboto,"Helvetica Neue","Segoe UI",Verdana,Tahoma,"Hiragino Sans GB","Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
+@font-family: "Open Sans", "Segoe UI", Tahoma, sans-serif;;
 @font-size-base : 14px;
 @font-size-small : 14px;
 @line-height-base : 2;
@@ -11,7 +11,7 @@
 @link-color: @primary-color;
 @table-thead-bg:  #fafafa;
 @table-td-stripe-bg           : #fafafa;
-@table-td-hover-bg            : rgba(52,136,153,0.1);
+@table-td-hover-bg            : rgba(178,134,188,0.05);
 @table-td-highlight-bg        : #fafafa;
 @border-color-base      : #ddd;
 @border-color-split     : #e8eaec;
@@ -20,6 +20,9 @@
 @input-padding-horizontal    : 8px;
 @input-padding-vertical-base : 8px;
 @tooltip-bg                   : #666;
+@warning-color: #fbb85d;
+@error-color: #d75968;
+@meta-color: #888;
 // 布局
 .margin-left-3 {
     margin-left: 3px
@@ -200,6 +203,16 @@
 }
 .color-primary2 {
     color: @primary-color2;
+}
+.color-warning {
+    color: @warning-color
+}
+
+.color-error {
+    color: @error-color
+}
+.meta-color {
+    color: @meta-color
 }
 //背景颜色
 .bg-primary {

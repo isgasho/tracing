@@ -26,14 +26,18 @@ export default {
         this.$store.dispatch('SetUserInfo', res.data.data).then(() => {  
             // 获取历史路径
             var opath = Cookies.get('lastPath')
-            if (opath != '') {
+            console.log(opath)
+            if (opath != '' && opath != undefined) {
               Cookies.remove('lastPath')
                this.$router.push({ path: opath })
+            } else {
+              this.$router.push('/')
             }
            
         })
     }).catch(error => {
-      // _this.$router.push({ path: '/' })
+      console.log(error)
+      _this.$router.push({ path: '/' })
     })
   },
   destroyed() {

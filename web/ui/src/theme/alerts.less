@@ -1,0 +1,159 @@
+@primary-color : #b286bc;
+@primary-color2: #f5eff6;
+@warning-color: #d75968; 
+@text-color: #666;
+
+
+.alerts-color-primary {
+    color: @primary-color
+}
+
+.alerts-hover-primary:hover {
+    color: @primary-color
+}
+
+// 设置modal样式
+.ivu-modal-wrap {
+    .ivu-modal {
+        .ivu-modal-content {
+            .ivu-modal-header {
+                border-bottom: 2px solid #DDD;
+                .ivu-modal-header-inner {
+                    font-size: 16px;
+                    line-height: 25px;
+                    color: @text-color
+                }
+            }
+            .ivu-modal-close {
+                display: none;
+            }
+            .ivu-modal-body {
+                margin-top:10px
+            }
+            .ivu-modal-footer {
+                margin-top:10px;
+                border-top:none;
+                .ivu-btn-primary {
+                    background: @primary-color;
+                    border-color: @primary-color
+                }
+                .ivu-btn-text:hover {
+                    color: @primary-color
+                }
+            }
+        }
+    }
+    .ivu-modal.ivu-modal-fullscreen {
+        .ivu-modal-content {
+        }
+        .ivu-modal-header {
+            margin-left:40px;
+            margin-right:40px;
+            padding-top:25px !important;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #DDD;
+            .ivu-modal-header-inner {
+                font-size: 19px !important;
+                line-height: 22px;
+            }
+        }
+        .ivu-modal-body {
+            margin-left:40px;
+            margin-right:40px;
+            margin-top:35px;
+            .ivu-form {
+                .ivu-form-item {
+                    // border-bottom: 1px solid #DDD;
+                    margin-left:8px;
+                    padding-bottom: 20px;
+                    .ivu-form-item-label {
+                        font-weight: bold;
+                        font-size:15px;
+                    }
+                    .right-meta {
+                        margin-top:2px
+                    }
+                    .right-body {
+                        margin-top:10px
+                    }
+                }
+            }
+        }
+    }
+}
+
+.ivu-radio-group {
+    .ivu-radio-checked {
+        .ivu-radio-inner {
+            border-color: @primary-color
+        }
+        .ivu-radio-inner:after {
+            background-color:@primary-color !important
+        }
+    }
+}
+
+.ivu-poptip.ivu-poptip-confirm {
+    .ivu-poptip-popper {
+        .ivu-poptip-footer {
+            .ivu-btn-primary {
+                background: transparent;
+                border:none;
+                color: #555;
+                // font-size: 3px;
+                margin-right:70px;
+            }
+            .ivu-btn-text {
+                font-size:14px;
+                background: @warning-color;
+                border-color: @warning-color;
+               
+                float:right
+            }
+        }
+    }
+}
+
+.ivu-select {
+    .ivu-select-dropdown {
+        .ivu-select-dropdown-list {
+            .ivu-select-item.ivu-select-item-selected {
+                color: @primary-color
+            }
+            .ivu-select-item.ivu-select-item-selected::after {
+                color: @primary-color
+            }
+        }
+    }
+}
+
+
+.ivu-tooltip {
+    .ivu-tooltip-popper {
+        .ivu-tooltip-content {
+            .ivu-tooltip-inner {
+                background: @primary-color2;
+                box-shadow: 0 1px 6px @primary-color2;
+                color: @text-color;
+            }
+            .ivu-tooltip-arrow {
+                border-right-color: @primary-color2;
+                border-bottom-color: @primary-color2
+            }
+        }
+    }
+}
+
+.ivu-radio-group {
+    .ivu-radio-wrapper.ivu-radio-wrapper-checked {
+        color: @primary-color;
+        border-color: @primary-color;
+        box-shadow: none;
+    }
+    .ivu-radio-wrapper.ivu-radio-wrapper-checked.ivu-ratio-focus {
+        box-shadow: none !important;
+    }
+    .ivu-radio-wrapper:hover {
+        color: @primary-color
+    }
+}

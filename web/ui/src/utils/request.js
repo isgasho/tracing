@@ -48,7 +48,7 @@ service.interceptors.response.use(
         content: response.data.message+' : '+ response.data.err_code,
         duration: 3 
       })
-      return response
+      return Promise.reject(response.data.message+' : '+ response.data.err_code)
     }
     return response
   },

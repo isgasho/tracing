@@ -101,6 +101,12 @@ func (s *Web) Start() error {
 		e.GET("/apm/web/traces", queryTraces, s.checkLogin)
 		e.GET("/apm/web/trace", queryTrace, s.checkLogin)
 
+		// 告警平台
+		e.POST("/apm/web/createGroup", s.createGroup, s.checkLogin)
+		e.POST("/apm/web/editGroup", s.editGroup, s.checkLogin)
+		e.POST("/apm/web/deleteGroup", s.deleteGroup, s.checkLogin)
+		e.GET("/apm/web/queryGroups", s.queryGroups, s.checkLogin)
+
 		// 管理员面板
 		e.GET("/apm/web/userList", s.userList, s.checkLogin)
 		e.POST("/apm/web/setAdmin", s.setAdmin, s.checkLogin)

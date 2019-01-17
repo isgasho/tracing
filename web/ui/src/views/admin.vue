@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
       <Row>
-          <Col span="18" offset="3">
+          <Col span="22" offset="1">
             <Table stripe :columns="userLabels" :data="userList" class="margin-top-15"></Table>
           </Col>
       </Row>
@@ -33,6 +33,14 @@ export default {
                 key: 'mobile'
             },
             {
+                title: '上次登录时间',
+                key: 'last_login_date'
+            },
+            {
+                title: '登录次数',
+                key: 'login_count'
+            },
+            {
                 title: '权限',
                 key: 'priv'
             },
@@ -46,7 +54,7 @@ export default {
                             if (params.row.priv == 'normal') {
                                 t = '设为管理'
                             } else if (params.row.priv == 'super_admin') {
-                                t = '转让超级管理'
+                                t = '转出超级管理'
                             }
                             return h('div', [
                                 h('Button', {

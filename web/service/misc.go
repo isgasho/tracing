@@ -25,3 +25,6 @@ func startEndDate(c echo.Context) (start time.Time, end time.Time, err error) {
 
 	return
 }
+
+
+utils.OnlyAlphaAndNum

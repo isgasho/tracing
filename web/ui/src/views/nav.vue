@@ -15,22 +15,14 @@
             <li class="product ng-scope browser not-active">
                 业务监控
             </li>
-            <li class="product ng-scope synthetics not-active">
+            <li class="product ng-scope system not-active">
                 系统监控
             </li>
-            <li class="product ng-scope mobile not-active">
-                告警平台
+            <li class="product ng-scope alerts not-active">
+                <a href="/apm/ui/alerts">告警平台</a>
             </li>
             <li class="product ng-scope infrastructure not-active">
                 使用文档
-            </li>
-            <!-- <li class="product ng-scope plugins not-active">
-                
-            </li>
-        
-
-            <li class="product ng-scope alerts not-active">
-                Alerts -->
             </li>
         </ul>
         <span class="hover-cursor">
@@ -49,7 +41,7 @@
                 <img alt="Icon-unknown_user" class="gravatar" height="30" src="https://gravatar.com/avatar/13eb272664a43d2a962cb7c1e778ddab?s=34&amp;d=https://rpm.newrelic.com/images/v5/template/icon-unknown_user.png?a848d37" width="30">
             </span>
         </span>
-        <span class="bg-primary2" style="float:right;color:white;margin-top:.4px;margin-right:40px;padding:6px 10px">
+        <span  :style="{'background':getBG()}" style="float:right;color:white;margin-top:.4px;margin-right:40px;padding:6px 10px">
             {{getMeta()}}
         </span>
       </Row>
@@ -69,7 +61,30 @@ export default {
   }, 
   computed: {
   },
+  mounted() {
+  },
   methods: {
+    getBG() {
+        var p = window.location.pathname
+        var routes = this.$router.options.routes 
+        for (var i=0;i<routes.length;i++) {
+            if (routes[i].path == p) {
+                return routes[i].bg
+            }
+            for (var j=0;j<routes[i].children.length;j++) {
+                if (routes[i].children[j].path==p) {
+                    return routes[i].children[j].bg
+                }
+                if (routes[i].children[j].children != undefined) {
+                    for (var k=0;k<routes[i].children[j].children.length;k++) {
+                        if (routes[i].children[j].children[k].path==p) {
+                            return routes[i].children[j].children[k].bg
+                        }
+                    }
+                }
+            }
+        }
+    },
     getMeta() {
         var p = window.location.pathname
         var routes = this.$router.options.routes 
@@ -146,7 +161,7 @@ export default {
     left: 0;
     z-index: 100;
     background-color: #474747;
-    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+    // box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 .product-switcher ul {
     list-style: none;
@@ -230,10 +245,10 @@ export default {
     z-index: 1024;
     left: 14px;
 }
-.product-switcher .mobile {
+.product-switcher .alerts {
     -webkit-transition: left 300ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
     transition: left 300ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
-    background-color: #00B6D8;
+    background-color: #7a5aa6;
     z-index: 1022;
     left: 24px;
 }
@@ -251,20 +266,14 @@ export default {
     z-index: 1021;
     left: 29px;
 }
-.product-switcher .synthetics {
+.product-switcher .system {
     -webkit-transition: left 260ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
     transition: left 260ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
-    background-color: #7a5aa6;
+    background-color: #00B6D8;
     z-index: 1023;
     left: 19px;
 }
-.product-switcher .alerts {
-    -webkit-transition: left 420ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
-    transition: left 420ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
-    background-color: rgb(178, 134, 188);
-    z-index: 1019;
-    left: 39px;
-}
+
 
 .product-switcher.open {
     width: 100%;
@@ -287,12 +296,12 @@ export default {
     box-shadow: none;
     left: 373px;
 }
-.product-switcher.open .synthetics {
+.product-switcher.open .system {
     z-index: 1105;
     box-shadow: none;
     left: 558px;
 }
-.product-switcher.open .mobile {
+.product-switcher.open .alerts {
     z-index: 1104;
     box-shadow: none;
     left: 743px;
@@ -309,11 +318,7 @@ export default {
 }
 
 
-.product-switcher.open .alerts {
-    z-index: 1101;
-    box-shadow: none;
-    left: 1285px;
-}
+
 
 @media only screen and (max-width: 1280px) {
     .product-switcher.open {
@@ -329,7 +334,7 @@ export default {
         top: 0px;
         left: 66.66667%;
     }
-    .product-switcher.open .mobile {
+    .product-switcher.open .alerts {
         width: 33.33333%;
         top: 41px;
         left: 33.33333%;
@@ -344,15 +349,10 @@ export default {
         top: 41px;
         left: 66.66667%;
     }
-    .product-switcher.open .synthetics {
+    .product-switcher.open .system {
         width: 33.33333%;
         top: 41px;
         left: 0%;
-    }
-    .product-switcher.open .alerts {
-        width: 33.33333%;
-        top: 82px;
-        left: 33.33333%;
     }
 }
 

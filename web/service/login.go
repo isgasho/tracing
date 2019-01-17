@@ -7,6 +7,7 @@ import (
 
 	"time"
 
+	"github.com/mafanr/g/utils"
 	"github.com/mafanr/vgo/web/misc"
 
 	"go.uber.org/zap"
@@ -81,10 +82,16 @@ func (web *Web) login(c echo.Context) error {
 	})
 
 	// 更新数据库中的user表
-	q = `INSERT INTO account (id,name,mobile,email) VALUES (?,?,?,?)`
-	err = web.Cql.Query(q, user.ID, user.Name, user.Mobile, user.Email).Exec()
+	q = `UPDATE account SET name=?,mobile=?,email=?,last_login_date=? WHERE id=?`
+	err = web.Cql.Query(q, user.Name, user.Mobile, user.Email, utils.Time2StringSecond(time.Now()), user.ID).Exec()
 	if err != nil {
 		g.L.Info("插入用户信息失败", zap.Error(err))
+	}
+	// 更新登录次数
+	q = `UPDATE login_count SET count  = count + 1 WHERE id=?`
+	err = web.Cql.Query(q, user.ID).Exec()
+	if err != nil {
+		g.L.Info("更新登录次数失败", zap.Error(err))
 	}
 
 	return c.JSON(http.StatusOK, g.Result{

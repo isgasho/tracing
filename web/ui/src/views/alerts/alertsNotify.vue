@@ -17,7 +17,7 @@
 <script>
 import request from '@/utils/request' 
 export default {
-  name: 'tmpl',
+  name: 'alertsNotify',
   data () {
     return {
       hello: '',
@@ -57,9 +57,7 @@ export default {
           user: '111'
         }
     }).then(res => {
-    }).catch(err => {
- 
-            })
+    })
   }
 }
 </script>
@@ -72,7 +70,7 @@ export default {
 </style>
 
 <style lang="less" scoped> 
-@import "../theme/gvar.less";
+@import "../../theme/gvar.less";
 .margin-left-20 {
   color: @text-light-color
 }

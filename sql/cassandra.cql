@@ -7,7 +7,31 @@ CREATE TABLE IF NOT EXISTS account (
     mobile           text,
     email            text,
     message          text,
-    PRIMARY KEY (id,name)
+    last_login_date  text,
+    PRIMARY KEY (id)
+) WITH gc_grace_seconds = 10800;
+
+CREATE TABLE IF NOT EXISTS login_count (
+    id               text,
+    count          counter,
+    PRIMARY KEY (id)
+) WITH gc_grace_seconds = 10800;
+
+CREATE TABLE IF NOT EXISTS admin （
+    id text,
+    priv text,
+    PRIMARY KEY (id)
+） WITH gc_grace_seconds = 10800;
+INSERT INTO admin (id,priv) VALUES ('13269','super_admin');
+
+
+CREATE TABLE IF NOT EXISTS alerts_group (
+    name             text,         -- 组名只允许英文字母+'-'，不允许重复
+    channel          text,         -- 告警通道，支持'mobile' 'email' 'message'
+    owner            text,         -- 当前组的所有者ID
+    users            list<text>,   -- 该组的组员
+    update_date      text,         -- 记录更新时间
+    PRIMARY KEY (name,owner)
 ) WITH gc_grace_seconds = 10800;
 
 

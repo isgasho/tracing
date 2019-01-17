@@ -62,6 +62,8 @@ const user = {
         commit('SET_TOKEN', '')
         commit('SET_PRIV', 'normal')
         removeToken()
+         // 记录现在的路径，登录后恢复
+        Cookies.set("lastPath", window.location.pathname)
       })
     }   
   }

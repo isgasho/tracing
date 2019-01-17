@@ -9,28 +9,31 @@ import (
 )
 
 type User struct {
-	ID     string `json:"id"`
-	Name   string `json:"name"`
-	Mobile string `json:"mobile"`
-	Email  string `json:"email"`
-	Priv   string `json:"priv"`
+	ID            string `json:"id"`
+	Name          string `json:"name"`
+	Mobile        string `json:"mobile"`
+	Email         string `json:"email"`
+	Priv          string `json:"priv"`
+	LastLoginDate string `json:"last_login_date"`
+	LoginCount    int    `json:"login_count"`
 }
 
 func (web *Web) userList(c echo.Context) error {
 	// 查询所有用户
-	q := `SELECT id,name,mobile,email FROM account`
+	q := `SELECT id,name,mobile,email,last_login_date FROM account`
 	iter := web.Cql.Query(q).Iter()
 
 	users := make(map[string]*User)
-	var id, name, mobile, email, priv string
+	var id, name, mobile, email, priv, lld string
 
-	for iter.Scan(&id, &name, &mobile, &email) {
+	for iter.Scan(&id, &name, &mobile, &email, &lld) {
 		users[id] = &User{
-			ID:     id,
-			Name:   name,
-			Mobile: mobile,
-			Email:  email,
-			Priv:   g.PRIV_NORMAL,
+			ID:            id,
+			Name:          name,
+			Mobile:        mobile,
+			Email:         email,
+			Priv:          g.PRIV_NORMAL,
+			LastLoginDate: lld,
 		}
 	}
 
@@ -39,7 +42,22 @@ func (web *Web) userList(c echo.Context) error {
 	iter = web.Cql.Query(q).Iter()
 
 	for iter.Scan(&id, &priv) {
-		users[id].Priv = priv
+		u, ok := users[id]
+		if ok {
+			u.Priv = priv
+		}
+	}
+
+	// 查询用户的登录次数
+	q = `SELECT id,count FROM login_count`
+	iter = web.Cql.Query(q).Iter()
+
+	var count int
+	for iter.Scan(&id, &count) {
+		u, ok := users[id]
+		if ok {
+			u.LoginCount = count
+		}
 	}
 
 	nusers := make([]*User, 0)
