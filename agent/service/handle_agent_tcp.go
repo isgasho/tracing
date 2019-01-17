@@ -21,6 +21,34 @@ import (
 	"go.uber.org/zap"
 )
 
+// var agentStartTimeTest int64
+
+// func threadDump(streamID int, conn net.Conn) error {
+// 	var rePacket proto.Packet
+
+// 	threadDump := command.NewTCommandThreadDump()
+// 	threadDump.Type = command.TThreadDumpType(1)
+// 	// transfer := command.NewTCommandTransfer()
+// 	// transfer.Payload = thrift.SerializeNew(threadDump)
+
+// 	applicationStreamCreate := proto.NewApplicationStreamCreate()
+// 	applicationStreamCreate.Payload = thrift.SerializeNew(threadDump) //transfer.Payload //thrift.Serialize(transfer)
+// 	applicationStreamCreate.ChannelID = streamID
+// 	rePacket = applicationStreamCreate
+
+// 	body, err := rePacket.Encode()
+// 	if err != nil {
+// 		g.L.Warn("rePacket.Encode", zap.String("error", err.Error()))
+// 		return err
+// 	}
+
+// 	if _, err := conn.Write(body); err != nil {
+// 		g.L.Warn("conn.Write", zap.String("error", err.Error()))
+// 		return err
+// 	}
+// 	return nil
+// }
+
 func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 	defer func() {
 		if err := recover(); err != nil {
@@ -33,6 +61,22 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 			conn.Close()
 		}
 	}()
+	// streamID := int(rand.Int31n(1000))
+	// go func() {
+	// 	for {
+	// 		time.Sleep(5 * time.Second)
+	// 		err := threadDump(streamID, conn)
+	// 		if err != nil {
+	// 			log.Println(err)
+	// 			break
+	// 		}
+	// 		streamID++
+	// 		log.Println("发送成功")
+
+	// 		time.Sleep(10 * time.Second)
+
+	// 	}
+	// }()
 
 	isRecvOffline := false
 	defer func() {
@@ -77,7 +121,7 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 			break
 
 		case proto.APPLICATION_REQUEST:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_REQUEST"))
+			// g.L.Debug("agentInfo", zap.String("type", "APPLICATION_REQUEST"))
 			applicationRequest := proto.NewApplicationRequest()
 			if err := applicationRequest.Decode(conn, reader); err != nil {
 				g.L.Warn("applicationRequest.Decode", zap.String("error", err.Error()))
@@ -142,6 +186,8 @@ func (pinpoint *Pinpoint) agentInfo(conn net.Conn) error {
 				g.L.Warn("applicationStreamCreateFail.Decode", zap.String("error", err.Error()))
 				return err
 			}
+
+			// log.Println(applicationStreamCreateFail)
 			break
 
 		case proto.APPLICATION_STREAM_RESPONSE:

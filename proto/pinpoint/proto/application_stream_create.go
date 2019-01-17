@@ -1,6 +1,7 @@
 package proto
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"net"
@@ -44,7 +45,13 @@ func (a *ApplicationStreamCreate) Decode(conn net.Conn, reader io.Reader) error 
 
 // Encode ...
 func (a *ApplicationStreamCreate) Encode() ([]byte, error) {
-	return nil, nil
+	body := make([]byte, 10)
+	binary.BigEndian.PutUint16(body[0:2], uint16(a.Type))
+	binary.BigEndian.PutUint32(body[2:6], uint32(a.ChannelID))
+	binary.BigEndian.PutUint32(body[6:10], uint32(len(a.Payload)))
+	bys := bytes.NewBuffer(body)
+	bys.Write(a.Payload)
+	return bys.Bytes(), nil
 }
 
 // GetPacketType ...
