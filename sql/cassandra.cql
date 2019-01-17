@@ -35,6 +35,29 @@ CREATE TABLE IF NOT EXISTS alerts_group (
 ) WITH gc_grace_seconds = 10800;
 
 
+CREATE TYPE alert (
+    name text, -- 监控项名称
+    type text, -- 监控项类型： apm、system
+    label text, -- 监控项描述
+    compare tinyint, -- 比较类型 1: > 2:<  3:=
+    unit text, -- 单位：%、个 
+    duration tinyint, -- 持续时间, 1 代表1分钟
+    value double,
+);
+
+CREATE TABLE IF NOT EXISTS alerts_policy (
+    id               UUID,          -- 唯一ID
+    name             text,         -- 策略模版名
+    owner            text,         -- 当前策略模版的所有者ID
+    alerts           list<frozen<alert>>, -- 告警项列表
+    update_date      bigint,         -- 记录更新时间
+    PRIMARY KEY (id,owner)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_policy (update_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
 CREATE TABLE IF NOT EXISTS agents (
     app_name            text,
     agent_id            text,

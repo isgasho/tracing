@@ -3,7 +3,7 @@
       <Row>
           <Col span="22" offset="1">
             <div class="header font-size-18">
-                <span class="hover-cursor alerts-hover-primary" @click="createPolicy"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建策略</span>
+                <span class="hover-cursor alerts-hover-primary" style="font-size:15px" @click="createPolicy"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建策略模版</span>
                  <Tooltip placement="right" max-width="400">
                     <Icon type="ios-help" style="margin-bottom:5px;font-size:16px"  />
                   <div slot="content" style="padding: 15px 15px">
@@ -14,7 +14,18 @@
                   </div>
                 </Tooltip>
             </div>
-            <Table stripe :columns="policyLabels" :data="policyList" class="margin-top-15" @on-row-click="editPolicy" on-row-dblclick="deletePolicy"></Table>
+            <Table stripe :columns="policyLabels" :data="policyList" class="margin-top-15" @on-row-click="editPolicy">
+              <template slot-scope="{ row }" slot="owner">
+                  {{ row.owner_name + '/'+row.owner_id}}
+              </template>
+              <template slot-scope="{ row }" slot="alerts">
+                  {{ row.alerts.length }}
+              </template>
+              <template slot-scope="{ row, index }" slot="action">
+            <Button type="primary" size="small" style="margin-right: 5px" @click="show(index)">View</Button>
+            <Button type="error" size="small" @click="remove(index)">Delete</Button>
+        </template>
+            </Table>
           </Col>
       </Row>
 
@@ -25,7 +36,7 @@
                     <FormItem label="策略模版名称">
                         <div class="margin-left-20">
                           <div class="right-meta">为你的模版选择一个准确、简洁的名称，只支持英文字母和-</div>
-                           <Input style="width:400px;" class="right-body" v-model="tempPolicy.name" placeholder="e.g. tf56pay-gateway"></Input>
+                           <Input style="width:400px;" class="right-body" v-model="tempPolicy.name" placeholder="e.g. tf56pay-gateway" :autofocus="handleType=='create'"></Input>
                         </div>    
                     </FormItem>
 
@@ -47,7 +58,7 @@
                                     <div class="font-size-12 margin-top-20">定义告警阈值</div>
                                       <div class="alert-setting no-border">
                                         <span class="label">监控指标</span>
-                                        <Select :value="tempAlert.name" style="width:250px" filterable > 
+                                        <Select :value="tempAlert.name" style="width:250px" > 
                                           <!-- <OptionGroup label="关键监控指标"> -->
                                               <Option v-for="alert in alertItems[policyType]" v-show="filterOption(alert)" @click.native="selAlert(alert)"  :value="alert.name" :key="alert.name">{{ alert.label }}</Option>
                                           <!-- </OptionGroup> -->
@@ -58,7 +69,7 @@
                                         </Select>
                                       </div>
 
-                                      <div class="alert-setting">
+                                      <div class="alert-setting" style="margin-top:15px">
                                         <span class="label">比较方式</span>
                                         <span style="margin-left:10px">
                                           <span v-if="tempAlert.compare==1"> > </span>
@@ -70,7 +81,7 @@
 
                                       <div class="alert-setting">
                                         <span class="label">设定阈值</span>
-                                        <Input style="width:100px;margin-bottom:5px" class="right-body" v-model="tempAlert.value" placeholder=""></Input>
+                                        <Input style="width:100px;margin-bottom:12px" class="right-body" v-model="tempAlert.value" placeholder=""></Input>
                                         <span class="label">{{tempAlert.unit}}</span>
                                       </div>
 
@@ -86,8 +97,8 @@
                                           <Icon type="md-add" class="meta-color hover-cursor" @click="addAlert"/>
                                         </Tooltip>
                                          
-                                        <Tooltip placement="bottom" max-width="400" content="删除该项">
-                                           <Icon type="md-close" class="color-error margin-left-5 hover-cursor"/>
+                                        <Tooltip placement="bottom" max-width="400" content="清空该项">
+                                           <Icon type="md-close" class="color-error margin-left-5 hover-cursor" @click="clearAlert"/>
                                         </Tooltip>
                                        
                                       </div>
@@ -98,14 +109,14 @@
                                   <div class="alert-setting" v-show="isAlertsVisible('apm')">
                                     <div class="font-size-12">应用监控</div>
                                     <div class="margin-left-10">
-                                      <alert v-for="alert in tempPolicy.alerts" v-show="alert.type=='apm'" :key="alert.value" :alert="alert" class="margin-left-10" style="background-color:#9cd9e7;padding:4px 6px;font-size:12px;border-radius:4px;"></alert>
+                                      <alert v-for="a in tempPolicy.alerts" v-show="a.type=='apm'" :key="a.value" :alert="a"  @click.native="editAlert(a)" class="margin-left-10 hover-cursor" style="background-color:#9cd9e7;padding:4px 6px;font-size:12px;border-radius:4px;"></alert>
                                     </div>
                                   </div>
 
                                   <div class="alert-setting" v-show="isAlertsVisible('system')">
                                     <div class="font-size-12 margin-top-10">系统监控</div>
                                      <div class="margin-left-10">
-                                      <alert v-for="alert in tempPolicy.alerts" v-show="alert.type=='system'" :key="alert.value" :alert="alert" class="margin-left-10" style="background-color:#efda83;padding:4px 6px;font-size:12px;border-radius:4px;"></alert>
+                                      <alert v-for="a in tempPolicy.alerts" v-show="a.type=='system'" :key="a.value" :alert="a"  @click.native="editAlert(a)" class="margin-left-10 hover-cursor" style="background-color:#efda83;padding:4px 6px;font-size:12px;border-radius:4px;"></alert>
                                     </div>
                                   </div>
                                 </div>
@@ -113,6 +124,17 @@
                              </Row>
                            </div>
                         </div>    
+                    </FormItem>
+
+                    <FormItem label="删除模版" v-show="handleType=='edit'">
+                        <Poptip
+                            confirm
+                            :title="'一旦删除不可恢复！确定删除模版 ' + tempPolicy.name + ' ？'"
+                            ok-text="删" 
+                            cancel-text="不,我不要删除,速速取消" 
+                            @on-ok="confirmDeletePolicy(tempPolicy.id)">
+                            <Button type="warning" size="small">删除</Button>
+                        </Poptip>
                     </FormItem>
                 </Form>
               </Col>
@@ -133,6 +155,25 @@ export default {
   computed: {
   },
   methods: {
+      clearAlert() {
+        this.tempAlert = {
+          name: '',
+          type: '',
+          duration: 0,
+          compare: 1,
+          value: 0,
+          unit: ''
+        }
+      },
+      editAlert(a) {
+        // 从tempPolicy中删除该alert
+        for (var i=0;i<this.tempPolicy.alerts.length;i++) {
+          if (this.tempPolicy.alerts[i].name == a.name) {
+            this.tempPolicy.alerts.splice(i,1)
+          }
+        }
+        this.tempAlert = a
+      } ,  
       filterOption(alert) {
         //若当前alert已经在tempPolicy中，则不显示
         for (var i=0;i<this.tempPolicy.alerts.length;i++) {
@@ -179,8 +220,21 @@ export default {
         this.policyType = tp
         this.tempAlert = {}
       },
-      confirmDeletePolicy(name) {
-         
+      confirmDeletePolicy(id) {
+         request({
+                url: '/apm/web/deletePolicy',
+                method: 'POST',
+                params: {
+                    id: id
+                }
+            }).then(res => {
+                this.loadPolicys()
+                this.handlePolicyVisible = false
+                this.$Message.success({
+                    content: '删除成功',
+                    duration: 3 
+                })
+            })
       },
       editPolicy(policy) {
           this.handleType = 'edit'
@@ -189,21 +243,52 @@ export default {
           this.handlePolicyVisible = true 
       },
       submitHandlePolicy() {
-
+        if (this.handleType == 'create') {
+          request({
+              url: '/apm/web/createPolicy',
+              method: 'POST',
+              params: {
+                policy: JSON.stringify(this.tempPolicy)
+              }
+          }).then(res => {
+            this.tempPolicy =  {
+                name: '',
+                alerts: []
+            }
+            this.loadPolicys()
+            this.$Message.success({
+                content: '创建成功',
+                duration: 3 
+            })
+          })
+        } else {
+          request({
+              url: '/apm/web/editPolicy',
+              method: 'POST',
+              params: {
+                policy: JSON.stringify(this.tempPolicy)
+              }
+          }).then(res => {
+            this.tempPolicy =  {
+                name: '',
+                alerts: []
+            }
+            this.loadPolicys()
+            this.$Message.success({
+                content: '编辑成功',
+                duration: 3 
+            })
+          })
+        }
       },
       cancelHandlePolicy() {
           this.handlePolicyVisible = false
-          this.tempPolicy = {
-                    name: '',
-                    channel: 'mobile',
-                    users: []
-                }
       },
       createPolicy() {
         this.handlePolicyTitle = '创建策略模版'
         this.handlePolicyVisible = true
         this.handleType = 'create'
-
+        this.tempPolicy.name = ''
         this.tempAlert = {
           name: 'apm.apdex_count',
           type: 'apm',
@@ -215,17 +300,17 @@ export default {
         }
       },
       loadPolicys() {
+        request({
+              url: '/apm/web/queryPolicies',
+              method: 'GET',
+              params: {
+              }
+          }).then(res => {
+            this.policyList = res.data.data
+          })
       }
   },
   mounted() {
-    request({
-        url: '/apm/web/userList',
-        method: 'GET',
-        params: {
-        }
-    }).then(res => {
-      this.userList = res.data.data
-    })
     this.loadPolicys()
   },
    data () {
@@ -234,24 +319,21 @@ export default {
         handlePolicyVisible: false,
         policyLabels: [
             {
-                title: '组名',
+                title: '模版名',
                 key: 'name'
             },
             {
                 title: 'Owner',
-                key: 'owner'
+                slot: 'owner',
             },
             {
-                title: '告警通道',
-                key: 'channel'
-            },
-             {
-                title: '组员数',
-                key: 'user_count'
-            },
+                title: '监控项',
+                key: 'alerts',
+                slot: 'alerts'
+            }
         ],
         policyList: [],
-        userList : [],
+  
 
         tempPolicy: {
             name: '',
@@ -492,6 +574,5 @@ export default {
     color: @meta-color
   }
 }
-
 
 </style>

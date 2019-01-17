@@ -58,8 +58,7 @@
             }
         }
         .ivu-modal-body {
-            margin-left:40px;
-            margin-right:40px;
+            padding-left:56px;
             margin-top:35px;
             .ivu-form {
                 .ivu-form-item {
@@ -71,12 +70,28 @@
                         font-size:15px;
                     }
                     .right-meta {
-                        margin-top:2px
+                        margin-top:2px;
+                        font-size: 13px;
                     }
                     .right-body {
-                        margin-top:10px
+                        margin-top:15px
                     }
                 }
+            }
+            input {
+                border-top:none !important;
+                border-left:none !important;
+                border-right:none !important;
+                border-radius: 0 !important
+              }
+              .ivu-input-number {
+                border: none !important
+              }
+
+            .ivu-input:focus {
+                border-color: @primary-color;
+                outline: 0;
+                box-shadow: none;
             }
         }
     }
@@ -101,7 +116,7 @@
                 border:none;
                 color: #555;
                 // font-size: 3px;
-                margin-right:70px;
+                margin-right:50px;
             }
             .ivu-btn-text {
                 font-size:14px;

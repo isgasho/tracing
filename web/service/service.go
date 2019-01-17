@@ -17,9 +17,11 @@ import (
 // 后台服务
 // Stats 离线计算
 type Web struct {
-	Cql      *gocql.Session
-	cache    *cache
-	sessions *sync.Map
+	Cql       *gocql.Session
+	cache     *cache
+	sessions  *sync.Map
+	usersMap  *sync.Map
+	usersList []*User
 }
 
 // New ...
@@ -73,6 +75,11 @@ func (s *Web) Start() error {
 	}
 	s.Cql = session
 
+	// 初始化全体用户列表(缓存以提升性能)
+	s.usersList = make([]*User, 0)
+	s.usersMap = &sync.Map{}
+	go s.loopLoadUsers()
+
 	go func() {
 		e := echo.New()
 		e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
@@ -107,8 +114,13 @@ func (s *Web) Start() error {
 		e.POST("/apm/web/deleteGroup", s.deleteGroup, s.checkLogin)
 		e.GET("/apm/web/queryGroups", s.queryGroups, s.checkLogin)
 
+		e.POST("/apm/web/createPolicy", s.createPolicy, s.checkLogin)
+		e.POST("/apm/web/editPolicy", s.editPolicy, s.checkLogin)
+		e.GET("/apm/web/queryPolicies", s.queryPolicies, s.checkLogin)
+		e.POST("/apm/web/deletePolicy", s.deletePolicy, s.checkLogin)
 		// 管理员面板
 		e.GET("/apm/web/userList", s.userList, s.checkLogin)
+		e.GET("/apm/web/manageUserList", s.manageUserList, s.checkLogin)
 		e.POST("/apm/web/setAdmin", s.setAdmin, s.checkLogin)
 		e.POST("/apm/web/cancelAdmin", s.cancelAdmin, s.checkLogin)
 

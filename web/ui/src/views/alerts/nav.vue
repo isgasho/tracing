@@ -35,7 +35,7 @@ export default {
       this.$router.push('/apm/ui/alerts/' + i)
     },
     initItem() {
-       this.appNames = [this.$store.state.apm.appName]
+        this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
         this.items = ['appList','policy','alertsNotify']
         this.level = {'appList':2, alertsNotify:2,policy:2, group:2}

@@ -9,8 +9,142 @@ import (
 	"github.com/labstack/echo"
 	"github.com/mafanr/g"
 	"github.com/mafanr/g/utils"
+	"github.com/mafanr/vgo/util"
 	"go.uber.org/zap"
 )
+
+type Policy struct {
+	ID        string        `json:"id"`
+	Name      string        `json:"name"`
+	OwnerID   string        `json:"owner_id"`
+	OwnerName string        `json:"owner_name"`
+	Alerts    []*util.Alert `json:"alerts"`
+}
+
+func (web *Web) createPolicy(c echo.Context) error {
+	policyRaw := c.FormValue("policy")
+
+	policy := &Policy{}
+	err := json.Unmarshal([]byte(policyRaw), &policy)
+	if err != nil || policy.Name == "" || len(policy.Alerts) == 0 {
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusBadRequest,
+			ErrCode: g.ParamInvalidC,
+			Message: g.ParamInvalidE,
+		})
+	}
+
+	// 获取当前用户
+	li := web.getLoginInfo(c)
+
+	// 插入
+	q := web.Cql.Query(`INSERT INTO  alerts_policy (id,name,owner,alerts,update_date) VALUES (uuid(),?,?,?,?)`, policy.Name, li.ID, policy.Alerts, time.Now().Unix())
+	err = q.Exec()
+	if err != nil {
+		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+	})
+}
+
+func (web *Web) editPolicy(c echo.Context) error {
+	policyRaw := c.FormValue("policy")
+
+	policy := &Policy{}
+	err := json.Unmarshal([]byte(policyRaw), &policy)
+	if err != nil || policy.Name == "" || len(policy.Alerts) == 0 {
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusBadRequest,
+			ErrCode: g.ParamInvalidC,
+			Message: g.ParamInvalidE,
+		})
+	}
+
+	// 获取当前用户
+	li := web.getLoginInfo(c)
+
+	// 插入
+	q := web.Cql.Query(`UPDATE  alerts_policy SET name=?,alerts=?,update_date=? WHERE id=? and owner=?`, policy.Name, policy.Alerts, time.Now().Unix(), policy.ID, li.ID)
+	err = q.Exec()
+	if err != nil {
+		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+	})
+}
+
+func (web *Web) queryPolicies(c echo.Context) error {
+	// 获取当前用户
+	li := web.getLoginInfo(c)
+
+	// 若该用户是管理员，可以获取所有组
+	var iter *gocql.Iter
+	if li.Priv == g.PRIV_NORMAL {
+		iter = web.Cql.Query(`SELECT id,name,owner,alerts FROM alerts_policy WHERE owner=?`, li.ID).Iter()
+	} else {
+		iter = web.Cql.Query(`SELECT id,name,owner,alerts FROM alerts_policy`).Iter()
+	}
+
+	var id, name, owner string
+	var alerts []*util.Alert
+
+	policies := make([]*Policy, 0)
+	for iter.Scan(&id, &name, &owner, &alerts) {
+		ownerNameR, _ := web.usersMap.Load(owner)
+		policies = append(policies, &Policy{id, name, owner, ownerNameR.(*User).Name, alerts})
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   policies,
+	})
+}
+
+func (web *Web) deletePolicy(c echo.Context) error {
+	id := c.FormValue("id")
+
+	if id == "" {
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusBadRequest,
+			ErrCode: g.ParamInvalidC,
+			Message: g.ParamInvalidE,
+		})
+	}
+
+	// 获取当前用户
+	li := web.getLoginInfo(c)
+
+	// 删除
+	q := web.Cql.Query(`DELETE FROM  alerts_policy WHERE id=? and owner=?`,
+		id, li.ID)
+	err := q.Exec()
+	if err != nil {
+		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+	})
+}
 
 func (web *Web) createGroup(c echo.Context) error {
 	name := c.FormValue("name")

@@ -126,7 +126,7 @@ export default {
   },
   mounted() {
     request({
-        url: '/apm/web/userList',
+        url: '/apm/web/manageUserList',
         method: 'GET',
         params: {
         }

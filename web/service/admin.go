@@ -2,6 +2,7 @@ package service
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	"github.com/mafanr/g"
@@ -18,7 +19,7 @@ type User struct {
 	LoginCount    int    `json:"login_count"`
 }
 
-func (web *Web) userList(c echo.Context) error {
+func (web *Web) manageUserList(c echo.Context) error {
 	// 查询所有用户
 	q := `SELECT id,name,mobile,email,last_login_date FROM account`
 	iter := web.Cql.Query(q).Iter()
@@ -68,6 +69,13 @@ func (web *Web) userList(c echo.Context) error {
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
 		Data:   nusers,
+	})
+}
+
+func (web *Web) userList(c echo.Context) error {
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   web.usersList,
 	})
 }
 
@@ -127,4 +135,31 @@ func (web *Web) cancelAdmin(c echo.Context) error {
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
 	})
+}
+
+func (web *Web) loopLoadUsers() {
+	for {
+		// 查询所有用户
+		q := `SELECT id,name,mobile,email,last_login_date FROM account`
+		iter := web.Cql.Query(q).Iter()
+
+		users := make([]*User, 0)
+		var id, name, mobile, email, lld string
+
+		for iter.Scan(&id, &name, &mobile, &email, &lld) {
+			u := &User{
+				ID:            id,
+				Name:          name,
+				Mobile:        mobile,
+				Email:         email,
+				LastLoginDate: lld,
+			}
+			users = append(users, u)
+			web.usersMap.Store(id, u)
+		}
+
+		web.usersList = users
+
+		time.Sleep(60 * time.Second)
+	}
 }
