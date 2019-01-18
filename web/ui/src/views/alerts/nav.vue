@@ -37,9 +37,9 @@ export default {
     initItem() {
         this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
-        this.items = ['appList','policy','alertsNotify']
+        this.items = ['appList','policy','group','alertsNotify']
         this.level = {'appList':2, alertsNotify:2,policy:2, group:2}
-        this.names = {appList: '应用列表','alertsNotify': "告警消息查询",
+        this.names = {appList: '告警设置','alertsNotify': "告警消息查询",
             policy: '策略模版',group:'组管理'}
         this.selItem = this.path.split('/')[4]
     }

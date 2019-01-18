@@ -161,7 +161,7 @@ func (web *Web) createGroup(c echo.Context) error {
 
 	var users []string
 	err := json.Unmarshal([]byte(usersS), &users)
-	if err != nil || len(users) == 0 {
+	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
 			ErrCode: g.ParamInvalidC,
@@ -215,7 +215,7 @@ func (web *Web) editGroup(c echo.Context) error {
 
 	var users []string
 	err := json.Unmarshal([]byte(usersS), &users)
-	if err != nil || len(users) == 0 {
+	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
 			ErrCode: g.ParamInvalidC,

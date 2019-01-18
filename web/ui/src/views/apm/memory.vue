@@ -1,7 +1,7 @@
 <template>
   <div>
-memory
-      </div>   
+    我们正在紧锣密鼓的开发中，敬请期待
+  </div>   
 </template>
 
 <script>

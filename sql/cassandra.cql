@@ -1,6 +1,7 @@
 CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
+-- 用户表
 CREATE TABLE IF NOT EXISTS account (
     id               text,
     name             text,
@@ -10,13 +11,14 @@ CREATE TABLE IF NOT EXISTS account (
     last_login_date  text,
     PRIMARY KEY (id)
 ) WITH gc_grace_seconds = 10800;
-
+-- 登录次数统计表
 CREATE TABLE IF NOT EXISTS login_count (
     id               text,
     count          counter,
     PRIMARY KEY (id)
 ) WITH gc_grace_seconds = 10800;
 
+-- 管理员表
 CREATE TABLE IF NOT EXISTS admin （
     id text,
     priv text,
@@ -24,17 +26,22 @@ CREATE TABLE IF NOT EXISTS admin （
 ） WITH gc_grace_seconds = 10800;
 INSERT INTO admin (id,priv) VALUES ('13269','super_admin');
 
-
+-- 告警用户组表
 CREATE TABLE IF NOT EXISTS alerts_group (
-    name             text,         -- 组名只允许英文字母+'-'，不允许重复
+    id               UUID,          -- 唯一ID
+    name             text,         -- 用户组名称
     channel          text,         -- 告警通道，支持'mobile' 'email' 'message'
     owner            text,         -- 当前组的所有者ID
     users            list<text>,   -- 该组的组员
-    update_date      text,         -- 记录更新时间
-    PRIMARY KEY (name,owner)
+    update_date      bigint,         -- 记录更新时间
+    PRIMARY KEY (id)
 ) WITH gc_grace_seconds = 10800;
 
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_group (owner) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
+
+-- 告警策略模版中的监控项
 CREATE TYPE alert (
     name text, -- 监控项名称
     type text, -- 监控项类型： apm、system
@@ -45,6 +52,7 @@ CREATE TYPE alert (
     value double,
 );
 
+-- 告警策略模版表
 CREATE TABLE IF NOT EXISTS alerts_policy (
     id               UUID,          -- 唯一ID
     name             text,         -- 策略模版名
@@ -57,6 +65,33 @@ CREATE TABLE IF NOT EXISTS alerts_policy (
 CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_policy (update_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
+-- 应用告警表
+CREATE TABLE IF NOT EXISTS app_alert (
+    name             text,              -- 应用名
+    owner            text,              -- 该应用告警的所有者ID
+    policy           text,              -- 应用关联的告警策略模版
+    group            text,              -- 应用关联的用户组
+    channel          text,              -- 不使用用户组时，单独设置告警通道
+    users            list<text>,        -- 不使用用户组时,单独设置通知的用户
+    extra_alerts     map<text, frozen<alert>>,  -- 额外的url告警项设置(可以自行指定url，设置特殊的告警规则)
+    update_date      bigint,            -- 记录更新时间
+    PRIMARY KEY (name)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (update_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (owner) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (policy) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (group) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
+
 
 CREATE TABLE IF NOT EXISTS agents (
     app_name            text,
