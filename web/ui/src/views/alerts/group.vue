@@ -3,7 +3,7 @@
       <Row>
           <Col span="22" offset="1">
             <div class="header font-size-18">
-                <span class="hover-cursor alerts-hover-primary" style="font-size:15px"  @click="createGroup"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建组</span>
+                <span class="hover-cursor alerts-hover-primary" style="font-size:15px"  @click="createGroup"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建用户组</span>
                 <Tooltip placement="right" max-width="400">
                     <Icon type="ios-help" style="margin-bottom:5px;font-size:16px"  />
                   <div slot="content" style="padding: 15px 15px">
@@ -12,7 +12,18 @@
                   </div>
                 </Tooltip>
             </div>
-            <Table stripe :columns="groupLabels" :data="groupList" class="margin-top-15" @on-row-click="editGroup" on-row-dblclick="deleteGroup"></Table>
+            <Table stripe :columns="groupLabels" :data="groupList" class="margin-top-15" @on-row-click="editGroup" on-row-dblclick="deleteGroup">
+                <template slot-scope="{ row }" slot="owner">
+                  {{ row.owner_name + '/'+row.owner_id}}
+                </template>
+                <template slot-scope="{ row }" slot="channel">
+                  <span v-if="row.channel=='mobile'">短信</span>
+                  <span v-else>邮件</span>
+                </template>
+                <template slot-scope="{ row }" slot="users">
+                  {{ row.users.length }}
+                </template>
+            </Table>
           </Col>
       </Row>
 
@@ -21,8 +32,7 @@
               <Col span="21" offset="1">
                 <Form :model="tempGroup" :label-width="80">
                     <FormItem label="组名">
-                        <Input v-model="tempGroup.name" placeholder="只支持英文字母和 -" v-if="handleType=='create'"></Input>
-                        <span v-else>{{tempGroup.name}}</span>
+                        <Input v-model="tempGroup.name" placeholder="为你的用户组起一个简洁、直观的名称.." ></Input>
                     </FormItem>
                     <FormItem label="告警通道">
                         <RadioGroup v-model="tempGroup.channel">
@@ -40,7 +50,7 @@
                             confirm
                             :title="'一旦删除不可恢复！确定删除组 ' + tempGroup.name + ' ？'"
                             ok-text="删" cancel-text="不,我不要删除,速速取消" 
-                            @on-ok="confirmDeleteGroup(tempGroup.name)">
+                            @on-ok="confirmDeleteGroup(tempGroup.id)">
                             <Button type="warning" size="small">删除</Button>
                         </Poptip>
                     </FormItem>
@@ -67,21 +77,22 @@ export default {
             },
             {
                 title: 'Owner',
-                key: 'owner'
+                slot: 'owner'
             },
             {
                 title: '告警通道',
-                key: 'channel'
+                slot: 'channel'
             },
              {
                 title: '组员数',
-                key: 'user_count'
+                slot: 'users'
             },
         ],
         groupList: [],
         userList : [],
 
         tempGroup: {
+            id :'',
             name: '',
             channel: 'mobile',
             users: []
@@ -94,12 +105,12 @@ export default {
   computed: {
   },
   methods: {
-      confirmDeleteGroup(name) {
+      confirmDeleteGroup(id) {
           request({
                 url: '/apm/web/deleteGroup',
                 method: 'POST',
                 params: {
-                    name: name
+                    id: id
                 }
             }).then(res => {
                  this.loadGroups()
@@ -127,14 +138,13 @@ export default {
                     users: JSON.stringify(this.tempGroup.users)
                 }
             }).then(res => {
-                this.tempGroup['owner'] = this.$store.state.user.id
-                this.tempGroup['user_count'] = this.tempGroup.users.length
-                this.groupList.unshift(this.tempGroup)
                 this.tempGroup = {
+                    id:'',
                     name: '',
                     channel: 'mobile',
                     users: []
                 }
+                this.loadGroups()
                 this.handleGroupVisible = false
                 this.$Message.success({
                     content: '创建成功',
@@ -146,6 +156,7 @@ export default {
                 url: '/apm/web/editGroup',
                 method: 'POST',
                 params: {
+                    id : this.tempGroup.id,
                     name: this.tempGroup.name,
                     channel: this.tempGroup.channel,
                     users: JSON.stringify(this.tempGroup.users)

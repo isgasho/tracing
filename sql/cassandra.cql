@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS alerts_group (
     owner            text,         -- 当前组的所有者ID
     users            list<text>,   -- 该组的组员
     update_date      bigint,         -- 记录更新时间
-    PRIMARY KEY (id)
+    PRIMARY KEY (id,owner)
 ) WITH gc_grace_seconds = 10800;
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_group (owner) 
@@ -66,6 +66,9 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_policy (update_date)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_policy (owner) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
+
 -- 应用告警表
 CREATE TABLE IF NOT EXISTS app_alert (
     name             text,              -- 应用名
@@ -76,7 +79,7 @@ CREATE TABLE IF NOT EXISTS app_alert (
     users            list<text>,        -- 不使用用户组时,单独设置通知的用户
     extra_alerts     map<text, frozen<alert>>,  -- 额外的url告警项设置(可以自行指定url，设置特殊的告警规则)
     update_date      bigint,            -- 记录更新时间
-    PRIMARY KEY (name)
+    PRIMARY KEY (name,owner)
 ) WITH gc_grace_seconds = 10800;
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (update_date) 

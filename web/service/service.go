@@ -112,12 +112,20 @@ func (s *Web) Start() error {
 		e.POST("/apm/web/createGroup", s.createGroup, s.checkLogin)
 		e.POST("/apm/web/editGroup", s.editGroup, s.checkLogin)
 		e.POST("/apm/web/deleteGroup", s.deleteGroup, s.checkLogin)
-		e.GET("/apm/web/queryGroups", s.queryGroups, s.checkLogin)
+		e.GET("/apm/web/queryGroups", s.queryGroups)
 
 		e.POST("/apm/web/createPolicy", s.createPolicy, s.checkLogin)
 		e.POST("/apm/web/editPolicy", s.editPolicy, s.checkLogin)
-		e.GET("/apm/web/queryPolicies", s.queryPolicies, s.checkLogin)
+		e.GET("/apm/web/queryPolicies", s.queryPolicies)
+		e.GET("/apm/web/queryPolicy", s.queryPolicy)
 		e.POST("/apm/web/deletePolicy", s.deletePolicy, s.checkLogin)
+
+		e.POST("/apm/web/createAppAlert", s.createAppAlert, s.checkLogin)
+		e.POST("/apm/web/editAppAlert", s.editAppAlert, s.checkLogin)
+		e.POST("/apm/web/deleteAppAlert", s.deleteAppAlert, s.checkLogin)
+
+		e.GET("/apm/web/alertsAppList", s.alertsAppList)
+
 		// 管理员面板
 		e.GET("/apm/web/userList", s.userList, s.checkLogin)
 		e.GET("/apm/web/manageUserList", s.manageUserList, s.checkLogin)

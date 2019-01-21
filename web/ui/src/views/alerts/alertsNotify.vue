@@ -1,16 +1,19 @@
 <template>
   <div class="app-container">
-      <div>{{hello}} {{world}}</div>
-      <div>
-        {{world}}
-        <div class="margin-left-20">{{getAddr}}</div>
-        你好中国人
-      </div>
-
-      <Button>Default</Button>
-    <Button type="primary">Primary</Button>
-    <Button type="dashed">Dashed</Button>
-    <Button type="text">Text</Button>
+      <Row>
+          <Col span="22" offset="1">
+            <div class="header font-size-18">
+                <Select v-model="selApp" style="width:220px" placeholder="选择你的应用" filterable>
+                    <Option v-for="item in appNames" :value="item" :key="item">{{ item }}</Option>
+                </Select>
+            </div>
+            <Table stripe :columns="appLabels" :data="appList" class="margin-top-15" @on-row-click="editApp">
+                <!-- <template slot-scope="{ row }" slot="owner">
+                  {{ row.owner_name + '/'+row.owner_id}}
+                </template> -->
+            </Table>
+          </Col>
+      </Row>
   </div>
 </template>
 
@@ -20,60 +23,68 @@ export default {
   name: 'alertsNotify',
   data () {
     return {
-      hello: '',
-      world: ''
+      appNames : [],
+      selApp: '',
+      appLabels: [
+            {
+                title: '应用名',
+                key: 'app_name'
+            },
+            {
+                title: '服务器',
+                key: 'agent_id',
+            },
+            {
+                title: '报警项',
+                key: 'alert',
+            },
+            {
+                title: 'API',
+                key: 'api',
+            },
+            {
+              title: '告警值',
+                key: 'alert_value',  
+            },
+            {
+              title: '告警通道',
+                key: 'channel',  
+            },
+            {
+              title: '告警用户',
+                key: 'users',  
+            },
+            {
+              title: '告警时间',
+                key: 'alert_time',  
+            }
+        ],
+        appList: [],
     }
   },
   watch: {
-    $route() {
-      // 当路由变化时，调用此函数
-    },
-    world(val) {
-      // world发生变化时
-    }
   },
   computed: {
-    getAddr() {
-      return process.env.API_ADDR
-    }
   },
   methods: {
   },
   mounted() {
-    this.$store.dispatch('setService', 'hello')
-
-    this.hello = this.$store.state.misc.service
-    this.world = this.$t('common.test')
-
-    setTimeout(() => {
-        this.world = "new world"
-    }, 3000)
-
-
     request({
-        url: '/login',
-        method: 'POST',
-        params: {
-          user: '111'
-        }
-    }).then(res => {
-    })
+            url: '/apm/web/appNames',
+            method: 'GET',
+            params: {
+            }
+        }).then(res => {   
+            this.appNames = res.data.data 
+        })
   }
 }
 </script>
 
 <style lang="less">
-.ivu-modal-close { 
-  visibility: hidden !important;
-}
-
 </style>
 
 <style lang="less" scoped> 
 @import "../../theme/gvar.less";
-.margin-left-20 {
-  color: @text-light-color
-}
-
 
 </style>

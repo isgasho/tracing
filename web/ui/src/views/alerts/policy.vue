@@ -19,12 +19,8 @@
                   {{ row.owner_name + '/'+row.owner_id}}
               </template>
               <template slot-scope="{ row }" slot="alerts">
-                  {{ row.alerts.length }}
+                 <policy1 :policyID="row.id" :policyName="row.alerts.length" class="hover-cursor"></policy1>
               </template>
-              <template slot-scope="{ row, index }" slot="action">
-            <Button type="primary" size="small" style="margin-right: 5px" @click="show(index)">View</Button>
-            <Button type="error" size="small" @click="remove(index)">Delete</Button>
-        </template>
             </Table>
           </Col>
       </Row>
@@ -147,9 +143,10 @@
 <script>
 import request from '@/utils/request'
 import alert from './components/alert' 
+import policy1 from './components/policy' 
 export default {
   name: 'policy',
-  components: {alert},
+  components: {alert,policy1},
   watch: {
   },
   computed: {
@@ -289,6 +286,7 @@ export default {
         this.handlePolicyVisible = true
         this.handleType = 'create'
         this.tempPolicy.name = ''
+        this.tempPolicy.alerts =  []
         this.tempAlert = {
           name: 'apm.apdex_count',
           type: 'apm',
