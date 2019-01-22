@@ -10,7 +10,7 @@ import (
 // Analyze ...
 type Analyze struct {
 	cql         *g.Cassandra
-	stats       *Stats
+	stats       Stats
 	blink       *Blink
 	appStore    *AppStore
 	hash        *g.Hash
@@ -25,7 +25,7 @@ var gAnalyze *Analyze
 // New ...
 func New() *Analyze {
 	analyze := &Analyze{
-		stats:    NewStats(),
+		stats:    newStats(),
 		blink:    NewBlink(),
 		cql:      g.NewCassandra(),
 		hash:     g.NewHash(),

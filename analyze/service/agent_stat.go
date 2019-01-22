@@ -52,21 +52,6 @@ func (agentStats *AgentStats) statsCounter(agentID string, index int64, stats []
 	return nil
 }
 
-var gInserStatRecord string = ``
-
-// if err := gAnalyze.db.Session.Query(gInserStatRecord,
-// 	app.AppName,
-// 	sqlID,
-// 	recordTime,
-// 	sql.elapsed,
-// 	sql.maxElapsed,
-// 	sql.minElapsed,
-// 	sql.averageElapsed, sql.count,
-// 	sql.averageElapsed,
-// ).Exec(); err != nil {
-// 	g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserStatRecord))
-// }
-
 var gInsertCPULoadRecord string = `INSERT INTO jvm_cpu_stats (app_name, agent_id, input_date, jvm, system) VALUES (?,?,?,?,?);`
 var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_stats (app_name , agent_id , input_date , heap_used , non_heap ) VALUES (?,?,?,?,?);`
 

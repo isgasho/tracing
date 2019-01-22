@@ -9,30 +9,37 @@ import (
 	"go.uber.org/zap"
 )
 
-// Stats 离线计算
-type Stats struct {
+// Stats ...
+type Stats interface {
+	Start() error
+	Close() error
+	Counter() error
 }
 
-// NewStats ...
-func NewStats() *Stats {
-	return &Stats{}
+// stats 离线计算
+type stats struct {
+}
+
+// newStats ...
+func newStats() *stats {
+	return &stats{}
 }
 
 // Start ...
-func (s *Stats) Start() error {
-	g.L.Info("Start Stats")
+func (s *stats) Start() error {
+	g.L.Info("Start stats")
 
 	return nil
 }
 
 // Close ...
-func (s *Stats) Close() error {
-	g.L.Info("Close Stats")
+func (s *stats) Close() error {
+	g.L.Info("Close stats")
 
 	return nil
 }
 
-func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
+func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// 如果最后一次计算点为0，那么放弃本次计算
 	if app.lastCountTime == 0 {
@@ -79,7 +86,7 @@ func (s *Stats) counter(app *App, wg *sync.WaitGroup) {
 }
 
 // Counter ...
-func (s *Stats) Counter() error {
+func (s *stats) Counter() error {
 	var wg sync.WaitGroup
 	// 这里appStore没有用锁的原因是因为Counter和loadApp函数是串联调用的
 	// gAnalyze.appStore.RLock()
@@ -87,7 +94,7 @@ func (s *Stats) Counter() error {
 		wg.Add(1)
 		// 每个应用一个携程去计算
 		// 只有等所有应用计算完毕才会进行下一轮计算
-		go gAnalyze.stats.counter(app, &wg)
+		go s.counter(app, &wg)
 	}
 	// gAnalyze.appStore.RUnlock()
 	wg.Wait()
