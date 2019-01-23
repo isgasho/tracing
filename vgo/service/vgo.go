@@ -19,7 +19,7 @@ type Vgo struct {
 	storage  *Storage  // 存储
 	pinpoint *Pinpoint // 处理pinpoint 数据
 	appStore *AppStore
-	etcd     *Etcd
+	etcd     Etcd
 }
 
 var gVgo *Vgo
@@ -30,7 +30,7 @@ func New() *Vgo {
 		storage:  NewStorage(),
 		pinpoint: NewPinpoint(),
 		appStore: NewAppStore(),
-		etcd:     NewEtcd(),
+		etcd:     newEtcd(),
 	}
 	return gVgo
 }

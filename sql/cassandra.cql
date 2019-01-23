@@ -324,38 +324,38 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_memory_stats (input_date)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
-TRUNCATE  TABLE  app_strs;
-TRUNCATE  TABLE  agent_stats;
-TRUNCATE  TABLE  traces_chunk;
-TRUNCATE  TABLE  agents;
-TRUNCATE  TABLE  traces;
-TRUNCATE  TABLE  app_apis;
-TRUNCATE  TABLE  app_sqls;
-TRUNCATE  TABLE  app_operation_index;
-TRUNCATE  TABLE  apps;
-TRUNCATE  TABLE  rpc_stats;
-TRUNCATE  TABLE  rpc_details_stats;
-TRUNCATE  TABLE  sql_stats;
-TRUNCATE  TABLE  jvm_memory_stats;
-TRUNCATE  TABLE  jvm_cpu_stats;
+-- TRUNCATE  TABLE  app_strs;
+-- TRUNCATE  TABLE  agent_stats;
+-- TRUNCATE  TABLE  traces_chunk;
+-- TRUNCATE  TABLE  agents;
+-- TRUNCATE  TABLE  traces;
+-- TRUNCATE  TABLE  app_apis;
+-- TRUNCATE  TABLE  app_sqls;
+-- TRUNCATE  TABLE  app_operation_index;
+-- TRUNCATE  TABLE  apps;
+-- TRUNCATE  TABLE  rpc_stats;
+-- TRUNCATE  TABLE  rpc_details_stats;
+-- TRUNCATE  TABLE  sql_stats;
+-- TRUNCATE  TABLE  jvm_memory_stats;
+-- TRUNCATE  TABLE  jvm_cpu_stats;
 
 -- TRUNCATE  TABLE apis;
 
 
-DROP  TABLE  app_strs;
-DROP  TABLE  agent_stats;
-DROP  TABLE  traces_chunk;
-DROP  TABLE  agents;
-DROP  TABLE  traces;
-DROP  TABLE  app_apis;
-DROP  TABLE  app_sqls;
-DROP  TABLE  app_operation_index;
-DROP  TABLE  apps;
-DROP  TABLE  rpc_stats;
-DROP  TABLE  rpc_details_stats;
-DROP  TABLE  sql_stats;
-DROP  TABLE  jvm_memory_stats;
-DROP  TABLE  jvm_cpu_stats;
+-- DROP  TABLE  app_strs;
+-- DROP  TABLE  agent_stats;
+-- DROP  TABLE  traces_chunk;
+-- DROP  TABLE  agents;
+-- DROP  TABLE  traces;
+-- DROP  TABLE  app_apis;
+-- DROP  TABLE  app_sqls;
+-- DROP  TABLE  app_operation_index;
+-- DROP  TABLE  apps;
+-- DROP  TABLE  rpc_stats;
+-- DROP  TABLE  rpc_details_stats;
+-- DROP  TABLE  sql_stats;
+-- DROP  TABLE  jvm_memory_stats;
+-- DROP  TABLE  jvm_cpu_stats;
 
 -- DROP  TABLE  apis;
  

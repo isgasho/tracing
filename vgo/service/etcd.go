@@ -10,19 +10,25 @@ import (
 	"go.etcd.io/etcd/clientv3"
 )
 
-// Etcd etcd struct,report udp listen addr
-type Etcd struct {
+// Etcd ...
+type Etcd interface {
+	Start() error
+	Close()
+	Watch()
+}
+
+// etcd etcd struct,report udp listen addr
+type etcd struct {
 	Client *clientv3.Client
 	Grant  *clientv3.LeaseGrantResponse
 	StopC  chan bool
 }
 
-var etcd *Etcd
+// var etcd *etcd
 
-// NewEtcd new Etcd
-func NewEtcd() *Etcd {
-	etcd = &Etcd{
-
+// newEtcd new etcd
+func newEtcd() *etcd {
+	etcd := &etcd{
 		StopC: make(chan bool, 1),
 	}
 
@@ -30,7 +36,7 @@ func NewEtcd() *Etcd {
 }
 
 // Start start etcd report thread
-func (etcd *Etcd) Start() error {
+func (etcd *etcd) Start() error {
 	cfg := clientv3.Config{
 		Endpoints:   misc.Conf.Etcd.Addrs,
 		DialTimeout: time.Duration(misc.Conf.Etcd.Dltimeout) * time.Second,
@@ -46,14 +52,14 @@ func (etcd *Etcd) Start() error {
 }
 
 // Close stop etcd report
-func (etcd *Etcd) Close() {
+func (etcd *etcd) Close() {
 	etcd.StopC <- true
 	time.Sleep(1 * time.Second)
 	close(etcd.StopC)
 }
 
 // Watch watch
-func (etcd *Etcd) Watch() {
+func (etcd *etcd) Watch() {
 	for {
 		rch := etcd.Client.Watch(context.Background(), misc.Conf.Etcd.WatchKey, clientv3.WithPrefix())
 		for wresp := range rch {
