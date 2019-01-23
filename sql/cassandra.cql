@@ -1,6 +1,8 @@
 CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
+USE vgo_v1_datacenter;
+
 -- 用户表
 CREATE TABLE IF NOT EXISTS account (
     id               text,
