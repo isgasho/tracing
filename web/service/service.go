@@ -106,6 +106,8 @@ func (s *Web) Start() error {
 
 		//应用接口统计
 		e.GET("/apm/web/apiStats", s.apiStats)
+		//获取指定接口的详细方法统计
+		e.GET("/apm/web/apiDetail", s.apiDetail)
 
 		//查询所有服务器名
 		e.GET("/apm/web/agentList", s.agentList, s.checkLogin)

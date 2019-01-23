@@ -19,9 +19,9 @@
           </Col>
       </Row>
       <Row style="padding:0 10px">
-          <Col span="17" class="split-border-right" style="padding:8px 10px;">
+          <Col span="17" class="split-border-right no-border" style="padding:8px 10px;">
              <Table stripe :columns="appLabels" :data="appList" class="margin-top-15" @on-row-click="gotoApp"></Table>
-             <Page :current="1" :total="totalApps" size="small" class="margin-top-5" simple />
+             <Page :current="1" :total="totalApps" size="small" class="margin-top-15" simple />
           </Col>
            <Col span="6"  style="padding:8px 10px;padding-left:20px">
                 <div class="margin-top-10 card-tab">
