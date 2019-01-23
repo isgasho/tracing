@@ -43,7 +43,7 @@ type SpanException struct {
 	elapsed        int
 	maxElapsed     int
 	minElapsed     int
-	averageElapsed int
+	averageElapsed float64
 	count          int
 	errCount       int
 }

@@ -39,7 +39,7 @@ func (spanUrls *SpanURLs) urlCounter(urlStr string, elapsed int, isError int) er
 		url.minElapsed = elapsed
 	}
 
-	url.averageElapsed = url.elapsed / url.count
+	url.averageElapsed = float64(url.elapsed) / float64(url.count)
 
 	if elapsed < misc.Conf.Stats.SatisfactionTime {
 		url.satisfactionCount++
@@ -77,7 +77,7 @@ func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
 
 // SpanURL ...
 type SpanURL struct {
-	averageElapsed    int
+	averageElapsed    float64
 	elapsed           int
 	count             int
 	errCount          int

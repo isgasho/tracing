@@ -237,7 +237,7 @@ CREATE TABLE IF NOT EXISTS  rpc_stats (
     total_elapsed       int,
     max_elapsed         int,
     min_elapsed         int,
-    average_elapsed     int,
+    average_elapsed     double,
     count               int,
     err_count           int,
     satisfaction        int,
@@ -271,7 +271,7 @@ CREATE TABLE IF NOT EXISTS rpc_details_stats (
     ratio_elapsed   FLOAT,
     max_elapsed     int,
     min_elapsed     int,
-    average_elapsed int,
+    average_elapsed double,
     count           int,
     err_count       int,
     PRIMARY KEY (app_name, url, input_date, api_id)
@@ -288,7 +288,7 @@ CREATE TABLE IF NOT EXISTS sql_stats (
     elapsed         int,
     max_elapsed     int,
     min_elapsed     int,
-    average_elapsed int,
+    average_elapsed double,
     count           int,
     err_count       int,
     PRIMARY KEY (app_name, sql, input_date)
@@ -323,6 +323,15 @@ CREATE TABLE IF NOT EXISTS jvm_memory_stats (
 CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_memory_stats (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+CREATE TABLE IF NOT EXISTS service_type (
+    ser_type        int,
+    info            text,
+    PRIMARY KEY (ser_type)
+) WITH gc_grace_seconds = 10800;
+ 
+
 
 -- TRUNCATE  TABLE  app_strs;
 -- TRUNCATE  TABLE  agent_stats;

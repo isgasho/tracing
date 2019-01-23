@@ -42,7 +42,7 @@ func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEve
 			api.errCount++
 		}
 
-		api.averageElapsed = api.elapsed / api.count
+		api.averageElapsed = float64(api.elapsed) / float64(api.count)
 	}
 
 	for _, event := range chunkEvents {
@@ -68,7 +68,7 @@ func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEve
 			api.errCount++
 		}
 
-		api.averageElapsed = api.elapsed / api.count
+		api.averageElapsed = float64(api.elapsed) / float64(api.count)
 	}
 
 	return nil
@@ -111,7 +111,7 @@ type SpanEvent struct {
 	elapsed        int
 	maxElapsed     int
 	minElapsed     int
-	averageElapsed int
+	averageElapsed float64
 	count          int
 	errCount       int
 }

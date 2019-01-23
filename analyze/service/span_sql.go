@@ -25,10 +25,10 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 		if len(ans) >= 0 {
 			for _, an := range ans {
 				if an.GetKey() == 20 {
-					sql, ok := spanSQLs.sqls[an.GetValue().GetIntValue()]
+					sql, ok := spanSQLs.sqls[an.Value.GetIntStringStringValue().GetIntValue()]
 					if !ok {
 						sql = NewSpanSQL()
-						spanSQLs.sqls[an.GetValue().GetIntValue()] = sql
+						spanSQLs.sqls[an.Value.GetIntStringStringValue().GetIntValue()] = sql
 					}
 					sql.count++
 					elapsed := int(event.EndElapsed)
@@ -46,7 +46,7 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 						sql.errCount++
 					}
 
-					sql.averageElapsed = sql.elapsed / sql.count
+					sql.averageElapsed = float64(sql.elapsed) / float64(sql.count)
 				}
 			}
 		}
@@ -78,7 +78,7 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 						sql.errCount++
 					}
 
-					sql.averageElapsed = sql.elapsed / sql.count
+					sql.averageElapsed = float64(sql.elapsed) / float64(sql.count)
 				}
 			}
 		}
@@ -99,7 +99,7 @@ func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {
 			sql.maxElapsed,
 			sql.minElapsed,
 			sql.averageElapsed, sql.count,
-			sql.averageElapsed,
+			sql.errCount,
 		).Exec(); err != nil {
 			g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserSQLRecord))
 		}
@@ -109,7 +109,7 @@ func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {
 
 // SpanSQL ...
 type SpanSQL struct {
-	averageElapsed int
+	averageElapsed float64
 	elapsed        int
 	count          int
 	errCount       int
