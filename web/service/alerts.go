@@ -200,6 +200,12 @@ func (web *Web) alertsAppList(c echo.Context) error {
 	// 获取当前用户
 	li := web.getLoginInfo(c)
 
+	apps := make([]*AppAlert, 0)
+	polies := make(map[string]string)
+	var userNames []string
+	var name, owner, channel, policy string
+	var users []string
+
 	var iter *gocql.Iter
 	switch tp {
 	case "1": // 查看全部应用告警
@@ -207,22 +213,49 @@ func (web *Web) alertsAppList(c echo.Context) error {
 	case "2": // 用户自己创建的
 		iter = web.Cql.Query(`SELECT name,owner,policy,channel,users FROM app_alert WHERE owner=?`, li.ID).Iter()
 	case "3": // 用户设定的应用列表
+		_, appNames := web.userAppSetting(li.ID)
+		for _, an := range appNames {
+			q := web.Cql.Query(`SELECT name,owner,policy,channel,users FROM app_alert WHERE name=?`, an)
+			err := q.Scan(&name, &owner, &policy, &channel, &users)
+			if err != nil {
+				continue
+			}
+			var on string
+			ownerNameR, ok := web.usersMap.Load(owner)
+			if ok {
+				on = ownerNameR.(*User).Name
+			}
+			for _, u := range users {
+				var un string
+				unr, ok := web.usersMap.Load(u)
+				if ok {
+					un = unr.(*User).Name
+				}
+				userNames = append(userNames, un)
+			}
+			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames})
+			polies[policy] = ""
+		}
 	}
 
-	var name, owner, channel, policy string
-	var users []string
-
-	apps := make([]*AppAlert, 0)
-	polies := make(map[string]string)
-	var userNames []string
-	for iter.Scan(&name, &owner, &policy, &channel, &users) {
-		ownerNameR, _ := web.usersMap.Load(owner)
-		for _, u := range users {
-			un, _ := web.usersMap.Load(u)
-			userNames = append(userNames, un.(*User).Name)
+	if tp == "1" || tp == "2" {
+		for iter.Scan(&name, &owner, &policy, &channel, &users) {
+			var on string
+			ownerNameR, ok := web.usersMap.Load(owner)
+			if ok {
+				on = ownerNameR.(*User).Name
+			}
+			for _, u := range users {
+				var un string
+				unr, ok := web.usersMap.Load(u)
+				if ok {
+					un = unr.(*User).Name
+				}
+				userNames = append(userNames, un)
+			}
+			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames})
+			polies[policy] = ""
 		}
-		apps = append(apps, &AppAlert{name, owner, ownerNameR.(*User).Name, policy, "", channel, users, userNames})
-		polies[policy] = ""
 	}
 
 	for pid := range polies {

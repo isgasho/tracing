@@ -31,7 +31,7 @@
              <Dropdown>
                 {{$store.state.user.name}}/{{$store.state.user.id}}
                 <DropdownMenu slot="list">
-                    <DropdownItem>个人设置</DropdownItem>
+                    <DropdownItem  @click.native="goSetting">个人设置</DropdownItem>
                     <DropdownItem v-show="$store.state.user.priv!='normal'" @click.native="goAdmin">管理面板</DropdownItem>
                     <DropdownItem @click.native="logout">退出登录</DropdownItem>
                 </DropdownMenu>
@@ -106,10 +106,11 @@ export default {
             }
         }
     },
+    goSetting() {
+        this.$router.push('/apm/ui/person')
+    },
     goAdmin() {
-        console.log(this.$router)
         this.$router.push('/apm/ui/admin')
-        this.$store.dispatch('setPage', '管理面板')
     },
     switchProduct() {
         this.isOpen = !this.isOpen

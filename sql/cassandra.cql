@@ -8,9 +8,12 @@ CREATE TABLE IF NOT EXISTS account (
     mobile           text,
     email            text,
     message          text,
+    app_show         tinyint, -- 1代表显示所有应用，2代表显示自己设定的应用
+    app_names        text, -- 用户自定义显示的应用列表
     last_login_date  text,
     PRIMARY KEY (id)
 ) WITH gc_grace_seconds = 10800;
+
 -- 登录次数统计表
 CREATE TABLE IF NOT EXISTS login_count (
     id               text,
@@ -19,7 +22,7 @@ CREATE TABLE IF NOT EXISTS login_count (
 ) WITH gc_grace_seconds = 10800;
 
 -- 管理员表
-CREATE TABLE IF NOT EXISTS admin （
+CREATE TABLE IF NOT EXISTS admin (
     id text,
     priv text,
     PRIMARY KEY (id)

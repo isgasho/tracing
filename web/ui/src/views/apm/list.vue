@@ -94,7 +94,7 @@ export default {
   mounted() {
       // 加载APPS
        request({
-        url: '/apm/web/appList',
+        url: '/apm/web/appListWithSetting',
         method: 'GET',
         params: {
           

@@ -97,10 +97,16 @@ func (s *Web) Start() error {
 		// 应用查询接口
 		//查询应用列表
 		e.GET("/apm/web/appList", s.appList, s.checkLogin)
+		e.GET("/apm/web/appListWithSetting", s.appListWithSetting, s.checkLogin)
 		//获取指定应用的一段时间内的状态
 		e.GET("/apm/web/appDash", s.appDash, s.checkLogin)
 		//查询所有的app名
-		e.GET("/apm/web/appNames", s.appNames, s.checkLogin)
+		e.GET("/apm/web/appNames", s.appNames)
+		e.GET("/apm/web/appNamesWithSetting", s.appNamesWithSetting, s.checkLogin)
+
+		//应用接口统计
+		e.GET("/apm/web/apiStats", s.apiStats)
+
 		//查询所有服务器名
 		e.GET("/apm/web/agentList", s.agentList, s.checkLogin)
 
@@ -116,7 +122,7 @@ func (s *Web) Start() error {
 
 		e.POST("/apm/web/createPolicy", s.createPolicy, s.checkLogin)
 		e.POST("/apm/web/editPolicy", s.editPolicy, s.checkLogin)
-		e.GET("/apm/web/queryPolicies", s.queryPolicies)
+		e.GET("/apm/web/queryPolicies", s.queryPolicies, s.checkLogin)
 		e.GET("/apm/web/queryPolicy", s.queryPolicy)
 		e.POST("/apm/web/deletePolicy", s.deletePolicy, s.checkLogin)
 
@@ -124,13 +130,17 @@ func (s *Web) Start() error {
 		e.POST("/apm/web/editAppAlert", s.editAppAlert, s.checkLogin)
 		e.POST("/apm/web/deleteAppAlert", s.deleteAppAlert, s.checkLogin)
 
-		e.GET("/apm/web/alertsAppList", s.alertsAppList)
+		e.GET("/apm/web/alertsAppList", s.alertsAppList, s.checkLogin)
 
 		// 管理员面板
 		e.GET("/apm/web/userList", s.userList, s.checkLogin)
 		e.GET("/apm/web/manageUserList", s.manageUserList, s.checkLogin)
 		e.POST("/apm/web/setAdmin", s.setAdmin, s.checkLogin)
 		e.POST("/apm/web/cancelAdmin", s.cancelAdmin, s.checkLogin)
+
+		// 个人设置
+		e.POST("/apm/web/setPerson", s.setPerson, s.checkLogin)
+		e.GET("/apm/web/getAppSetting", s.getAppSetting, s.checkLogin)
 
 		e.Logger.Fatal(e.Start(misc.Conf.Web.Addr))
 	}()

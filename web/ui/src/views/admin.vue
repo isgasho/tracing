@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" style="margin-top:30px">
       <Row>
           <Col span="22" offset="1">
             <Table stripe :columns="userLabels" :data="userList" class="margin-top-15"></Table>

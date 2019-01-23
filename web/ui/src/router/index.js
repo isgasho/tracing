@@ -17,6 +17,7 @@ export default new Router({
       children: [
         { path: '/apm/ui/list', meta: '应用监控',bg: '#348899',component: () => import('@/views/apm/list')},
         { path: '/apm/ui/admin', meta:'管理面板', bg: '#348899',component: () => import('@/views/admin')},
+        { path: '/apm/ui/person', meta:'个人设置', bg: '#348899',component: () => import('@/views/personSetting')},
         { 
           path: '/apm/ui/index', 
           component: ApmNav,

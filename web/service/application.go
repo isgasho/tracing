@@ -1,15 +1,18 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
 	"time"
 
+	"github.com/gocql/gocql"
 	"github.com/labstack/echo"
 	"github.com/mafanr/g"
 	"github.com/mafanr/g/utils"
+	"github.com/mafanr/vgo/web/misc"
 )
 
 type AppStat struct {
@@ -89,6 +92,102 @@ func (web *Web) appList(c echo.Context) error {
 	})
 }
 
+func (web *Web) appListWithSetting(c echo.Context) error {
+	li := web.getLoginInfo(c)
+	appShow, appNames := web.userAppSetting(li.ID)
+
+	napps := make([]*AppStat, 0)
+
+	now := time.Now()
+	// 查询缓存数据是否存在和过期
+	// if web.cache.appList == nil || now.Sub(web.cache.appListUpdate).Seconds() > CacheUpdateIntv {
+	// 取过去6分钟的数据
+	start := now.Unix() - 450
+
+	apps := make(map[string]*AppStat)
+	var q *gocql.Query
+	var appName string
+	var count int
+	var tElapsed, errCount, satisfaction, tolerate int
+
+	if appShow == 1 {
+		q = web.Cql.Query(`SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM rpc_stats WHERE input_date > ? and input_date < ? `, start, now.Unix())
+		iter := q.Iter()
+
+		for iter.Scan(&appName, &tElapsed, &count, &errCount, &satisfaction, &tolerate) {
+			app, ok := apps[appName]
+			if !ok {
+				apps[appName] = &AppStat{
+					Name:         appName,
+					Count:        count,
+					totalElapsed: float64(tElapsed),
+					errCount:     float64(errCount),
+					satisfaction: float64(satisfaction),
+					tolerate:     float64(tolerate),
+				}
+			} else {
+				app.Count += count
+				app.totalElapsed += float64(tElapsed)
+				app.errCount += float64(errCount)
+				app.satisfaction += float64(satisfaction)
+				app.tolerate += float64(tolerate)
+			}
+		}
+
+		if err := iter.Close(); err != nil {
+			log.Println("close iter error:", err)
+		}
+	} else {
+		for _, an := range appNames {
+			err := web.Cql.Query(`SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM rpc_stats WHERE app_name =? and input_date > ? and input_date < ? `, an, start, now.Unix()).Scan(&appName, &tElapsed, &count, &errCount, &satisfaction, &tolerate)
+			if err != nil {
+				log.Println("select app stats error:", err)
+			}
+
+			app, ok := apps[appName]
+			if !ok {
+				apps[appName] = &AppStat{
+					Name:         appName,
+					Count:        count,
+					totalElapsed: float64(tElapsed),
+					errCount:     float64(errCount),
+					satisfaction: float64(satisfaction),
+					tolerate:     float64(tolerate),
+				}
+			} else {
+				app.Count += count
+				app.totalElapsed += float64(tElapsed)
+				app.errCount += float64(errCount)
+				app.satisfaction += float64(satisfaction)
+				app.tolerate += float64(tolerate)
+			}
+		}
+
+	}
+
+	for _, app := range apps {
+		app.ErrorPercent, _ = utils.DecimalPrecision(app.errCount / float64(app.Count))
+		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
+		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
+		napps = append(napps, app)
+	}
+
+	// 	// 更新缓存
+	// 	if len(napps) > 0 {
+	// 		web.cache.appList = napps
+	// 		web.cache.appListUpdate = now
+	// 	}
+	// } else {
+	// 	napps = web.cache.appList
+	// 	fmt.Println("query from cache:", napps)
+	// }
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   napps,
+	})
+}
+
 type DashResult struct {
 	Timeline    []string  `json:"timeline"`
 	CountList   []int     `json:"count_list"`
@@ -99,7 +198,7 @@ type DashResult struct {
 
 func (web *Web) appDash(c echo.Context) error {
 	appName := c.FormValue("app_name")
-	start, end, err := startEndDate(c)
+	start, end, err := misc.StartEndDate(c)
 	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusOK,
@@ -223,6 +322,29 @@ func (web *Web) appNames(c echo.Context) error {
 	})
 }
 
+func (web *Web) appNamesWithSetting(c echo.Context) error {
+	li := web.getLoginInfo(c)
+	appShow, appNames := web.userAppSetting(li.ID)
+
+	ans := make([]string, 0)
+	if appShow == 1 { // 显示全部应用
+		q := `SELECT app_name FROM apps `
+		iter := web.Cql.Query(q).Iter()
+
+		var appName string
+		for iter.Scan(&appName) {
+			ans = append(ans, appName)
+		}
+	} else {
+		ans = appNames
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   ans,
+	})
+}
+
 type AgentStat struct {
 	AgentID     string `json:"agent_id"`
 	HostName    string `json:"host_name"`
@@ -255,4 +377,23 @@ func (web *Web) agentList(c echo.Context) error {
 
 func time2String(t time.Time) string {
 	return t.Format("01-02 15:04")
+}
+
+// 获取用户的应用设定
+func (web *Web) userAppSetting(user string) (int, []string) {
+	q := web.Cql.Query(`SELECT app_show,app_names FROM account WHERE id=?`, user)
+	var appShow int
+	var appNameS string
+	err := q.Scan(&appShow, &appNameS)
+	if err != nil {
+		return 1, nil
+	}
+
+	appNames := make([]string, 0)
+	err = json.Unmarshal([]byte(appNameS), &appNames)
+	if err != nil {
+		return 1, nil
+	}
+
+	return appShow, appNames
 }

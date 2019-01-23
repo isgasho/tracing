@@ -1,4 +1,4 @@
-package service
+package misc
 
 import (
 	"time"
@@ -8,7 +8,7 @@ import (
 )
 
 // 获取开始和截止日期
-func startEndDate(c echo.Context) (start time.Time, end time.Time, err error) {
+func StartEndDate(c echo.Context) (start time.Time, end time.Time, err error) {
 	startRaw := c.FormValue("start")
 	endRaw := c.FormValue("end")
 

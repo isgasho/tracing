@@ -143,7 +143,7 @@ export default {
         this.selItem = this.path.split('/')[3]
         // 加载app名列表
          request({
-            url: '/apm/web/appNames',
+            url: '/apm/web/appNamesWithSetting',
             method: 'GET',
             params: {
             }

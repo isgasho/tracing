@@ -2,7 +2,6 @@
 const getters = {
   //misc
   service: state => state.misc.service,
-  currentPage: state => state.misc.currentPage,
 
   selDate: state => state.misc.selDate,
   appid: state => state.apm.appid,
