@@ -247,6 +247,15 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_stats (input_date)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
+
+CREATE TABLE IF NOT EXISTS  app_urls (
+    app_name            text,
+    url                 text,
+    PRIMARY KEY (app_name, url)
+) WITH gc_grace_seconds = 10800;  
+
+
+
 CREATE TABLE IF NOT EXISTS rpc_details_stats (
     app_name        text,
     url             text,

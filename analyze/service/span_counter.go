@@ -3,7 +3,6 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/mafanr/g"
@@ -12,7 +11,7 @@ import (
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 )
 
-var gCounterQuerySpan string = `SELECT agent_start_time, insert_date, rpc, elapsed,  service_type, parent_app_name,
+var gCounterQuerySpan string = `SELECT app_name, insert_date, rpc, elapsed,  service_type, parent_app_name,
 	parent_app_type, span_event_list, err, agent_id
 	FROM traces WHERE trace_id=? AND span_id=?;`
 
@@ -20,11 +19,12 @@ var gChunkEventsIterTrace string = `SELECT span_event_list FROM traces_chunk WHE
 
 var gUpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app_name=?;`
 
+var gInsertUrls string = `INSERT INTO app_urls (app_name, url) VALUES (?, ?) ;`
+
 // spanCounter ...
 func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
 	iterTrace := gAnalyze.appStore.cql.Session.Query(gCounterQuerySpan, traceID, spanID).Iter()
-
 	var startTime int64
 	var rpc string
 	var elapsed int
@@ -55,8 +55,6 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
 	}
 
-	log.Println(traceID, spanID)
-
 DoSpan:
 	for iterTrace.Scan(&appName, &startTime, &rpc, &elapsed, &serviceType, &parentAppName, &parentAppType, &spanEventList, &isErr, &agentID) {
 		index, _ := ModMs2Min(startTime)
@@ -65,6 +63,16 @@ DoSpan:
 		if err != nil {
 			g.L.Warn("json.Unmarshal error", zap.String("error", err.Error()))
 			continue
+		}
+
+		if app, ok := gAnalyze.appStore.getApp(appName); ok {
+			if _, ok := app.getURL(rpc); !ok {
+				query := gAnalyze.cql.Session.Query(gInsertUrls, appName, rpc)
+				if err := query.Exec(); err != nil {
+					g.L.Warn("json.Unmarshal error", zap.String("error", err.Error()), zap.String("query", query.String()))
+				}
+				app.storeURL(rpc)
+			}
 		}
 
 		if e, ok := es[index]; ok {

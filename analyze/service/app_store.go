@@ -89,7 +89,6 @@ func (appStore *AppStore) loadApp() error {
 		if !strings.EqualFold(key, gAnalyze.clusterName) {
 			continue
 		}
-
 		app, isExist := appStore.getApp(appName)
 		if !isExist {
 			app = NewApp(appName)
