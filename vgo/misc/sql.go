@@ -37,7 +37,7 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 var InsertOperIndex string = `
 	INSERT
-	INTO app_operation_index(app_name, agent_id, api_id, insert_date, trace_id, rpc, span_id)
+	INTO app_operation_index(app_name, agent_id, api_id, input_date, trace_id, api, span_id)
 	VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 var InsertAgentStat string = `

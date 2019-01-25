@@ -50,7 +50,7 @@ func (spanUrls *SpanURLs) urlCounter(urlStr string, elapsed int, isError int) er
 	return nil
 }
 
-var gInserRPCRecord string = `INSERT INTO rpc_stats (app_name, input_date, url, total_elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count, satisfaction, tolerate)
+var gInserRPCRecord string = `INSERT INTO api_stats (app_name, input_date, api, total_elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count, satisfaction, tolerate)
  VALUES (?,?,?,?,?,?,?,?,?,?,?);`
 
 // urlRecord ...

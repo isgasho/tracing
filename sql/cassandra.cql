@@ -174,17 +174,9 @@ CREATE TABLE IF NOT EXISTS traces (
     api_id              int,
     exception_info      blob,
     app_service_type    int,
-    PRIMARY KEY (trace_id, span_id, input_date, api)
+    PRIMARY KEY (trace_id, span_id, input_date)
 ) WITH gc_grace_seconds = 10800;
 
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON traces (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
-
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON traces (api) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
 
 CREATE TABLE IF NOT EXISTS traces_chunk (
@@ -213,14 +205,14 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     app_name        text,
     agent_id        text,
     api_id          int,
-    insert_date     bigint,
-    rpc             text,
+    input_date      bigint,
+    api             text,
     trace_id        text,
     span_id         bigint,
-    PRIMARY KEY (app_name, agent_id, api_id, insert_date)
+    PRIMARY KEY (app_name, agent_id, api_id, api,input_date)
 ) WITH gc_grace_seconds = 10800;  
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (insert_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
@@ -240,10 +232,10 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON agent_stats (timestamp)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
-CREATE TABLE IF NOT EXISTS  rpc_stats (
+CREATE TABLE IF NOT EXISTS  api_stats (
     app_name            text,
     input_date          bigint,
-    url                 text,
+    api                 text,
     total_elapsed       int,
     max_elapsed         int,
     min_elapsed         int,
@@ -252,12 +244,12 @@ CREATE TABLE IF NOT EXISTS  rpc_stats (
     err_count           int,
     satisfaction        int,
     tolerate            int,
-    PRIMARY KEY (app_name, url, input_date)
+    PRIMARY KEY (app_name, api, input_date)
 ) WITH gc_grace_seconds = 10800;  
 
 
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_stats (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON api_stats (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
@@ -271,25 +263,25 @@ CREATE TABLE IF NOT EXISTS  app_urls (
 
 
 
-CREATE TABLE IF NOT EXISTS rpc_details_stats (
+CREATE TABLE IF NOT EXISTS api_details_stats (
     app_name        text,
-    url             text,
+    api             text,
     api_id          int,
     input_date      bigint,
     ser_type        int,
     elapsed         int,
-    ratio_elapsed   FLOAT,
     max_elapsed     int,
     min_elapsed     int,
     average_elapsed double,
     count           int,
     err_count       int,
-    PRIMARY KEY (app_name, url, input_date, api_id)
+    PRIMARY KEY (app_name, api, input_date, api_id)
 ) WITH gc_grace_seconds = 10800;  
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON rpc_details_stats (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON api_details_stats (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
 
 CREATE TABLE IF NOT EXISTS sql_stats (
     app_name        text,

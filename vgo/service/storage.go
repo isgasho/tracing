@@ -281,10 +281,11 @@ func (s *Storage) WriteSpan(span *trace.TSpan) error {
 		g.L.Warn("WriteSpan error", zap.String("error", err.Error()))
 		return err
 	}
-	// if err := s.writeIndexes(span); err != nil {
-	// 	g.L.Warn("WriteSpan error", zap.String("error", err.Error()))
-	// 	return err
-	// }
+
+	if err := s.writeIndexes(span); err != nil {
+		g.L.Warn("WriteSpan error", zap.String("error", err.Error()))
+		return err
+	}
 	return nil
 }
 

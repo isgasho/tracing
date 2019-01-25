@@ -11,7 +11,7 @@ import (
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 )
 
-var gCounterQuerySpan string = `SELECT app_name, insert_date, rpc, elapsed,  service_type, parent_app_name,
+var gCounterQuerySpan string = `SELECT app_name, input_date, api, elapsed,  service_type, parent_app_name,
 	parent_app_type, span_event_list, err, agent_id
 	FROM traces WHERE trace_id=? AND span_id=?;`
 
