@@ -443,3 +443,23 @@ func (s *Storage) writeAgentStat(appName, agentID string, agentStat *pinpoint.TA
 	}
 	return nil
 }
+
+func (s *Storage) storeServiceType() error {
+	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+	inputServiceType := `
+		INSERT
+		INTO service_type(service_type, info)
+		VALUES (?, ?) ;`
+	for svrID, info := range util.ServiceType {
+		batchInsert.Query(
+			inputServiceType,
+			svrID,
+			info)
+	}
+
+	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
+		g.L.Warn("storeServiceType", zap.String("error", err.Error()), zap.String("SQL", inputServiceType))
+		return err
+	}
+	return nil
+}

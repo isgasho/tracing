@@ -68,9 +68,19 @@ func (v *Vgo) init() error {
 		return err
 	}
 
+	v.initServiceType()
+
 	// init service
 	v.acceptAgent()
 
+	return nil
+}
+
+func (v *Vgo) initServiceType() error {
+	if err := v.storage.storeServiceType(); err != nil {
+		g.L.Warn("initServiceType err", zap.Error(err))
+		return err
+	}
 	return nil
 }
 
