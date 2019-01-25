@@ -6,7 +6,7 @@ import (
 
 // Element ...
 type Element struct {
-	urls       *SpanURLs
+	apis       *SpanAPIs
 	events     *SpanEvents
 	exceptions *SpanExceptions
 	stats      *AgentStats
@@ -16,7 +16,7 @@ type Element struct {
 // NewElement ...
 func NewElement() *Element {
 	return &Element{
-		urls:       NewSpanURLs(),
+		apis:       NewSpanAPIs(),
 		events:     NewSpanEvents(),
 		exceptions: NewSpanExceptions(),
 		stats:      NewAgentStats(),

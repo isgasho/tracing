@@ -76,10 +76,10 @@ DoSpan:
 		}
 
 		if e, ok := es[index]; ok {
-			e.urls.urlCounter(rpc, elapsed, isErr)
+			e.apis.apiCounter(rpc, elapsed, isErr)
 			e.events.eventsCounter(rpc, spanEvents, chunkEvents)
 			e.sqls.sqlCounter(spanEvents, chunkEvents)
-			// e.exceptions.exceptionCounter(urlStr string, elapsed int, isError int)
+			// e.exceptions.exceptionCounter(apiStr string, elapsed int, isError int)
 		}
 	}
 
@@ -101,7 +101,7 @@ func ModMs2Min(ms int64) (int64, error) {
 }
 
 func spanCounterRecord(app *App, recordTime int64, e *Element) error {
-	e.urls.urlRecord(app, recordTime)
+	e.apis.apiRecord(app, recordTime)
 	e.events.eventRecord(app, recordTime)
 	e.sqls.sqlRecord(app, recordTime)
 	e.stats.statRecord(app, recordTime)

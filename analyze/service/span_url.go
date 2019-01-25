@@ -6,45 +6,45 @@ import (
 	"go.uber.org/zap"
 )
 
-// SpanURLs ...
-type SpanURLs struct {
-	urls map[string]*SpanURL
+// SpanAPIs ...
+type SpanAPIs struct {
+	apis map[string]*SpanAPI
 }
 
-// NewSpanURLs ...
-func NewSpanURLs() *SpanURLs {
-	return &SpanURLs{
-		urls: make(map[string]*SpanURL),
+// NewSpanAPIs ...
+func NewSpanAPIs() *SpanAPIs {
+	return &SpanAPIs{
+		apis: make(map[string]*SpanAPI),
 	}
 }
 
-// urlCounter ...
-func (spanUrls *SpanURLs) urlCounter(urlStr string, elapsed int, isError int) error {
-	url, ok := spanUrls.urls[urlStr]
+// apiCounter ...
+func (spanUrls *SpanAPIs) apiCounter(apiStr string, elapsed int, isError int) error {
+	api, ok := spanUrls.apis[apiStr]
 	if !ok {
-		url = NewSpanURL()
-		spanUrls.urls[urlStr] = url
+		api = NewSpanAPI()
+		spanUrls.apis[apiStr] = api
 	}
-	url.elapsed += elapsed
-	url.count++
+	api.elapsed += elapsed
+	api.count++
 	if isError != 0 {
-		url.errCount++
+		api.errCount++
 	}
 
-	if elapsed > url.maxElapsed {
-		url.maxElapsed = url.elapsed
+	if elapsed > api.maxElapsed {
+		api.maxElapsed = api.elapsed
 	}
 
-	if url.minElapsed == 0 || url.minElapsed > elapsed {
-		url.minElapsed = elapsed
+	if api.minElapsed == 0 || api.minElapsed > elapsed {
+		api.minElapsed = elapsed
 	}
 
-	url.averageElapsed = float64(url.elapsed) / float64(url.count)
+	api.averageElapsed = float64(api.elapsed) / float64(api.count)
 
 	if elapsed < misc.Conf.Stats.SatisfactionTime {
-		url.satisfactionCount++
+		api.satisfactionCount++
 	} else if elapsed > misc.Conf.Stats.TolerateTime {
-		url.tolerateCount++
+		api.tolerateCount++
 	}
 
 	return nil
@@ -53,30 +53,30 @@ func (spanUrls *SpanURLs) urlCounter(urlStr string, elapsed int, isError int) er
 var gInserRPCRecord string = `INSERT INTO api_stats (app_name, input_date, api, total_elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count, satisfaction, tolerate)
  VALUES (?,?,?,?,?,?,?,?,?,?,?);`
 
-// urlRecord ...
-func (spanUrls *SpanURLs) urlRecord(app *App, recordTime int64) error {
-	for urlStr, url := range spanUrls.urls {
+// apiRecord ...
+func (spanUrls *SpanAPIs) apiRecord(app *App, recordTime int64) error {
+	for apiStr, api := range spanUrls.apis {
 		if err := gAnalyze.cql.Session.Query(gInserRPCRecord,
 			app.AppName,
 			recordTime,
-			urlStr,
-			url.elapsed,
-			url.maxElapsed,
-			url.minElapsed,
-			url.averageElapsed,
-			url.count,
-			url.errCount,
-			url.satisfactionCount,
-			url.tolerateCount,
+			apiStr,
+			api.elapsed,
+			api.maxElapsed,
+			api.minElapsed,
+			api.averageElapsed,
+			api.count,
+			api.errCount,
+			api.satisfactionCount,
+			api.tolerateCount,
 		).Exec(); err != nil {
-			g.L.Warn("urlRecord error", zap.String("error", err.Error()))
+			g.L.Warn("apiRecord error", zap.String("error", err.Error()))
 		}
 	}
 	return nil
 }
 
-// SpanURL ...
-type SpanURL struct {
+// SpanAPI ...
+type SpanAPI struct {
 	averageElapsed    float64
 	elapsed           int
 	count             int
@@ -87,7 +87,7 @@ type SpanURL struct {
 	tolerateCount     int
 }
 
-// NewSpanURL ...
-func NewSpanURL() *SpanURL {
-	return &SpanURL{}
+// NewSpanAPI ...
+func NewSpanAPI() *SpanAPI {
+	return &SpanAPI{}
 }
