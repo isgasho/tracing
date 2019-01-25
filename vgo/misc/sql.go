@@ -25,7 +25,7 @@ VALUES (?, ?, ?);`
 var InsertSpan string = `
 INSERT
 INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
-	insert_date, elapsed, rpc, service_type, end_point, remote_addr, annotations, err,
+	input_time, elapsed, api, service_type, end_point, remote_addr, annotations, err,
 	span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, api_id)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 

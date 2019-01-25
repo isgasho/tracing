@@ -151,6 +151,7 @@ CREATE TABLE IF NOT EXISTS app_strs (
 
 
 
+-- 全链路数据表
 CREATE TABLE IF NOT EXISTS traces (
     trace_id            text,
     span_id             bigint,
@@ -158,9 +159,9 @@ CREATE TABLE IF NOT EXISTS traces (
     agent_id            text,
     agent_start_time    bigint,
     parent_id           bigint,
-    insert_date         bigint,
+    input_time          bigint,
     elapsed             int,
-    rpc                 text,
+    api                 text,
     service_type        int,
     end_point           text,
     remote_addr         text,
@@ -173,8 +174,17 @@ CREATE TABLE IF NOT EXISTS traces (
     api_id              int,
     exception_info      blob,
     app_service_type    int,
-    PRIMARY KEY (trace_id, span_id, insert_date)
+    PRIMARY KEY (trace_id, span_id, input_time, api)
 ) WITH gc_grace_seconds = 10800;
+
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON traces (input_time) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON traces (api) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
 
 CREATE TABLE IF NOT EXISTS traces_chunk (
