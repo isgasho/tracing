@@ -57,6 +57,9 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 		// log.Println("上次计算时间间隔太短,等待")
 		return
 	}
+	// SELECT app_name, input_date, rpc, elapsed,  service_type, parent_app_name,
+	// parent_app_type, span_event_list, err, agent_id
+	// FROM traces WHERE input_date>? and input_date<=?;;
 
 	es := GetElements(queryStartTime, queryEndTime)
 	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and insert_date>? and insert_date<=?;`

@@ -10,8 +10,8 @@ import (
 	"go.etcd.io/etcd/clientv3"
 )
 
-// Etcd ...
-type Etcd interface {
+// SerDiscovery ...
+type SerDiscovery interface {
 	Start() error
 	Close()
 	Watch()

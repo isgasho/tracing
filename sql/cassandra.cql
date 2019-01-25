@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS traces (
     agent_id            text,
     agent_start_time    bigint,
     parent_id           bigint,
-    input_time          bigint,
+    input_date          bigint,
     elapsed             int,
     api                 text,
     service_type        int,
@@ -174,11 +174,11 @@ CREATE TABLE IF NOT EXISTS traces (
     api_id              int,
     exception_info      blob,
     app_service_type    int,
-    PRIMARY KEY (trace_id, span_id, input_time, api)
+    PRIMARY KEY (trace_id, span_id, input_date, api)
 ) WITH gc_grace_seconds = 10800;
 
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON traces (input_time) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON traces (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
