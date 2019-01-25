@@ -126,4 +126,22 @@ func init() {
 	SerCode[1501] = "PHP_METHOD"
 	SerCode[9700] = "PHP_REMOTE_METHOD"
 
+	// postgresql
+	SerCode[1500] = "PHP"
+	SerCode[1501] = "PHP_METHOD"
+	SerCode[9700] = "PHP_REMOTE_METHOD"
+
+	// php
+	SerCode[1500] = "PHP"
+	SerCode[1501] = "PHP_METHOD"
+	SerCode[9700] = "PHP_REMOTE_METHOD"
+
+	// postgresql
+	SerCode[2500] = "POSTGRESQL"
+	SerCode[2501] = "POSTGRESQL_EXECUTE_QUERY"
+
+	// rabbitmq.client
+	SerCode[8300] = "RABBITMQ_CLIENT"
+	SerCode[8301] = "RABBITMQ_CLIENT_INTERNAL"
+
 }

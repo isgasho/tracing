@@ -1,6 +1,6 @@
 package misc
 
-var AgentInsert string = `INSERT INTO agents (app_name, agent_id, ser_type, socket_id, host_name, ip,
+var AgentInsert string = `INSERT INTO agents (app_name, agent_id, service_type, socket_id, host_name, ip,
 	pid, version, start_time, end_time, is_live, is_container, operating_env, vgo_addr) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 

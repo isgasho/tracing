@@ -104,7 +104,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (group)
 CREATE TABLE IF NOT EXISTS agents (
     app_name            text,
     agent_id            text,
-    ser_type            int,
+    service_type        int,
     socket_id           int,
     host_name           text,
     ip                  text,
@@ -269,7 +269,7 @@ CREATE TABLE IF NOT EXISTS api_details_stats (
     api             text,
     method_id       int,
     input_date      bigint,
-    ser_type        int,
+    service_type    int,
     elapsed         int,
     max_elapsed     int,
     min_elapsed     int,
@@ -329,8 +329,8 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_memory_stats (input_date)
 
 
 CREATE TABLE IF NOT EXISTS service_type (
-    ser_type        int,
-    info            text,
-    PRIMARY KEY (ser_type)
+    service_type        int,
+    info                text,
+    PRIMARY KEY (service_type)
 ) WITH gc_grace_seconds = 10800;
  
