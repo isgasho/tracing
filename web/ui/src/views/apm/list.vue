@@ -92,6 +92,7 @@ export default {
       }
   },
   mounted() {
+      this.$Loading.start();
       // 加载APPS
        request({
         url: '/apm/web/appListWithSetting',
@@ -101,8 +102,10 @@ export default {
         }
     }).then(res => {
       this.appList = res.data.data
-      console.log(res.data)
-    })
+      this.$Loading.finish();
+    }).catch(error => {
+        this.$Loading.error();
+      })
   }
 }
 </script>

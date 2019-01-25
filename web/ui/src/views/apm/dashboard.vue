@@ -104,6 +104,7 @@ export default {
   },
   methods: {
       initDash() {
+        this.$Loading.start();
         // 加载当前APP的dashbord数据
         request({
             url: '/apm/web/appDash',
@@ -119,6 +120,10 @@ export default {
             this.elapsedList = res.data.data.elapsed_list
             this.errorList = res.data.data.error_list
             this.apdexList = res.data.data.apdex_list
+
+            this.$Loading.finish();
+        }).catch(error => {
+          this.$Loading.error();
         })
 
         request({

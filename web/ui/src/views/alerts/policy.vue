@@ -298,6 +298,7 @@ export default {
         }
       },
       loadPolicys() {
+        this.$Loading.start();
         request({
               url: '/apm/web/queryPolicies',
               method: 'GET',
@@ -305,7 +306,10 @@ export default {
               }
           }).then(res => {
             this.policyList = res.data.data
-          })
+            this.$Loading.finish();
+          }).catch(error => {
+            this.$Loading.error();
+        })
       }
   },
   mounted() {

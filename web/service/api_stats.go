@@ -1,23 +1,36 @@
 package service
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo"
 	"github.com/mafanr/g"
+	"github.com/mafanr/g/utils"
 	"github.com/mafanr/vgo/web/misc"
+	"go.uber.org/zap"
 )
 
 type ApiStat struct {
-	URL            string `json:"url"`
-	MaxElapsed     int    `json:"max_elapsed"`
-	MinElapsed     int    `json:"min_elapsed"`
-	Count          int    `json:"count"`
-	AverageElapsed int    `json:"average_elapsed"`
-	ErrorCount     int    `json:"error_count"`
+	API            string  `json:"api"`
+	MaxElapsed     int     `json:"max_elapsed"`
+	MinElapsed     int     `json:"min_elapsed"`
+	Count          int     `json:"count"`
+	AverageElapsed float64 `json:"average_elapsed"`
+	ErrorCount     int     `json:"error_count"`
 }
+
+// type ApiStats []*ApiStat
+
+// func (a ApiStats) Len() int { // 重写 Len() 方法
+// 	return len(a)
+// }
+// func (a ApiStats) Swap(i, j int) { // 重写 Swap() 方法
+// 	a[i], a[j] = a[j], a[i]
+// }
+// func (a ApiStats) Less(i, j int) bool { // 重写 Less() 方法， 从大到小排序
+// 	return a[j].AverageElapsed < a[i].AverageElapsed
+// }
 
 // 单个应用下，所有接口的统计信息
 func (web *Web) apiStats(c echo.Context) error {
@@ -32,11 +45,12 @@ func (web *Web) apiStats(c echo.Context) error {
 	}
 
 	// 读取相应数据，按照时间填到对应的桶中
-	q := `SELECT url,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM rpc_stats WHERE app_name = ? and input_date > ? and input_date < ? `
+	q := `SELECT api,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `
 	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
 
 	// apps := make(map[string]*AppStat)
-	var maxElapsed, minElapsed, count, aElapsed, errCount int
+	var maxElapsed, minElapsed, count, errCount int
+	var aElapsed float64
 	var url string
 	ass := make(map[string]*ApiStat)
 	for iter.Scan(&url, &maxElapsed, &minElapsed, &aElapsed, &count, &errCount) {
@@ -56,7 +70,7 @@ func (web *Web) apiStats(c echo.Context) error {
 			as.Count += count
 			as.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			as.AverageElapsed = (as.AverageElapsed*as.Count + aElapsed*count) / (as.Count + count)
+			as.AverageElapsed, _ = utils.DecimalPrecision((as.AverageElapsed*float64(as.Count) + aElapsed*float64(count)) / float64((as.Count + count)))
 		}
 	}
 
@@ -77,16 +91,19 @@ func (web *Web) apiStats(c echo.Context) error {
 }
 
 type ApiMethod struct {
-	ID             int    `json:"-"`
-	Name           string `json:"name"`
-	ServiceType    int    `json:"service_type"`
-	RatioElapsed   int    `json:"ratio_elapsed"`
-	Elapsed        int    `json:"elapsed"`
-	MaxElapsed     int    `json:"max_elapsed"`
-	MinElapsed     int    `json:"min_elapsed"`
-	Count          int    `json:"count"`
-	AverageElapsed int    `json:"average_elapsed"`
-	ErrorCount     int    `json:"error_count"`
+	ID             int     `json:"-"`
+	API            string  `json:"api"`
+	ServiceType    int     `json:"service_type"`
+	RatioElapsed   int     `json:"ratio_elapsed"`
+	Elapsed        int     `json:"elapsed"`
+	MaxElapsed     int     `json:"max_elapsed"`
+	MinElapsed     int     `json:"min_elapsed"`
+	Count          int     `json:"count"`
+	AverageElapsed float64 `json:"average_elapsed"`
+	ErrorCount     int     `json:"error_count"`
+
+	Line   int    `json:"line"`
+	Method string `json:"method"`
 }
 
 func (web *Web) apiDetail(c echo.Context) error {
@@ -100,7 +117,7 @@ func (web *Web) apiDetail(c echo.Context) error {
 	}
 
 	appName := c.FormValue("app_name")
-	url := c.FormValue("url")
+	url := c.FormValue("api")
 
 	if appName == "" || url == "" {
 		return c.JSON(http.StatusOK, g.Result{
@@ -110,16 +127,17 @@ func (web *Web) apiDetail(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT api_id,ser_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM rpc_details_stats WHERE app_name = ? and url=? and input_date > ? and input_date < ? `
+	q := `SELECT api_id,ser_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and api = ? and input_date > ? and input_date < ? `
 	iter := web.Cql.Query(q, appName, url, start.Unix(), end.Unix()).Iter()
 
-	var apiID, serType, elapsed, maxE, minE, averageE, count, errCount int
+	var apiID, serType, elapsed, maxE, minE, count, errCount int
+	var averageE float64
 	var totalElapsed int
 	ad := make(map[int]*ApiMethod)
 	for iter.Scan(&apiID, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			ad[apiID] = &ApiMethod{apiID, "", serType, 0, elapsed, maxE, minE, count, averageE, errCount}
+			ad[apiID] = &ApiMethod{apiID, url, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -134,33 +152,34 @@ func (web *Web) apiDetail(c echo.Context) error {
 			am.Count += count
 			am.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			am.AverageElapsed = (am.AverageElapsed*am.Count + averageE*count) / (am.Count + count)
+			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + averageE*float64(count)) / float64((am.Count + count)))
 		}
 
 		totalElapsed += elapsed
 	}
 
+	ads := make([]*ApiMethod, 0, len(ad))
 	for _, am := range ad {
 		// 计算耗时占比
 		am.RatioElapsed = am.Elapsed * 100 / totalElapsed
 		// 通过apiID 获取api name
-		q := `SELECT api_info,line,type FROM app_apis WHERE app_name = ? and api_id=?`
+		q := web.Cql.Query(`SELECT api_info,line FROM app_apis WHERE app_name = ? and api_id=?`, appName, am.ID)
 		var apiInfo string
-		var line, tp int
-		err := web.Cql.Query(q, appName, am.ID).Scan(&apiInfo, &line, &tp)
-		fmt.Println(err, line, tp, apiInfo)
+		var line int
+		err := q.Scan(&apiInfo, &line)
+		if err != nil {
+			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+			continue
+		}
+
+		am.Line = line
+		am.Method = apiInfo
+
+		ads = append(ads, am)
 	}
 
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
-		Data:   []string{},
+		Data:   ads,
 	})
 }
-
-// CREATE TABLE IF NOT EXISTS app_apis (
-//     app_name            text,
-//     api_id              int,
-//     api_info            text,
-//     line                int,
-//     type                int,
-//     PRIMARY KEY (app_name, api_id)

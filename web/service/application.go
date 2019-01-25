@@ -2,7 +2,6 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"math"
 	"net/http"
@@ -37,7 +36,7 @@ func (web *Web) appList(c echo.Context) error {
 	// if web.cache.appList == nil || now.Sub(web.cache.appListUpdate).Seconds() > CacheUpdateIntv {
 	// 取过去6分钟的数据
 	start := now.Unix() - 450
-	q := `SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM rpc_stats WHERE input_date > ? and input_date < ? `
+	q := `SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM api_stats WHERE input_date > ? and input_date < ? `
 	iter := web.Cql.Query(q, start, now.Unix()).Iter()
 
 	apps := make(map[string]*AppStat)
@@ -71,7 +70,6 @@ func (web *Web) appList(c echo.Context) error {
 		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
 		napps = append(napps, app)
 	}
-	fmt.Println("query from database:", napps)
 
 	if err := iter.Close(); err != nil {
 		log.Println("close iter error:", err, web.Cql.Closed())
@@ -111,7 +109,7 @@ func (web *Web) appListWithSetting(c echo.Context) error {
 	var tElapsed, errCount, satisfaction, tolerate int
 
 	if appShow == 1 {
-		q = web.Cql.Query(`SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM rpc_stats WHERE input_date > ? and input_date < ? `, start, now.Unix())
+		q = web.Cql.Query(`SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM api_stats WHERE input_date > ? and input_date < ? `, start, now.Unix())
 		iter := q.Iter()
 
 		for iter.Scan(&appName, &tElapsed, &count, &errCount, &satisfaction, &tolerate) {
@@ -139,7 +137,7 @@ func (web *Web) appListWithSetting(c echo.Context) error {
 		}
 	} else {
 		for _, an := range appNames {
-			err := web.Cql.Query(`SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM rpc_stats WHERE app_name =? and input_date > ? and input_date < ? `, an, start, now.Unix()).Scan(&appName, &tElapsed, &count, &errCount, &satisfaction, &tolerate)
+			err := web.Cql.Query(`SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM api_stats WHERE app_name =? and input_date > ? and input_date < ? `, an, start, now.Unix()).Scan(&appName, &tElapsed, &count, &errCount, &satisfaction, &tolerate)
 			if err != nil {
 				log.Println("select app stats error:", err)
 			}
@@ -233,7 +231,7 @@ func (web *Web) appDash(c echo.Context) error {
 	}
 
 	// 读取相应数据，按照时间填到对应的桶中
-	q := `SELECT total_elapsed,count,err_count,satisfaction,tolerate,input_date FROM rpc_stats WHERE app_name = ? and input_date > ? and input_date < ? `
+	q := `SELECT total_elapsed,count,err_count,satisfaction,tolerate,input_date FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `
 	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
 
 	// apps := make(map[string]*AppStat)
@@ -396,4 +394,29 @@ func (web *Web) userAppSetting(user string) (int, []string) {
 	}
 
 	return appShow, appNames
+}
+
+func (web *Web) appApis(c echo.Context) error {
+	appName := c.FormValue("app_name")
+	if appName == "" {
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusBadRequest,
+			ErrCode: g.ParamInvalidC,
+			Message: g.ParamInvalidE,
+		})
+	}
+
+	q := `SELECT url FROM app_urls WHERE app_name=?`
+	iter := web.Cql.Query(q, appName).Iter()
+
+	var url string
+	urls := make([]string, 0)
+	for iter.Scan(&url) {
+		urls = append(urls, url)
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   urls,
+	})
 }

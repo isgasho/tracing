@@ -65,17 +65,10 @@ export default {
 </script>
 
 <style lang="less">
-.ivu-modal-close { 
-  visibility: hidden !important;
-}
-
 </style>
 
 <style lang="less" scoped> 
 @import "../theme/gvar.less";
-.margin-left-20 {
-  color: @text-light-color
-}
 
 
 </style>

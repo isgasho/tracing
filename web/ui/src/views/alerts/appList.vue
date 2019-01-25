@@ -239,6 +239,7 @@ export default {
           }
       },
       loadApps() {
+        this.$Loading.start();
         request({
             url: '/apm/web/alertsAppList',
             method: 'GET',
@@ -247,6 +248,9 @@ export default {
             }
         }).then(res => {
             this.appList = res.data.data
+             this.$Loading.finish();
+        }).catch(error => {
+            this.$Loading.error();
         })
       }
   },

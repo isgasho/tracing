@@ -6,8 +6,16 @@
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+  mounted()  {
+    this.$Loading.config({
+    color: '#b2dde7',
+    failedColor: '#f0ad4e',
+    height: 6
+});
+  }
 }
+
 </script>
 
 <style>

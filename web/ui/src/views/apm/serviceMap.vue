@@ -24,6 +24,7 @@ export default {
   methods: {
   },
   mounted() {
+    this.$Loading.start();
     request({
         url: '/apm/web/serviceMap',
         method: 'GET',
@@ -31,7 +32,10 @@ export default {
         }
     }).then(res => {
       this.data = res.data.data
-    })
+      this.$Loading.finish();
+    }).catch(error => {
+        this.$Loading.error();
+      })
   }
 }
 </script>

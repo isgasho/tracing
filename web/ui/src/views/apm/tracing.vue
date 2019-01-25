@@ -5,24 +5,28 @@
           <div  class="font-size-18">链路过滤</div>
           <div class="margin-top-10">
             <div class="font-size-16">请求API</div>
-            <Select style="width:300px" size="large">
-                <Option value="beijing">New York</Option>
-                <Option value="shanghai">London</Option>
-                <Option value="shenzhen">Sydney</Option>
+            <Select v-model="currentUrl" style="width:400px" size="large" class="api-filter"  placeholder="默认选择全部API" filterable clearable=true>
+              <Option v-for="url in urls" :value="url" :key="url">
+                {{ url }}
+              </Option>
             </Select>
           </div>
           
           <div class="margin-top-40">
             <div class="font-size-16">最低响应时间</div>
-            <Input  placeholder="e.g. 1.2s 100ms 500us" style="width: 300px" size="large" />
+            <Input  v-model="minResp" placeholder="e.g.  100ms,留空代表不限制" style="width: 400px" size="large" />
           </div>
            <div class="margin-top-40">
             <div class="font-size-16">最大响应时间</div>
-            <Input  placeholder="e.g. 3s" style="width: 300px" size="large" />
+            <Input   v-model="maxResp" placeholder="e.g. 3000ms，留空代表并不限制" style="width: 400px" size="large" />
           </div>
           <div class="margin-top-40">
             <div class="font-size-16">限定搜索数目</div>
-            <InputNumber :max="100" :min="1"  :step="5" v-model="resultLimit" style="width: 300px" size="large"></InputNumber>
+            <InputNumber :max="100" :min="1"  :step="5" v-model="resultLimit" style="width: 400px" size="large"></InputNumber>
+          </div>
+
+          <div class="margin-top-20">
+            <Button type="primary"  class="primary2-button" @click="queryTraces">查询链路</Button>
           </div>
        </Col>
        <Col span="14" offset="1">
@@ -134,8 +138,13 @@ export default {
     return {
       tracesData: [],
       traceData: {},
-       resultLimit: 20,
+       resultLimit: 50,
+       minResp: null,
+       maxResp: null,
       selectedTraces: [],
+
+      urls : [],
+      currentUrl: '',
 
       traceLabels: [
             {
@@ -183,6 +192,25 @@ export default {
     
   },
   methods: {
+    queryTraces() {
+      this.$Loading.start();
+      request({
+          url: '/apm/web/queryTraces',
+          method: 'GET',
+          params: {
+            app_name: this.$store.state.apm.appName,
+            api : this.currentUrl,
+            min_resp: this.minResp,
+            max_resp: this.maxResp,
+            limit: this.resultLimit
+          }
+      }).then(res => {
+        this.tracesData = res.data.data
+        this.$Loading.finish();
+      }).catch(error => {
+        this.$Loading.error();
+      })
+    },
     isShow(r) {
       // 对于collapseList中的每个值，判断当前行是否在它的子树中，若在，则不显示，跳出循环
       // 若当前name是以collapseList的值为前缀，说明在子树中
@@ -233,29 +261,35 @@ export default {
     },
     showTrace(t) {
       this.selectedTrace = t
+      this.$Loading.start();
       // 查询trace详情
       request({
-        url: '/apm/web/trace',
-        method: 'GET',
-        params: {
-          traceId : t.traceId
-        }
-    }).then(res => {
-      this.traceData = JSON.parse(res.data.data)
-      this.traceVisible = true
-      console.log(this.selectedTrace)
-      console.log(this.traceData)
-    })
+          url: '/apm/web/trace',
+          method: 'GET',
+          params: {
+            traceId : t.traceId
+          }
+      }).then(res => {
+        this.traceData = JSON.parse(res.data.data)
+        this.traceVisible = true
+        console.log(this.selectedTrace)
+        console.log(this.traceData)
+
+        this.$Loading.finish();
+      }).catch(error => {
+        this.$Loading.error();
+      })
     }
   },
   mounted() {
     request({
-        url: '/apm/web/traces',
+        url: '/apm/web/appApis',
         method: 'GET',
         params: {
+           app_name: this.$store.state.apm.appName,
         }
     }).then(res => {
-      this.tracesData = JSON.parse(res.data.data)
+      this.urls = res.data.data
     })
   }
 }
@@ -299,7 +333,7 @@ export default {
 }
 </style>
 
-<style>
+<style lang="less">
     .ivu-table .error-trace td{
         background-color: rgba(223, 83, 83, .5);
         color: #333;
@@ -308,9 +342,18 @@ export default {
       cursor: pointer;
     }
 
-.custom-trigger {
-  cursor:col-resize;
-}
+    .custom-trigger {
+      cursor:col-resize;
+    }
+
+    .api-filter {
+      .ivu-select-dropdown-list {
+        max-width: 395px;
+        // overflow: hidden;
+        // text-overflow:ellipsis;
+        // white-space: nowrap;
+      }
+    }
 </style>
 
 

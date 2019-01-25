@@ -32,7 +32,8 @@ export default new Router({
             { path: '/apm/ui/memory',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/memory')},
             { path: '/apm/ui/database',  meta: '应用监控',bg: '#348899', component: () => import('@/views/apm/database')},
             { path: '/apm/ui/interface', meta: '应用监控',bg: '#348899',  component: () => import('@/views/apm/interface')},
-            { path: '/apm/ui/exception',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/exception')}
+            { path: '/apm/ui/exception',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/exception')},
+            { path: '/apm/ui/method',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/method')}
           ]
         },
         { 

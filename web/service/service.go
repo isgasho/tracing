@@ -104,16 +104,27 @@ func (s *Web) Start() error {
 		e.GET("/apm/web/appNames", s.appNames)
 		e.GET("/apm/web/appNamesWithSetting", s.appNamesWithSetting, s.checkLogin)
 
+		// 查询APP底下的所有API
+		e.GET("/apm/web/appApis", s.appApis)
+
 		//应用接口统计
 		e.GET("/apm/web/apiStats", s.apiStats)
 		//获取指定接口的详细方法统计
 		e.GET("/apm/web/apiDetail", s.apiDetail)
 
+		// 应用Method统计
+		e.GET("/apm/web/appMethods", s.appMethods)
+
+		// 数据库统计
+		e.GET("/apm/web/sqlStats", s.sqlStats)
+
 		//查询所有服务器名
 		e.GET("/apm/web/agentList", s.agentList, s.checkLogin)
 
 		e.GET("/apm/web/serviceMap", queryServiceMap, s.checkLogin)
-		e.GET("/apm/web/traces", queryTraces, s.checkLogin)
+
+		// 链路查询
+		e.GET("/apm/web/queryTraces", queryTraces, s.checkLogin)
 		e.GET("/apm/web/trace", queryTrace, s.checkLogin)
 
 		// 告警平台
