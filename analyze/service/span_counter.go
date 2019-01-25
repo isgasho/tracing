@@ -19,7 +19,7 @@ var gChunkEventsIterTrace string = `SELECT span_event_list FROM traces_chunk WHE
 
 var gUpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app_name=?;`
 
-var gInsertUrls string = `INSERT INTO app_urls (app_name, url) VALUES (?, ?) ;`
+var gInsertUrls string = `INSERT INTO app_apis (app_name, api) VALUES (?, ?) ;`
 
 // spanCounter ...
 func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {

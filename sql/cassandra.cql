@@ -122,13 +122,13 @@ CREATE TABLE IF NOT EXISTS agents (
 
 
 
-CREATE TABLE IF NOT EXISTS app_apis (
+CREATE TABLE IF NOT EXISTS app_methods (
     app_name            text,
-    api_id              int,
-    api_info            text,
+    method_id           int,
+    method_info         text,
     line                int,
     type                int,
-    PRIMARY KEY (app_name, api_id)
+    PRIMARY KEY (app_name, method_id)
 ) WITH gc_grace_seconds = 10800;  -- 3 hours of downtime acceptable on nodes
 
 
@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS traces (
     parent_app_name     text,
     parent_app_type     int,
     acceptor_host       text,
-    api_id              int,
+    method_id           int,
     exception_info      blob,
     app_service_type    int,
     PRIMARY KEY (trace_id, span_id, input_date)
@@ -204,12 +204,13 @@ CREATE TABLE IF NOT EXISTS apps (
 CREATE TABLE IF NOT EXISTS  app_operation_index (
     app_name        text,
     agent_id        text,
-    api_id          int,
+    method_id          int,
     input_date      bigint,
     api             text,
+    elapsed         int,
     trace_id        text,
     span_id         bigint,
-    PRIMARY KEY (app_name, agent_id, api_id, api,input_date)
+    PRIMARY KEY (app_name, agent_id, method_id, api,input_date)
 ) WITH gc_grace_seconds = 10800;  
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (input_date) 
@@ -255,10 +256,10 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_stats (input_date)
 
 
 
-CREATE TABLE IF NOT EXISTS  app_urls (
+CREATE TABLE IF NOT EXISTS  app_apis (
     app_name            text,
-    url                 text,
-    PRIMARY KEY (app_name, url)
+    api                 text,
+    PRIMARY KEY (app_name, api)
 ) WITH gc_grace_seconds = 10800;  
 
 
@@ -266,7 +267,7 @@ CREATE TABLE IF NOT EXISTS  app_urls (
 CREATE TABLE IF NOT EXISTS api_details_stats (
     app_name        text,
     api             text,
-    api_id          int,
+    method_id       int,
     input_date      bigint,
     ser_type        int,
     elapsed         int,
@@ -275,7 +276,7 @@ CREATE TABLE IF NOT EXISTS api_details_stats (
     average_elapsed double,
     count           int,
     err_count       int,
-    PRIMARY KEY (app_name, api, input_date, api_id)
+    PRIMARY KEY (app_name, api, input_date, method_id)
 ) WITH gc_grace_seconds = 10800;  
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON api_details_stats (input_date) 

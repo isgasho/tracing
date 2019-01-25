@@ -74,7 +74,7 @@ func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEve
 	return nil
 }
 
-var gInserRPCDetailsRecord string = ` INSERT INTO api_details_stats (app_name, api, input_date, api_id, ser_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
+var gInserRPCDetailsRecord string = ` INSERT INTO api_details_stats (app_name, api, input_date, method_id, ser_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
 
 // eventRecord ...
 func (spanEvents *SpanEvents) eventRecord(app *App, recordTime int64) error {

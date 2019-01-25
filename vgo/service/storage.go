@@ -146,24 +146,6 @@ func (s *Storage) AppAPIStore(appName string, apiInfo *trace.TApiMetaData) error
 	return nil
 }
 
-// APIStore ...
-func (s *Storage) APIStore(apiInfo *trace.TApiMetaData) error {
-
-	query := s.cql.Query(
-		misc.APIInsert,
-		apiInfo.ApiId,
-		apiInfo.ApiInfo,
-		apiInfo.GetLine(),
-		apiInfo.GetType(),
-	)
-	if err := query.Exec(); err != nil {
-		g.L.Warn("APIStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
-		return err
-	}
-
-	return nil
-}
-
 // AppSQLStore ...
 func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error {
 	newSQL := g.B64.EncodeToString(talent.String2Bytes(sqlInfo.Sql))
@@ -372,6 +354,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		span.AgentId,
 		span.GetApiId(),
 		span.StartTime,
+		span.GetElapsed(),
 		span.TransactionId,
 		span.GetRPC(),
 		span.GetSpanId(),

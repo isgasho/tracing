@@ -10,11 +10,11 @@ VALUES ( ?, ?, ?, ?);`
 var AgentOfflineInsert string = `INSERT INTO agents (app_name, agent_id, end_time, is_live) 
 VALUES ( ?, ?, ?, ?);`
 
-var AppAPIInsert string = `INSERT INTO app_apis (app_name, api_id, api_info, line, type) 
+var AppAPIInsert string = `INSERT INTO app_methods (app_name, method_id, method_info, line, type) 
 VALUES (?, ?, ?, ?, ?);`
 
-var APIInsert string = `INSERT INTO apis (api_id, api_info, line, type) 
-VALUES (?, ?, ?, ?);`
+// var APIInsert string = `INSERT INTO apis (api_id, api_info, line, type)
+// VALUES (?, ?, ?, ?);`
 
 var AppSQLInsert string = `INSERT INTO app_sqls (app_name, sql_id, sql_info) 
 VALUES (?, ?, ?);`
@@ -26,7 +26,7 @@ var InsertSpan string = `
 INSERT
 INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
 	input_date, elapsed, api, service_type, end_point, remote_addr, annotations, err,
-	span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, api_id)
+	span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, method_id)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 var InsertSpanChunk string = `
@@ -37,8 +37,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 var InsertOperIndex string = `
 	INSERT
-	INTO app_operation_index(app_name, agent_id, api_id, input_date, trace_id, api, span_id)
-	VALUES (?, ?, ?, ?, ?, ?, ?)`
+	INTO app_operation_index(app_name, agent_id, method_id, input_date, elapsed, trace_id, api, span_id)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 
 var InsertAgentStat string = `
 	INSERT
