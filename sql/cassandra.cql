@@ -204,13 +204,13 @@ CREATE TABLE IF NOT EXISTS apps (
 CREATE TABLE IF NOT EXISTS  app_operation_index (
     app_name        text,
     agent_id        text,
-    method_id          int,
+    method_id       int,
     input_date      bigint,
     api             text,
     elapsed         int,
     trace_id        text,
     span_id         bigint,
-    PRIMARY KEY (app_name, agent_id, method_id, api,input_date)
+    PRIMARY KEY (app_name, api, input_date, method_id, agent_id)
 ) WITH gc_grace_seconds = 10800;  
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (input_date) 
