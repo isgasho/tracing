@@ -43,7 +43,10 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 		iterChunkEvents := gAnalyze.appStore.cql.Session.Query(gChunkEventsIterTrace, traceID, spanID).Iter()
 
 		iterChunkEvents.Scan(&spanChunkEventList)
-		iterChunkEvents.Close()
+
+		if err := iterChunkEvents.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
+		}
 
 		if len(spanChunkEventList) == 0 {
 			goto DoSpan
@@ -83,8 +86,9 @@ DoSpan:
 		}
 	}
 
-	iterTrace.Close()
-
+	if err := iterTrace.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
 	return nil
 }
 

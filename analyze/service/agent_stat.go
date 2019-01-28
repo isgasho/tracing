@@ -133,7 +133,10 @@ func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) err
 				}
 			}
 		}
-		iterAgentStat.Close()
+
+		if err := iterAgentStat.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
+		}
 	}
 	for key, e := range es {
 		cpu, ok := e.stats.cpus[key]

@@ -43,6 +43,7 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// 如果最后一次计算点为0，那么放弃本次计算
 	if app.lastCountTime == 0 {
+		// log.Println("如果最后一次计算点为0，那么放弃本次计算")
 		return
 	}
 
@@ -61,15 +62,22 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	es := GetElements(queryStartTime, queryEndTime)
 	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and input_date>? and input_date<=?;`
 	iterTraceID := gAnalyze.appStore.cql.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
-	defer iterTraceID.Close()
 
+	defer func() {
+		if err := iterTraceID.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
+		}
+	}()
+	// SELECT trace_id, span_id FROM app_operation_index WHERE app_name='helm' and input_date>1548514140000 and input_date<=1548514200000;
 	var traceID string
 	var spanID int64
 
+	// log.Println("查询")
 	for iterTraceID.Scan(&traceID, &spanID) {
+		// log.Println("查询到T让测ID", app.AppName, traceID, spanID)
 		spanCounter(traceID, spanID, es)
 	}
-
+	// log.Println("查询 2 ", app.AppName, queryStartTime, queryEndTime)
 	statsCounter(app, queryStartTime, queryEndTime, es)
 
 	// @TODO记录计算结果
@@ -84,6 +92,7 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 		return
 	}
 	app.lastCountTime = queryEndTime
+	// log.Println("插入时间")
 }
 
 // Counter ...

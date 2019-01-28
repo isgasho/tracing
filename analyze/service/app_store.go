@@ -74,7 +74,12 @@ func (appStore *AppStore) loadApp() error {
 
 	query := `SELECT app_name, last_count_time FROM apps; `
 	iterApp := appStore.cql.Session.Query(query).Iter()
-	defer iterApp.Close()
+
+	defer func() {
+		if err := iterApp.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
+		}
+	}()
 
 	var appName string
 	var lastCountTime int64
@@ -100,7 +105,11 @@ func (appStore *AppStore) loadApp() error {
 			queryStartTime := `SELECT start_time  FROM agent_stats  WHERE app_name=? LIMIT 1;`
 			iterStartTime := appStore.cql.Session.Query(queryStartTime, app.AppName).Iter()
 			iterStartTime.Scan(&lastCountTime)
-			iterStartTime.Close()
+
+			if err := iterStartTime.Close(); err != nil {
+				g.L.Warn("close iter error:", zap.Error(err))
+			}
+
 			newMin, _ := ModMs2Min(lastCountTime)
 			lastCountTime = newMin * 1000
 		}
@@ -123,7 +132,9 @@ func (appStore *AppStore) loadApp() error {
 				app.delAgent(agentID)
 			}
 		}
-		agentsIter.Close()
+		if err := agentsIter.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
+		}
 	}
 
 	return nil
