@@ -358,6 +358,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		span.TransactionId,
 		span.GetRPC(),
 		span.GetSpanId(),
+		span.GetErr(),
 	)
 
 	if err := query.Exec(); err != nil {
