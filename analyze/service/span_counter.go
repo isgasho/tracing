@@ -82,7 +82,7 @@ DoSpan:
 			e.apis.apiCounter(rpc, elapsed, isErr)
 			e.events.eventsCounter(rpc, spanEvents, chunkEvents)
 			e.sqls.sqlCounter(spanEvents, chunkEvents)
-			// e.exceptions.exceptionCounter(apiStr string, elapsed int, isError int)
+			e.exceptions.exceptionCounter(spanEvents, chunkEvents)
 		}
 	}
 
@@ -104,10 +104,11 @@ func ModMs2Min(ms int64) (int64, error) {
 	return t.Unix() - int64(t.Second()), nil
 }
 
-func spanCounterRecord(app *App, recordTime int64, e *Element) error {
-	e.apis.apiRecord(app, recordTime)
-	e.events.eventRecord(app, recordTime)
-	e.sqls.sqlRecord(app, recordTime)
-	e.stats.statRecord(app, recordTime)
+func spanCounterRecord(app *App, inputDate int64, e *Element) error {
+	e.apis.apiRecord(app, inputDate)
+	e.events.eventRecord(app, inputDate)
+	e.sqls.sqlRecord(app, inputDate)
+	e.stats.statRecord(app, inputDate)
+	e.exceptions.exceptionRecord(app, inputDate)
 	return nil
 }

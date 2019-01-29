@@ -257,6 +257,25 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_stats (input_date)
 
 
 
+CREATE TABLE IF NOT EXISTS  exception_stats (
+    app_name            text,
+    method_id           int,
+    exception_info      text,
+    input_date          bigint,
+    total_elapsed       int,
+    max_elapsed         int,
+    min_elapsed         int,
+    count               int,
+    PRIMARY KEY (app_name, method_id, exception_info, input_date)
+) WITH gc_grace_seconds = 10800;  
+
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON exception_stats (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+
 CREATE TABLE IF NOT EXISTS  app_apis (
     app_name            text,
     api                 text,

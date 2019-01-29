@@ -42,6 +42,7 @@ func (s *stats) Close() error {
 func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// 如果最后一次计算点为0，那么放弃本次计算
+	// if app.lastCountTime == 0 || len(app.Agents) == 0 {
 	if app.lastCountTime == 0 {
 		// log.Println("如果最后一次计算点为0，那么放弃本次计算")
 		return
