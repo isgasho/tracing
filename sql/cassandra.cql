@@ -210,6 +210,7 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     elapsed         int,
     trace_id        text,
     span_id         bigint,
+    error           tinyint,            
     PRIMARY KEY (app_name, api, input_date, method_id, agent_id)
 ) WITH gc_grace_seconds = 10800;  
 
