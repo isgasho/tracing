@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func (web *Web) setPerson(c echo.Context) error {
+func (web *Web) setUser(c echo.Context) error {
 	appNameS := c.FormValue("app_names")
 	appShow, _ := strconv.Atoi(c.FormValue("app_show"))
 

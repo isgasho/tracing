@@ -10,8 +10,9 @@
      </Row>
      <Row :gutter="20">
         <Col span="9">
+        <rpm width="100%" height="300px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
               <error width="100%" height="300px" id="apm-error" :dateList="dateList" :valueList="errorList"></error>
-             <rpm width="100%" height="300px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
+             
          </Col>
           <Col span="6" offset="1" style="padding:8px 10px;padding-left:20px">
                 <div class="font-size-18">应用动态</div>

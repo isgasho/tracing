@@ -16,10 +16,10 @@ const apm = {
         state.appName = name
         Cookies.set('apm-appName', name)
       },
-      SET_SEL_DATE: (state, date) => {
-        state.selDate = date
-        Cookies.set('sel-date', date)
-      }
+    SET_SEL_DATE: (state, date) => {
+      state.selDate = date
+      Cookies.set('sel-date', date)
+    }
   },
 
   actions: {
@@ -37,7 +37,7 @@ const apm = {
 
 function getDate() {
   var d = Cookies.get('sel-date')
-  if (d == '' || d == '[]') {
+  if (d == '' || d == '[]' || d == undefined) {
     return JSON.stringify([new Date((new Date()).getTime() - 3600 * 1000).toLocaleString('chinese',{hour12:false}).replace(/\//g,'-'),new Date().toLocaleString('chinese',{hour12:false}).replace(/\//g,'-')])
   }
 

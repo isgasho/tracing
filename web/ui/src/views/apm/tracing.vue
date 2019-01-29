@@ -5,20 +5,20 @@
           <div  class="font-size-18">链路过滤</div>
           <div class="margin-top-10">
             <div class="font-size-16">请求API</div>
-            <Select v-model="currentUrl" style="width:400px" size="large" class="api-filter"  placeholder="默认选择全部API" filterable clearable=true>
-              <Option v-for="url in urls" :value="url" :key="url">
-                {{ url }}
+            <Select v-model="currentApi" style="width:400px" size="large" class="api-filter"  placeholder="默认选择全部API" filterable clearable>
+              <Option v-for="api in apis" :value="api" :key="api">
+                {{ api }}
               </Option>
             </Select>
           </div>
           
           <div class="margin-top-40">
-            <div class="font-size-16">最低响应时间</div>
-            <Input  v-model="minResp" placeholder="e.g.  100ms,留空代表不限制" style="width: 400px" size="large" />
+            <div class="font-size-16">最低响应时间(ms)</div>
+            <Input  v-model="minElapsed" placeholder="e.g.  100，留空代表不限制" style="width: 400px" size="large" />
           </div>
            <div class="margin-top-40">
-            <div class="font-size-16">最大响应时间</div>
-            <Input   v-model="maxResp" placeholder="e.g. 3000ms，留空代表并不限制" style="width: 400px" size="large" />
+            <div class="font-size-16">最大响应时间(ms)</div>
+            <Input   v-model="maxElapsed" placeholder="e.g. 3000，留空代表并不限制" style="width: 400px" size="large" />
           </div>
           <div class="margin-top-40">
             <div class="font-size-16">限定搜索数目</div>
@@ -30,7 +30,7 @@
           </div>
        </Col>
        <Col span="14" offset="1">
-        <trace :graphData="tracesData" style='height: 49vh' @selTraces="selectTraces"></trace>
+        <trace :graphData="tracesData" v-if="tracesData.is_suc==true" style='height: 49vh' @selTraces="selectTraces"></trace>
        </Col>
     </Row>
 
@@ -53,7 +53,7 @@
     <!-- 链路展示Modal -->
     <Modal v-model="traceVisible" :footer-hide="true" :z-index="500" fullscreen>
         <div slot="header" style="padding-top:5px;padding-bottom:0px;border-bottom:none">
-            <div class="font-size-16" style="font-weight:bold">{{$store.state.apm.appName}} : {{selectedTrace.url}}</div>
+            <div class="font-size-16" style="font-weight:bold">{{$store.state.apm.appName}} : {{selectedTrace.api}}</div>
             <div  style="margin-top:13px;font-weight:bold;font-size:12px">
               <span class="meta-word">
                 时间:
@@ -136,15 +136,15 @@ export default {
   components: {trace},
   data () {
     return {
-      tracesData: [],
+      tracesData: {},
       traceData: {},
        resultLimit: 50,
-       minResp: null,
-       maxResp: null,
+       minElapsed: null,
+       maxElapsed: null,
       selectedTraces: [],
 
-      urls : [],
-      currentUrl: '',
+      apis : [],
+      currentApi: '',
 
       traceLabels: [
             {
@@ -154,7 +154,7 @@ export default {
             },
             {
                 title: 'API',
-                key: 'url'
+                key: 'api'
             },
              {
                 title: '耗时(ms)',
@@ -199,13 +199,17 @@ export default {
           method: 'GET',
           params: {
             app_name: this.$store.state.apm.appName,
-            api : this.currentUrl,
-            min_resp: this.minResp,
-            max_resp: this.maxResp,
-            limit: this.resultLimit
+            api : this.currentApi,
+            min_elapsed: this.minElapsed,
+            max_eapsed: this.maxElapsed,
+            limit: this.resultLimit,
+
+            start: JSON.parse(this.$store.state.apm.selDate)[0],
+            end: JSON.parse(this.$store.state.apm.selDate)[1],
           }
       }).then(res => {
         this.tracesData = res.data.data
+        console.log(this.tracesData)
         this.$Loading.finish();
       }).catch(error => {
         this.$Loading.error();
@@ -289,7 +293,7 @@ export default {
            app_name: this.$store.state.apm.appName,
         }
     }).then(res => {
-      this.urls = res.data.data
+      this.apis = res.data.data
     })
   }
 }

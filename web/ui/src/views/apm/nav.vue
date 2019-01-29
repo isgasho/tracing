@@ -11,7 +11,7 @@
           </Col>
           <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:67px">
             <div class="color-primary font-size-16 padding-top-15 hover-cursor">
-              <DatePicker :split-panels=true  confirm type="datetimerange" :options="options1" :value="JSON.parse($store.state.apm.selDate)"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" :clearable=false :editable=false></DatePicker>
+              <DatePicker :split-panels=true  confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
             </div>
           </Col>
       </Row>
@@ -116,6 +116,17 @@ export default {
   computed: {
   },
   methods: {
+    getDate() {
+      var d = this.$store.state.apm.selDate
+      if (d == '') {
+        return [new Date((new Date()).getTime() - 3600 * 1000).toLocaleString('chinese',{hour12:false}).replace(/\//g,'-'),new Date().toLocaleString('chinese',{hour12:false}).replace(/\//g,'-')]
+      } else {
+        return   JSON.parse(this.$store.state.apm.selDate)
+      }
+    },
+    clearDate() {
+       this.$store.dispatch('setSelDate', '')
+    },
     selAppName(appName) {
       this.$store.dispatch('setAPPName', appName)
     },
@@ -185,6 +196,9 @@ function defaultDate() {
     cursor: auto  
   }
 
+  .ivu-picker-confirm {
+
+  }
   input {
       border:none;
   }

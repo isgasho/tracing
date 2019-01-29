@@ -354,7 +354,7 @@ export default {
         alertItems: {
           apm: [
             {
-              name: 'apm.url_error_ratio',
+              name: 'apm.api_error_ratio',
               label: '接口错误率',
                key: true,
               compare: 1,
@@ -381,7 +381,7 @@ export default {
               default: 0.8
             },
             {
-              name: 'apm.url_elapsed',
+              name: 'apm.api_elapsed',
               label: '接口平均耗时',
               key: false,
               compare: 1,
@@ -435,7 +435,7 @@ export default {
             //   default: 10000
             // },
             {
-              name: 'apm.url_count',
+              name: 'apm.api_count',
               label: '接口访问次数',
                key: false,
               compare: 1,

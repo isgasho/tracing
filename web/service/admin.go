@@ -48,6 +48,9 @@ func (web *Web) manageUserList(c echo.Context) error {
 			u.Priv = priv
 		}
 	}
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
 
 	// 查询用户的登录次数
 	q = `SELECT id,count FROM login_count`
@@ -59,6 +62,9 @@ func (web *Web) manageUserList(c echo.Context) error {
 		if ok {
 			u.LoginCount = count
 		}
+	}
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
 	}
 
 	nusers := make([]*User, 0)
@@ -156,6 +162,9 @@ func (web *Web) loopLoadUsers() {
 			}
 			users = append(users, u)
 			web.usersMap.Store(id, u)
+		}
+		if err := iter.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
 		}
 
 		web.usersList = users

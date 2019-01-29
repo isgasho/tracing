@@ -9,8 +9,7 @@ export default {
     props: ['graphData'],
     data () {
         return {
-            tracesChart: null,
-            currentNode: null
+            tracesChart: null
         }
     },
     mounted () {
@@ -18,24 +17,17 @@ export default {
         let self = this;
         setTimeout(function () {
             // 解析出具体的data
-            for (var i=0;i< self.graphData.value.agentNodeModels.length;i++) {
-                if (self.graphData.value.agentNodeModels[i].key == self.graphData.value.nowNodeKey) {
-                    self.traceChart(self.graphData.value.agentNodeModels[i])
-                    break
-                }
-            }
+                    self.traceChart(self.graphData)
         }, 100);
     },
     watch: {
     },
     computed: {},
     methods: {
-         traceChart: function (node) {
-            this.currentNode = node
-            this.tracesChart.series = node.agentSources.traceHis.traceSeries;
-            // serries颜色，错误: color: 'rgba(223, 83, 83, .5)'  成功 rgb(18, 147, 154)
-            this.tracesChart.xAxis.tickPositions = node.timeXticks;
-            this.tracesChart.subtitle.text = node.agentSources.traceHis.subTitle;
+         traceChart: function (data) {
+            this.tracesChart.series = data.series;
+            // this.tracesChart.xAxis.tickPositions = data.timeXticks;
+            this.tracesChart.subtitle.text = data.subTitle;
             Highcharts.chart(this.$el, this.tracesChart);
         },
         initTraceChart: function () {
@@ -67,10 +59,10 @@ export default {
                     },
                     type: 'datetime',
                     labels: {
-                        format: '{value: %m-%d %H:%M:%S}',
+                        format: '{value: %m-%d %H:%M}',
                         setp: 1
                     },
-                    tickPositions: [],
+                    // tickPositions: [],
                     startOnTick: false,
                     endOnTick: false,
                     showLastLabel: false,
@@ -123,7 +115,7 @@ export default {
                         tooltip: {
                             pointFormat: '{point.x: %m-%d %H:%M:%S}, {point.y}ms '
                         },
-                        enableMouseTracking: false,
+                        enableMouseTracking: true,
                         turboThreshold: "disable"
                     }
                 },
@@ -134,49 +126,47 @@ export default {
             function selectPointsByDrag(e) {
                 if (e.xAxis && e.yAxis) {
                     var traces = [];
-                    if (self.tracesChart.series[0].visible === undefined || self.tracesChart.series[0].visible === true) {
-                        var succesdata = self.currentNode.agentSources.traceHis.traceSeries[0].data;
+                    // if (self.tracesChart.series[0].visible === undefined || self.tracesChart.series[0].visible === true) {
+                        var succesdata = self.tracesChart.series[0].data;
                         for (var i = 0; i < succesdata.length; i++) {
                             var point = succesdata[i];
                             if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max &&
                                 point.y >= e.yAxis[0].min && point.y <= e.yAxis[0].max) {
                                 // traces += point.traceId + ":" + point.agentId + ":" + point.startTime + ","
                                 var trace = {
-                                    traceId: point.traceId,
-                                    agentId: point.agentId,
+                                    traceId: point.id,
+                                    agentId: point.agent_id,
                                     elapsed: point.y,
                                     errCode: 0,
-                                    url: point.url,
+                                    api: point.api,
                                     showTime: formatTime(point.x),
-                                    startTime: point.startTime,
-                                    traceIp: point.traceIp
+                                    startTime: point.x
                                 };
                                 traces.push(trace);
                               
                             }
                         }
-                    }
-                    if (self.tracesChart.series[1].visible === undefined || self.tracesChart.series[1].visible === true) {
-                        var errordata = self.currentNode.agentSources.traceHis.traceSeries[1].data;
+                    // }
+                    // if (self.tracesChart.series[1].visible === undefined || self.tracesChart.series[1].visible === true) {
+                        var errordata = self.tracesChart.series[1].data;
                         for (var j = 0; j < errordata.length; j++) {
                             var point2 = errordata[j];
                             if (point2.x >= e.xAxis[0].min && point2.x <= e.xAxis[0].max &&
                                 point2.y >= e.yAxis[0].min && point2.y <= e.yAxis[0].max) {
                                 // traces += point2.traceId + ":" + point2.agentId + ":" + point2.startTime + ","
                                 var trace2 = {
-                                    traceId: point2.traceId,
-                                    agentId: point2.agentId,
+                                    traceId: point2.id,
+                                    agentId: point2.agent_id,
                                     elapsed: point2.y,
                                     errCode: 1,
-                                    url: point2.url,
+                                    api: point2.api,
                                     showTime: formatTime(point2.x),
-                                    startTime: point2.startTime,
-                                    traceIp: point2.traceIp
+                                    startTime: point2.x
                                 };
                                 traces.push(trace2);
                             }
                         }
-                    }
+                    // }
 
                     if (traces !== "") {
                         self.$emit("selTraces", traces) 

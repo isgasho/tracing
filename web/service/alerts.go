@@ -218,6 +218,7 @@ func (web *Web) alertsAppList(c echo.Context) error {
 			q := web.Cql.Query(`SELECT name,owner,policy,channel,users FROM app_alert WHERE name=?`, an)
 			err := q.Scan(&name, &owner, &policy, &channel, &users)
 			if err != nil {
+				g.L.Warn("query database error:", zap.Error(err))
 				continue
 			}
 			var on string
@@ -255,6 +256,10 @@ func (web *Web) alertsAppList(c echo.Context) error {
 			}
 			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames})
 			polies[policy] = ""
+		}
+
+		if err := iter.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
 		}
 	}
 
@@ -611,6 +616,10 @@ func (web *Web) queryGroups(c echo.Context) error {
 	for iter.Scan(&id, &name, &owner, &channel, &users) {
 		ownerNameR, _ := web.usersMap.Load(owner)
 		groups = append(groups, &Group{id, name, owner, ownerNameR.(*User).Name, channel, users})
+	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
 	}
 
 	return c.JSON(http.StatusOK, g.Result{

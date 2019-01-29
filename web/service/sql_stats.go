@@ -66,6 +66,10 @@ func (web *Web) sqlStats(c echo.Context) error {
 		}
 	}
 
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
+
 	ads := make([]*SqlStat, 0, len(ad))
 	for _, am := range ad {
 		// 通过apiID 获取api name

@@ -30,18 +30,18 @@ func (web *Web) appMethods(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT api_id,api,ser_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and input_date > ? and input_date < ? `
+	q := `SELECT method_id,api,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and input_date > ? and input_date < ? `
 	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
 
 	var apiID, serType, elapsed, maxE, minE, count, errCount int
 	var averageE float64
 	var totalElapsed int
-	var url string
+	var api string
 	ad := make(map[int]*ApiMethod)
-	for iter.Scan(&apiID, &url, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
+	for iter.Scan(&apiID, &api, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			ad[apiID] = &ApiMethod{apiID, url, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
+			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -67,12 +67,13 @@ func (web *Web) appMethods(c echo.Context) error {
 		// 计算耗时占比
 		am.RatioElapsed = am.Elapsed * 100 / totalElapsed
 		// 通过apiID 获取api name
-		q := web.Cql.Query(`SELECT api_info,line FROM app_apis WHERE app_name = ? and api_id=?`, appName, am.ID)
+		q := web.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id=?`, appName, am.ID)
 		var apiInfo string
 		var line int
 		err := q.Scan(&apiInfo, &line)
 		if err != nil {
 			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+
 			continue
 		}
 
@@ -80,6 +81,10 @@ func (web *Web) appMethods(c echo.Context) error {
 		am.Method = apiInfo
 
 		ads = append(ads, am)
+	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
 	}
 
 	return c.JSON(http.StatusOK, g.Result{

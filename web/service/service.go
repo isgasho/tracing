@@ -124,7 +124,7 @@ func (s *Web) Start() error {
 		e.GET("/apm/web/serviceMap", queryServiceMap, s.checkLogin)
 
 		// 链路查询
-		e.GET("/apm/web/queryTraces", queryTraces, s.checkLogin)
+		e.GET("/apm/web/queryTraces", s.queryTraces, s.checkLogin)
 		e.GET("/apm/web/trace", queryTrace, s.checkLogin)
 
 		// 告警平台
@@ -152,7 +152,7 @@ func (s *Web) Start() error {
 		e.POST("/apm/web/cancelAdmin", s.cancelAdmin, s.checkLogin)
 
 		// 个人设置
-		e.POST("/apm/web/setPerson", s.setPerson, s.checkLogin)
+		e.POST("/apm/web/setPerson", s.setUser, s.checkLogin)
 		e.GET("/apm/web/getAppSetting", s.getAppSetting, s.checkLogin)
 
 		e.Logger.Fatal(e.Start(misc.Conf.Web.Addr))

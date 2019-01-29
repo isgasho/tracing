@@ -12,6 +12,7 @@ import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/g/utils"
 	"github.com/mafanr/vgo/web/misc"
+	"go.uber.org/zap"
 )
 
 type AppStat struct {
@@ -314,6 +315,11 @@ func (web *Web) appNames(c echo.Context) error {
 	for iter.Scan(&appName) {
 		appNames = append(appNames, appName)
 	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
+
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
 		Data:   appNames,
@@ -333,6 +339,10 @@ func (web *Web) appNamesWithSetting(c echo.Context) error {
 		for iter.Scan(&appName) {
 			ans = append(ans, appName)
 		}
+		if err := iter.Close(); err != nil {
+			g.L.Warn("close iter error:", zap.Error(err))
+		}
+
 	} else {
 		ans = appNames
 	}
@@ -367,6 +377,11 @@ func (web *Web) agentList(c echo.Context) error {
 			IsContainer: isContainer,
 		})
 	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
+
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
 		Data:   agents,
@@ -406,17 +421,21 @@ func (web *Web) appApis(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT url FROM app_urls WHERE app_name=?`
+	q := `SELECT api FROM app_apis WHERE app_name=?`
 	iter := web.Cql.Query(q, appName).Iter()
 
-	var url string
-	urls := make([]string, 0)
-	for iter.Scan(&url) {
-		urls = append(urls, url)
+	var api string
+	apis := make([]string, 0)
+	for iter.Scan(&api) {
+		apis = append(apis, api)
+	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
 	}
 
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
-		Data:   urls,
+		Data:   apis,
 	})
 }

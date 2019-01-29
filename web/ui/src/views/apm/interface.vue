@@ -12,7 +12,7 @@
 
     <Modal v-model="modalVisible" :footer-hide="true" :z-index="500" fullscreen>
         <div slot="header" style="padding-top:5px;padding-bottom:0px;border-bottom:none">
-            <div class="font-size-16" style="font-weight:bold">{{$store.state.apm.appName}} : {{tempApi.url}}</div>
+            <div class="font-size-16" style="font-weight:bold">{{$store.state.apm.appName}} : {{tempApi.api}}</div>
             <div  style="margin-top:13px;font-weight:bold;font-size:12px">
               <span class="meta-word">
                 平均耗时:

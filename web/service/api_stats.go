@@ -51,12 +51,12 @@ func (web *Web) apiStats(c echo.Context) error {
 	// apps := make(map[string]*AppStat)
 	var maxElapsed, minElapsed, count, errCount int
 	var aElapsed float64
-	var url string
+	var api string
 	ass := make(map[string]*ApiStat)
-	for iter.Scan(&url, &maxElapsed, &minElapsed, &aElapsed, &count, &errCount) {
-		as, ok := ass[url]
+	for iter.Scan(&api, &maxElapsed, &minElapsed, &aElapsed, &count, &errCount) {
+		as, ok := ass[api]
 		if !ok {
-			ass[url] = &ApiStat{url, maxElapsed, minElapsed, count, aElapsed, errCount}
+			ass[api] = &ApiStat{api, maxElapsed, minElapsed, count, aElapsed, errCount}
 		} else {
 			// 取最大值
 			if maxElapsed > as.MaxElapsed {
@@ -117,9 +117,9 @@ func (web *Web) apiDetail(c echo.Context) error {
 	}
 
 	appName := c.FormValue("app_name")
-	url := c.FormValue("api")
+	api := c.FormValue("api")
 
-	if appName == "" || url == "" {
+	if appName == "" || api == "" {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
 			ErrCode: g.ParamInvalidC,
@@ -127,8 +127,8 @@ func (web *Web) apiDetail(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT api_id,ser_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and api = ? and input_date > ? and input_date < ? `
-	iter := web.Cql.Query(q, appName, url, start.Unix(), end.Unix()).Iter()
+	q := `SELECT method_id,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and api = ? and input_date > ? and input_date < ? `
+	iter := web.Cql.Query(q, appName, api, start.Unix(), end.Unix()).Iter()
 
 	var apiID, serType, elapsed, maxE, minE, count, errCount int
 	var averageE float64
@@ -137,7 +137,7 @@ func (web *Web) apiDetail(c echo.Context) error {
 	for iter.Scan(&apiID, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			ad[apiID] = &ApiMethod{apiID, url, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
+			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -158,12 +158,16 @@ func (web *Web) apiDetail(c echo.Context) error {
 		totalElapsed += elapsed
 	}
 
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
+
 	ads := make([]*ApiMethod, 0, len(ad))
 	for _, am := range ad {
 		// 计算耗时占比
 		am.RatioElapsed = am.Elapsed * 100 / totalElapsed
 		// 通过apiID 获取api name
-		q := web.Cql.Query(`SELECT api_info,line FROM app_apis WHERE app_name = ? and api_id=?`, appName, am.ID)
+		q := web.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id =?`, appName, am.ID)
 		var apiInfo string
 		var line int
 		err := q.Scan(&apiInfo, &line)

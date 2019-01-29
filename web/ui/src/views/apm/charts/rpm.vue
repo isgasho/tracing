@@ -99,14 +99,14 @@ export default {
 		yAxis: [{
             name: '单位（rpm）',
 			type: 'value',
-			splitNumber: 7,
-// 			splitLine: {
-// 				 show: true,
-// 				 lineStyle: {
-// 					 color: '#233e64'
-// 				 }
-// 			 },
-			 axisLine: {show: false,},
+			// splitNumber: 7,
+			splitLine: {
+				 show: false,
+				 lineStyle: {
+					 color: '#233e64'
+				 }
+			 },
+			 axisLine: {show: true,},
 			 axisLabel: {
 			 	margin:20,
 				 textStyle: {
