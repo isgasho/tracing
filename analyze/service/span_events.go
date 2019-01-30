@@ -52,7 +52,7 @@ func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEve
 			spanEvents.spanEvents[event.GetApiId()] = api
 		}
 		api.count++
-		elapsed := int(event.EndElapsed - event.StartElapsed)
+		elapsed := int(event.EndElapsed)
 		api.elapsed += elapsed
 		api.serType = int(event.ServiceType)
 		if elapsed > api.maxElapsed {

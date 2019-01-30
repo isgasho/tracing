@@ -116,7 +116,7 @@ func (v *Vgo) agentWork(conn net.Conn) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			g.L.Error("agentWork:.", zap.Any("msg", err))
+			g.L.Error("agentWork", zap.Any("msg", err))
 			return
 		}
 	}()
