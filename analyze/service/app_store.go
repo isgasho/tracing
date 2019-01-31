@@ -55,11 +55,12 @@ func (appStore *AppStore) LoadAppAndCounter() {
 	for {
 		select {
 		case <-ticker.C:
+			// 定时加载app，然后计算每一个APP的数据
 			if err := appStore.loadApp(); err != nil {
 				g.L.Warn("loadApp", zap.String("error", err.Error()))
 				break
 			}
-
+			// 计算模块
 			if err := gAnalyze.stats.Counter(); err != nil {
 				g.L.Warn("Counter", zap.String("error", err.Error()))
 				break

@@ -22,3 +22,5 @@ var ChunkEventsIterTrace string = `SELECT span_event_list FROM traces_chunk WHER
 var UpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app_name=?;`
 
 var InsertAPIs string = `INSERT INTO app_apis (app_name, api) VALUES (?, ?) ;`
+
+var QueryTraceID string = `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and input_date>? and input_date<=?;`

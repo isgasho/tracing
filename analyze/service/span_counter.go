@@ -29,6 +29,7 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
 	var chunkEvents []*trace.TSpanEvent
 
+	// 查询分片的span信息
 	{
 		var spanChunkEventList []byte
 		iterChunkEvents := gAnalyze.appStore.cql.Session.Query(misc.ChunkEventsIterTrace, traceID, spanID).Iter()
@@ -59,6 +60,7 @@ DoSpan:
 			continue
 		}
 
+		// 查询缓存并记录API信息到数据
 		if app, ok := gAnalyze.appStore.getApp(appName); ok {
 			if _, ok := app.getAPI(rpc); !ok {
 				query := gAnalyze.cql.Session.Query(misc.InsertAPIs, appName, rpc)
@@ -69,10 +71,15 @@ DoSpan:
 			}
 		}
 
+		// 对index时间点到数据进行计算
 		if e, ok := es[index]; ok {
+			// API
 			e.apis.apiCounter(rpc, elapsed, isErr)
+			// 内部事件method_id相关计算
 			e.events.eventsCounter(rpc, spanEvents, chunkEvents)
+			// SQL统计
 			e.sqls.sqlCounter(spanEvents, chunkEvents)
+			// 异常统计
 			e.exceptions.exceptionCounter(spanEvents, chunkEvents)
 		}
 	}

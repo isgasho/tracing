@@ -11,8 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// SerDiscovery ...
-type SerDiscovery interface {
+// SrvDiscovery ...
+type SrvDiscovery interface {
 	Init(reportKey, reportValue, watchDir string) error
 	Start() error
 	Close()

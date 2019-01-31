@@ -19,7 +19,7 @@ type Vgo struct {
 	storage      *Storage  // 存储
 	pinpoint     *Pinpoint // 处理pinpoint 数据
 	appStore     *AppStore
-	serDiscovery SerDiscovery
+	srvDiscovery SrvDiscovery
 }
 
 var gVgo *Vgo
@@ -30,7 +30,7 @@ func New() *Vgo {
 		storage:      NewStorage(),
 		pinpoint:     NewPinpoint(),
 		appStore:     NewAppStore(),
-		serDiscovery: newEtcd(),
+		srvDiscovery: newEtcd(),
 	}
 	return gVgo
 }
@@ -38,7 +38,7 @@ func New() *Vgo {
 // Start ...
 func (v *Vgo) Start() error {
 
-	if err := v.serDiscovery.Start(); err != nil {
+	if err := v.srvDiscovery.Start(); err != nil {
 		g.L.Fatal("Start:etcd.Start", zap.String("error", err.Error()))
 		return err
 	}
