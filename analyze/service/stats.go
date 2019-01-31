@@ -73,12 +73,9 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	var traceID string
 	var spanID int64
 
-	// log.Println("查询")
 	for iterTraceID.Scan(&traceID, &spanID) {
-		// log.Println("查询到T让测ID", app.AppName, traceID, spanID)
 		spanCounter(traceID, spanID, es)
 	}
-	// log.Println("查询 2 ", app.AppName, queryStartTime, queryEndTime)
 	statsCounter(app, queryStartTime, queryEndTime, es)
 
 	// @TODO记录计算结果
@@ -88,12 +85,12 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 
 	// @TODO
 	// 记录计算时间到表
-	if err := gAnalyze.cql.Session.Query(gUpdateLastCounterTime, queryEndTime, app.AppName).Exec(); err != nil {
-		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", gUpdateLastCounterTime))
+	query := gAnalyze.cql.Session.Query(misc.UpdateLastCounterTime, queryEndTime, app.AppName)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return
 	}
 	app.lastCountTime = queryEndTime
-	// log.Println("插入时间")
 }
 
 // Counter ...

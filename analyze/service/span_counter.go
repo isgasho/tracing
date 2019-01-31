@@ -8,23 +8,14 @@ import (
 	"github.com/mafanr/g"
 	"go.uber.org/zap"
 
+	"github.com/mafanr/vgo/analyze/misc"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 )
-
-var gCounterQuerySpan string = `SELECT app_name, input_date, api, elapsed,  service_type, parent_app_name,
-	parent_app_type, span_event_list, err, agent_id
-	FROM traces WHERE trace_id=? AND span_id=?;`
-
-var gChunkEventsIterTrace string = `SELECT span_event_list FROM traces_chunk WHERE trace_id=? AND  span_id=?;`
-
-var gUpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app_name=?;`
-
-var gInsertUrls string = `INSERT INTO app_apis (app_name, api) VALUES (?, ?) ;`
 
 // spanCounter ...
 func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
-	iterTrace := gAnalyze.appStore.cql.Session.Query(gCounterQuerySpan, traceID, spanID).Iter()
+	iterTrace := gAnalyze.appStore.cql.Session.Query(misc.CounterQuerySpan, traceID, spanID).Iter()
 	var startTime int64
 	var rpc string
 	var elapsed int
@@ -40,7 +31,7 @@ func spanCounter(traceID string, spanID int64, es map[int64]*Element) error {
 
 	{
 		var spanChunkEventList []byte
-		iterChunkEvents := gAnalyze.appStore.cql.Session.Query(gChunkEventsIterTrace, traceID, spanID).Iter()
+		iterChunkEvents := gAnalyze.appStore.cql.Session.Query(misc.ChunkEventsIterTrace, traceID, spanID).Iter()
 
 		iterChunkEvents.Scan(&spanChunkEventList)
 
@@ -69,12 +60,12 @@ DoSpan:
 		}
 
 		if app, ok := gAnalyze.appStore.getApp(appName); ok {
-			if _, ok := app.getURL(rpc); !ok {
-				query := gAnalyze.cql.Session.Query(gInsertUrls, appName, rpc)
+			if _, ok := app.getAPI(rpc); !ok {
+				query := gAnalyze.cql.Session.Query(misc.InsertAPIs, appName, rpc)
 				if err := query.Exec(); err != nil {
 					g.L.Warn("json.Unmarshal error", zap.String("error", err.Error()), zap.String("query", query.String()))
 				}
-				app.storeURL(rpc)
+				app.storeAPI(rpc)
 			}
 		}
 

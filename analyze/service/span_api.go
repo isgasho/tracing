@@ -50,13 +50,10 @@ func (spanUrls *SpanAPIs) apiCounter(apiStr string, elapsed int, isError int) er
 	return nil
 }
 
-var gInserRPCRecord string = `INSERT INTO api_stats (app_name, input_date, api, total_elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count, satisfaction, tolerate)
- VALUES (?,?,?,?,?,?,?,?,?,?,?);`
-
 // apiRecord ...
 func (spanUrls *SpanAPIs) apiRecord(app *App, recordTime int64) error {
 	for apiStr, api := range spanUrls.apis {
-		if err := gAnalyze.cql.Session.Query(gInserRPCRecord,
+		query := gAnalyze.cql.Session.Query(misc.InserAPIRecord,
 			app.AppName,
 			recordTime,
 			apiStr,
@@ -68,8 +65,9 @@ func (spanUrls *SpanAPIs) apiRecord(app *App, recordTime int64) error {
 			api.errCount,
 			api.satisfactionCount,
 			api.tolerateCount,
-		).Exec(); err != nil {
-			g.L.Warn("apiRecord error", zap.String("error", err.Error()))
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("apiRecord error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		}
 	}
 	return nil
