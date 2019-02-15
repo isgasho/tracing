@@ -112,6 +112,17 @@ func (a *Agent) Start() error {
 		g.L.Fatal("Start:a.pinpoint.Start", zap.Error(err))
 	}
 
+	// init collectors
+	for name, collector := range Collectors {
+		if err := collector.Init(); err != nil {
+			g.L.Fatal("collector Init", zap.Error(err), zap.String("name", name))
+		}
+		if err := collector.Start(); err != nil {
+			g.L.Fatal("collector Start", zap.Error(err), zap.String("name", name))
+		}
+		g.L.Info("collector start", zap.String("name", name))
+	}
+
 	return nil
 }
 

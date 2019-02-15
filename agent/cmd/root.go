@@ -22,6 +22,7 @@ import (
 
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/agent/misc"
+	_ "github.com/mafanr/vgo/agent/plugins/collector/all"
 	"github.com/mafanr/vgo/agent/service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
