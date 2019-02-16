@@ -1,8 +1,40 @@
 package service
 
-import "sync"
+import (
+	"sync"
 
-// 系统信息采集
+	"github.com/mafanr/vgo/agent/misc"
+
+	"github.com/mafanr/g"
+	"go.uber.org/zap"
+)
+
+// SystemCollector 系统信息采集
+type SystemCollector struct {
+}
+
+// NewSystemCollector ...
+func NewSystemCollector() *SystemCollector {
+	return &SystemCollector{}
+}
+
+// Start ...
+func (s *SystemCollector) Start() {
+	// 系统采集可以关闭
+	if !misc.Conf.System.OnOff {
+		return
+	}
+	// 系统信息采集
+	for name, collector := range Collectors {
+		if err := collector.Init(); err != nil {
+			g.L.Fatal("collector Init", zap.Error(err), zap.String("name", name))
+		}
+		if err := collector.Start(); err != nil {
+			g.L.Fatal("collector Start", zap.Error(err), zap.String("name", name))
+		}
+		g.L.Info("collector start", zap.String("name", name))
+	}
+}
 
 // Collectors ...
 var Collectors map[string]Collector

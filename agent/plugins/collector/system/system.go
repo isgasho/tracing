@@ -4,7 +4,10 @@ import (
 	"log"
 	"time"
 
+	"github.com/mafanr/vgo/agent/misc"
+
 	"github.com/mafanr/g"
+
 	"go.uber.org/zap"
 
 	"github.com/mafanr/vgo/agent/service"
@@ -40,7 +43,7 @@ func (sys *SystemStats) Gather() error {
 		"uptime": int64(hostinfo.Uptime),
 	}
 
-	log.Println(fields)
+	log.Println("采集4", fields)
 	// metric := &system.Metric{
 	// 	Name:     "system",
 	// 	Fields:   fields,
@@ -59,28 +62,23 @@ func (sys *SystemStats) Gather() error {
 }
 
 func (sys *SystemStats) start() {
-	// sys.appname = agent.Name()
-	// ticker := time.NewTicker(time.Duration(sys.Interval) * time.Second)
-	// defer func() {
-	// 	if err := recover(); err != nil {
-	// 		agent.Logger.Error("sys init", zap.Any("err", err))
-	// 	}
-	// }()
-	// defer ticker.Stop()
 
-	// for {
-	// 	select {
-	// 	case <-sys.stop:
-	// 		return nil
-	// 	case <-ticker.C:
-	// 		sys.Gather()
-	// 		continue
-	// 	}
-	// }
+	ticker := time.NewTicker(time.Duration(misc.Conf.Systemload.Interval) * time.Second)
+	defer func() {
+		if err := recover(); err != nil {
+			g.L.Error("sys init", zap.Any("err", err))
+		}
+	}()
+	defer ticker.Stop()
 
 	for {
-		time.Sleep(1 * time.Second)
-		g.L.Info("plugins", zap.String("name", "system"))
+		select {
+		case <-sys.stop:
+			return
+		case <-ticker.C:
+			sys.Gather()
+			continue
+		}
 	}
 
 }

@@ -6,6 +6,7 @@ const (
 	TypeOfPinpoint   byte = 2 // 	Pinpoint 日志数据
 	TypeOfCmd        byte = 3 // 	指令包 数据
 	TypeOfLog        byte = 4 // 	日志数据
+	TypeOfSystem     byte = 5 // 	系统数据
 )
 
 // 指令报文类型
@@ -37,6 +38,12 @@ const (
 	TypeOfTAgentStat      uint16 = 10
 	TypeOfTAgentStatBatch uint16 = 11
 	TypeOfAgentOffline    uint16 = 12 // Agent 下线
+)
+
+// 系统监控数据类型
+const (
+	TypeOfCPU        uint16 = 1 // cpu
+	TypeOfSystemload uint16 = 2 // Systemload
 )
 
 // 其他控制类型

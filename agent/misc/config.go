@@ -33,8 +33,15 @@ type Config struct {
 	}
 
 	System struct {
-		OnOff          bool
-		GatherInterval int
+		OnOff bool
+	}
+
+	CPU struct {
+		Interval int
+	}
+
+	Systemload struct {
+		Interval int
 	}
 }
 
