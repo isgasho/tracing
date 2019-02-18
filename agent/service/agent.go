@@ -115,7 +115,7 @@ func (a *Agent) Start() error {
 	}
 
 	// 启动系统信息采集
-	a.systemCollector.Start()
+	go a.systemCollector.Start()
 
 	return nil
 }
@@ -192,6 +192,12 @@ func (a *Agent) write(data *util.VgoPacket) {
 
 // Close ...
 func (a *Agent) Close() error {
+
+	// 是否启用系统信息采集
+	if misc.Conf.System.OnOff {
+		a.systemCollector.Close()
+	}
+
 	return nil
 }
 

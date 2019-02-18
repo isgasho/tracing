@@ -4,11 +4,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/mafanr/vgo/agent/misc"
-
-	"github.com/mafanr/g"
-
-	"go.uber.org/zap"
+	"github.com/mafanr/vgo/util"
 
 	"github.com/mafanr/vgo/agent/service"
 	"github.com/shirou/gopsutil/host"
@@ -23,19 +19,19 @@ type SystemStats struct {
 	TransName string `toml:"trans_name"`
 }
 
-func (sys *SystemStats) Gather() error {
+func (sys *SystemStats) Gather() (*util.Metric, error) {
 	loadavg, err := load.Avg()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	hostinfo, err := host.Info()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	fields := map[string]interface{}{
@@ -43,60 +39,22 @@ func (sys *SystemStats) Gather() error {
 		"uptime": int64(hostinfo.Uptime),
 	}
 
-	log.Println("采集4", fields)
-	// metric := &system.Metric{
-	// 	Name:     "system",
-	// 	Fields:   fields,
-	// 	Time:     time.Now().Unix(),
-	// 	Interval: sys.Interval,
-	// 	Tags:     make(map[string]string),
-	// }
-
-	// metric.Tags["app"] = sys.appname
-
-	// log.Println("采集4 tags", metric.Tags)
-	// log.Println("采集4 fields", metric.Fields)
-	// agent.Writer(sys.TransName, []*system.Metric{metric})
-
-	return nil
-}
-
-func (sys *SystemStats) start() {
-
-	ticker := time.NewTicker(time.Duration(misc.Conf.Systemload.Interval) * time.Second)
-	defer func() {
-		if err := recover(); err != nil {
-			g.L.Error("sys init", zap.Any("err", err))
-		}
-	}()
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-sys.stop:
-			return
-		case <-ticker.C:
-			sys.Gather()
-			continue
-		}
+	metric := &util.Metric{
+		Name:     "system",
+		Fields:   fields,
+		Time:     time.Now().Unix(),
+		Interval: sys.Interval,
+		Tags:     make(map[string]string),
 	}
 
+	log.Println("采集 tags", metric.Tags)
+	log.Println("采集 fields", metric.Fields)
+
+	return metric, nil
 }
 
 // Init ...
 func (sys *SystemStats) Init() error {
-	go sys.start()
-	return nil
-}
-
-// Start ...
-func (sys *SystemStats) Start() error {
-	return nil
-}
-
-// Close ...
-func (sys *SystemStats) Close() error {
-	sys.stop <- true
 	return nil
 }
 

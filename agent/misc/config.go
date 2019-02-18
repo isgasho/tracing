@@ -33,7 +33,8 @@ type Config struct {
 	}
 
 	System struct {
-		OnOff bool
+		OnOff    bool
+		Interval int
 	}
 
 	CPU struct {
