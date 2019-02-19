@@ -354,3 +354,12 @@ CREATE TABLE IF NOT EXISTS service_type (
     PRIMARY KEY (service_type)
 ) WITH gc_grace_seconds = 10800;
  
+
+CREATE TABLE IF NOT EXISTS system (
+    app_name        text,
+    agent_id        text,
+    input_date      bigint,
+    metrics         blob,
+    PRIMARY KEY (app_name, agent_id, input_date)
+) WITH gc_grace_seconds = 10800;
+ 

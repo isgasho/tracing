@@ -47,17 +47,33 @@ func (s *SystemCollector) Start() {
 	defer ticker.Stop()
 
 	metrics := util.NewMetricData()
+	metrics.AppName = gAgent.agentInfo.AppName
+	metrics.AgentID = gAgent.agentInfo.AgentID
 	packet := &util.VgoPacket{
 		Type:       util.TypeOfSystem,
 		Version:    util.VersionOf01,
 		IsSync:     util.TypeOfSyncNo,
 		IsCompress: util.TypeOfCompressYes,
 	}
+
+	isGetApInfo := false
+	if len(metrics.AppName) == 0 || len(metrics.AgentID) == 0 {
+		metrics.AppName = gAgent.agentInfo.AppName
+		metrics.AgentID = gAgent.agentInfo.AgentID
+	}
+
 	for {
 		select {
 		case <-s.stop:
 			return
 		case <-ticker.C:
+			if !isGetApInfo {
+				metrics.AppName = gAgent.agentInfo.AppName
+				metrics.AgentID = gAgent.agentInfo.AgentID
+				if len(metrics.AppName) != 0 && len(metrics.AgentID) != 0 {
+					isGetApInfo = true
+				}
+			}
 			// 一次采集所有插件
 			for name, collector := range Collectors {
 				metric, err := collector.Gather()
@@ -65,9 +81,13 @@ func (s *SystemCollector) Start() {
 					g.L.Debug("system collector err", zap.String("name", name), zap.String("error", err.Error()))
 					continue
 				}
+				if metric == nil {
+					continue
+				}
 				// 存放
 				metrics.Payload = append(metrics.Payload, metric)
 			}
+			metrics.Time = time.Now().Unix()
 			// 编码
 			payload, err := msgpack.Marshal(metrics)
 			if err != nil {
@@ -82,6 +102,7 @@ func (s *SystemCollector) Start() {
 			if err := gAgent.client.WritePacket(packet); err != nil {
 				g.L.Warn("WritePacket", zap.String("error", err.Error()))
 			}
+
 			// 清空缓存
 			metrics.Payload = metrics.Payload[:0]
 			continue

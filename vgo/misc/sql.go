@@ -56,3 +56,8 @@ var InsertApp string = `
 INSERT
 INTO apps(app_name)
 VALUES (?)`
+
+var InsertSystems string = `
+		INSERT
+		INTO system(app_name, agent_id, input_date, metrics)
+		VALUES (?, ?, ?, ?) ;`

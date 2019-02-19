@@ -39,22 +39,22 @@ func New() *Vgo {
 func (v *Vgo) Start() error {
 
 	if err := v.srvDiscovery.Start(); err != nil {
-		g.L.Fatal("Start:etcd.Start", zap.String("error", err.Error()))
+		g.L.Fatal("etcd start", zap.String("error", err.Error()))
 		return err
 	}
 
 	if err := v.storage.Init(); err != nil {
-		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+		g.L.Fatal("storage init", zap.String("error", err.Error()))
 		return err
 	}
 
 	if err := v.storage.Start(); err != nil {
-		g.L.Fatal("Start:storage.Start", zap.String("error", err.Error()))
+		g.L.Fatal("storage start", zap.String("error", err.Error()))
 		return err
 	}
 
 	if err := v.init(); err != nil {
-		g.L.Fatal("Start:v.init", zap.String("error", err.Error()))
+		g.L.Fatal("init", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -64,7 +64,7 @@ func (v *Vgo) Start() error {
 func (v *Vgo) init() error {
 	// init mysql
 	if err := v.initMysql(); err != nil {
-		g.L.Warn("init:v.initMysql", zap.String("error", err.Error()))
+		g.L.Warn("init mysql", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -94,13 +94,13 @@ func (v *Vgo) initMysql() error {
 func (v *Vgo) acceptAgent() error {
 	ln, err := net.Listen("tcp", misc.Conf.Vgo.ListenAddr)
 	if err != nil {
-		g.L.Fatal("acceptAgent:net.Listen", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Vgo.ListenAddr))
+		g.L.Fatal("Listen", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Vgo.ListenAddr))
 	}
 	go func() {
 		for {
 			conn, err := ln.Accept()
 			if err != nil {
-				g.L.Fatal("acceptAgent:ln.Accept", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Vgo.ListenAddr))
+				g.L.Fatal("Accept", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Vgo.ListenAddr))
 			}
 			conn.SetReadDeadline(time.Now().Add(time.Duration(misc.Conf.Vgo.AgentTimeout) * time.Second))
 			go v.agentWork(conn)
@@ -139,17 +139,21 @@ func (v *Vgo) agentWork(conn net.Conn) {
 				switch packet.Type {
 				case util.TypeOfCmd:
 					if err := v.dealCmd(conn, packet); err != nil {
-						g.L.Warn("agentWork:v.dealCmd", zap.String("error", err.Error()))
+						g.L.Warn("dealCmd", zap.String("error", err.Error()))
 						return
 					}
 					break
 				case util.TypeOfPinpoint:
 					if err := v.pinpoint.dealUpload(conn, packet); err != nil {
-						g.L.Warn("agentWork:v.pinpoint.dealUpload", zap.String("error", err.Error()))
+						g.L.Warn("dealUpload", zap.String("error", err.Error()))
 						return
 					}
 					break
 				case util.TypeOfSystem:
+					if err := v.dealSystem(packet); err != nil {
+						g.L.Warn("dealSystem", zap.String("error", err.Error()))
+						return
+					}
 					break
 				}
 			}
@@ -172,6 +176,16 @@ func (v *Vgo) dealCmd(conn net.Conn, packet *util.VgoPacket) error {
 		}
 		g.L.Debug("dealCmd:ping", zap.String("addr", conn.RemoteAddr().String()))
 	}
+	return nil
+}
+
+func (v *Vgo) dealSystem(packet *util.VgoPacket) error {
+	metric := util.NewMetricData()
+	if err := msgpack.Unmarshal(packet.Payload, metric); err != nil {
+		g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
+		return err
+	}
+	v.storage.metricsChan <- metric
 	return nil
 }
 
