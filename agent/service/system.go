@@ -6,6 +6,7 @@ import (
 	"github.com/mafanr/g"
 	"github.com/mafanr/vgo/agent/misc"
 	"github.com/mafanr/vgo/util"
+	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
 
@@ -45,27 +46,44 @@ func (s *SystemCollector) Start() {
 
 	defer ticker.Stop()
 
-	metrics := make([]*util.Metric, 0)
-
+	metrics := util.NewMetricData()
+	packet := &util.VgoPacket{
+		Type:       util.TypeOfSystem,
+		Version:    util.VersionOf01,
+		IsSync:     util.TypeOfSyncNo,
+		IsCompress: util.TypeOfCompressYes,
+	}
 	for {
 		select {
 		case <-s.stop:
 			return
 		case <-ticker.C:
+			// 一次采集所有插件
 			for name, collector := range Collectors {
 				metric, err := collector.Gather()
 				if err != nil {
 					g.L.Debug("system collector err", zap.String("name", name), zap.String("error", err.Error()))
 					continue
 				}
-				metrics = append(metrics, metric)
+				// 存放
+				metrics.Payload = append(metrics.Payload, metric)
 			}
+			// 编码
+			payload, err := msgpack.Marshal(metrics)
+			if err != nil {
+				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+				// 清空缓存
+				metrics.Payload = metrics.Payload[:0]
+				continue
+			}
+			packet.Payload = payload
 
 			// 发送
-
+			if err := gAgent.client.WritePacket(packet); err != nil {
+				g.L.Warn("WritePacket", zap.String("error", err.Error()))
+			}
 			// 清空缓存
-			metrics = metrics[:0]
-
+			metrics.Payload = metrics.Payload[:0]
 			continue
 		}
 	}

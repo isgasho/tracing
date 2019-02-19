@@ -149,6 +149,8 @@ func (v *Vgo) agentWork(conn net.Conn) {
 						return
 					}
 					break
+				case util.TypeOfSystem:
+					break
 				}
 			}
 		}
