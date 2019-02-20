@@ -11,29 +11,30 @@ export default new Router({
   mode: 'history',
   routes: [
     { 
-      path: '/', 
+      path: '/apm/ui', 
       component: Nav,
-      redirect: '/apm/ui/list',
+      // redirect: '/apm/ui/list',
       children: [
-        { path: '/apm/ui/list', meta: '应用监控',bg: '#348899',component: () => import('@/views/apm/list')},
-        { path: '/apm/ui/admin', meta:'管理面板', bg: '#348899',component: () => import('@/views/admin')},
-        { path: '/apm/ui/person', meta:'个人设置', bg: '#348899',component: () => import('@/views/personSetting')},
+        { path: '/apm/ui/list', meta: '应用监控',bg: '#39c',component: () => import('@/views/apm/list')},
+        { path: '/apm/ui/admin', meta:'管理面板', bg: '#39c',component: () => import('@/views/admin')},
+        { path: '/apm/ui/person', meta:'个人设置', bg: '#39c',component: () => import('@/views/personSetting')},
         { 
           path: '/apm/ui/index', 
           component: ApmNav,
           redirect: '/apm/ui/dashboard',
           meta: '应用监控',
           children: [
-            { path: '/apm/ui/dashboard',     meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/dashboard')},
-            { path: '/apm/ui/tracing',  meta: '应用监控',bg: '#348899', component: () => import('@/views/apm/tracing')},
-            { path: '/apm/ui/serviceMap',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/serviceMap')},
-            { path: '/apm/ui/runtime',  meta: '应用监控',bg: '#348899', component: () => import('@/views/apm/runtime')},
-            { path: '/apm/ui/thread',  meta: '应用监控',bg: '#348899', component: () => import('@/views/apm/thread')},
-            { path: '/apm/ui/memory',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/memory')},
-            { path: '/apm/ui/database',  meta: '应用监控',bg: '#348899', component: () => import('@/views/apm/database')},
-            { path: '/apm/ui/interface', meta: '应用监控',bg: '#348899',  component: () => import('@/views/apm/interface')},
-            { path: '/apm/ui/exception',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/exception')},
-            { path: '/apm/ui/method',  meta: '应用监控', bg: '#348899',component: () => import('@/views/apm/method')}
+            { path: '/apm/ui/dashboard',     meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/dashboard')},
+            { path: '/apm/ui/tracing',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/tracing')},
+            { path: '/apm/ui/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')},
+            { path: '/apm/ui/runtime',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/runtime')},
+            { path: '/apm/ui/system',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/system')},
+            { path: '/apm/ui/thread',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/thread')},
+            { path: '/apm/ui/memory',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/memory')},
+            { path: '/apm/ui/database',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/database')},
+            { path: '/apm/ui/interface', meta: '应用监控',bg: '#39c',  component: () => import('@/views/apm/interface')},
+            { path: '/apm/ui/exception',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/exception')},
+            { path: '/apm/ui/method',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/method')}
           ]
         },
         { 
@@ -50,7 +51,7 @@ export default new Router({
         },
       ]
     },
-    { path: '/apm/ui/login', component: () => import('@/views/login/index')},
+    { path: '/', component: () => import('@/views/index')},
     { path: '/apm/ui/callback', component: () => import('@/views/login/callback')},
 
 

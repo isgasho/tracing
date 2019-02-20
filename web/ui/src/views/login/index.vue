@@ -1,6 +1,6 @@
 <template>
   <div class="login-container">
-
+    <video  poster="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABAQMAAAAl21bKAAAAA1BMVEWvAP9YXMgKAAAAAXRSTlMAQObYZgAAAApJREFUeJxjYgAAAAYAAzY3fKgAAAAASUVORK5CYII=" id="datadog-video" playsinline="" autoplay="" muted="" loop="" class="bgvid" preload="auto" data-play="true" style="background-image: url(https://datadog-prod.imgix.net/img/dd_homepage_still_opt.png?w=1700&amp;h=956&amp;fit=crop);height:900px"><source src="https://don08600y3gfm.cloudfront.net/video/dd_homepage_3.mp4"></video>
     <Form class="login-form" autoComplete="on" label-position="left">
       <div class="title-container">
         <h3 class="title">传化监控平台</h3>
@@ -21,6 +21,7 @@
 <script>
 /* eslint-disable */
 import request from '@/utils/request' 
+const config = require('@/../config')
 export default {
   name: 'login',
   data() {
@@ -29,7 +30,7 @@ export default {
   },
   methods: {
     handleLogin() {
-      let host = "10.50.38.63:9530"
+      let host = config.dev.host + ":" + config.dev.port
       let url = "http://sitetest.tf56.com/openssoWeb/opensso/login?clientNo=1" + "&redirectUrl=http://" + host + "/apm/ui/callback"
       window.location.href = url
     }

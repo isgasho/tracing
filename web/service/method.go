@@ -30,8 +30,8 @@ func (web *Web) appMethods(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT method_id,api,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and input_date > ? and input_date < ? `
-	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
+	q := web.Cql.Query(`SELECT method_id,api,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and input_date > ? and input_date < ? `, appName, start.Unix(), end.Unix())
+	iter := q.Iter()
 
 	var apiID, serType, elapsed, maxE, minE, count, errCount int
 	var averageE float64
@@ -41,7 +41,8 @@ func (web *Web) appMethods(c echo.Context) error {
 	for iter.Scan(&apiID, &api, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
+			av, _ := utils.DecimalPrecision(averageE)
+			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, av, errCount, 0, ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值

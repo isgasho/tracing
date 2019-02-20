@@ -11,7 +11,7 @@
           </Col>
           <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:67px">
             <div class="color-primary font-size-16 padding-top-15 hover-cursor">
-              <DatePicker :split-panels=true  confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
+              <DatePicker format="yyyy-MM-dd HH:mm" :split-panels=true  confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 290px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
             </div>
           </Col>
       </Row>
@@ -144,11 +144,11 @@ export default {
     initItem() {
        this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
-        this.items = ['monitoring','dashboard','tracing','serviceMap','runtime','profiling','thread','memory','stats','database','interface','method','exception']
-        this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2, profiling:1,thread:2,memory:2,stats:1,database:2,interface:2,exception:2,method:2}
+        this.items = ['monitoring','dashboard','tracing','serviceMap','system','runtime','profiling','thread','memory','stats','database','interface','method','exception']
+        this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2,system:2, profiling:1,thread:2,memory:2,stats:1,database:2,interface:2,exception:2,method:2}
         this.names = {monitoring: '监控','dashboard': "应用总览",
             tracing: '链路跟踪',serviceMap:'应用拓扑',  
-            runtime: '应用运行时', profiling: '在线诊断', thread:'线程剖析', memory: '内存剖析',
+            runtime: '应用运行时', system:'系统指标',profiling: '在线诊断', thread:'线程剖析', memory: '内存剖析',
             stats: '数据统计', 
             database:'数据库', interface:'访问接口', exception:'错误异常',method:'关键事务'}
         this.selItem = this.path.split('/')[3]

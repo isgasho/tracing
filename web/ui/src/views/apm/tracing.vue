@@ -3,16 +3,16 @@
     <Row class="padding-20">
        <Col span="8" style="background:rgb(245, 245, 245)"  class="padding-20 padding-bottom-40">
           <div  class="font-size-18">链路过滤</div>
-          <div class="margin-top-10">
+          <!-- <div class="margin-top-10">
             <div class="font-size-16">请求API</div>
             <Select v-model="currentApi" style="width:400px" size="large" class="api-filter"  placeholder="默认选择全部API" filterable clearable>
               <Option v-for="api in apis" :value="api" :key="api">
                 {{ api }}
               </Option>
             </Select>
-          </div>
+          </div> -->
           
-          <div class="margin-top-40">
+          <div class="margin-top-10">
             <div class="font-size-16">最低响应时间(ms)</div>
             <Input  v-model="minElapsed" placeholder="e.g.  100，留空代表不限制" style="width: 400px" size="large" />
           </div>
@@ -45,7 +45,7 @@
             </Select>
           </span>
 
-        <div style="padding-left:10px;padding-right:10px" class="margin-top-20">
+        <div style="padding-left:10px;padding-right:10px" class="margin-top-20 margin-bottom-40">
           <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="selectedTraces" class="margin-top-15" @on-row-click="showTrace"></Table>
         </div>
         </div>

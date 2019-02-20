@@ -150,6 +150,8 @@ export default {
 		}]
 };
       this.chart.setOption(option)
+
+      this.chart.group = 'group-dashboard';
     }
   }
 }

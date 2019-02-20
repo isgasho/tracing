@@ -36,6 +36,7 @@
 </template>
 
 <script>
+import echarts from 'echarts'
 import request from '@/utils/request'
 import apdex from './charts/apdex'
 import error from './charts/error'
@@ -141,6 +142,7 @@ export default {
   },
   mounted() {
     this.initDash()
+    echarts.connect('group-dashboard');
   }
 }
 </script>

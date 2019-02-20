@@ -37,7 +37,7 @@ service.interceptors.response.use(
       Cookies.set("lastPath", window.location.pathname)
 
       setTimeout(function() {
-        window.location.href = "/apm/ui/login"
+        window.location.href = "/"
       },600)
       return response
     }

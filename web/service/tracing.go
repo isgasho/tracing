@@ -63,15 +63,15 @@ func (web *Web) queryTraces(c echo.Context) error {
 	var q *gocql.Query
 	if api == "" {
 		if max == 0 {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed > ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min)
+			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min)
 		} else {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed > ? and elapsed < ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min, max)
+			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min, max)
 		}
 	} else {
 		if max == 0 {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed > ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min)
+			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min)
 		} else {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed > ? and elapsed < ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min, max)
+			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min, max)
 		}
 	}
 

@@ -21,7 +21,15 @@ export default {
         }, 100);
     },
     watch: {
-    },
+     graphData() {
+        this.initTraceChart()
+        let self = this;
+        setTimeout(function () {
+            // 解析出具体的data
+                    self.traceChart(self.graphData)
+        }, 100);
+     }
+  },
     computed: {},
     methods: {
          traceChart: function (data) {

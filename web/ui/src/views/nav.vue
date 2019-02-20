@@ -1,5 +1,6 @@
 <template>
   <div>
+      <div style="height:6px;background-color: #F2BC56;"></div>
       <Row class="nav" >
         <ul class="product-switcher" :class="{'open':isOpen}">
             <li class="notched"  @click="switchProduct">
@@ -15,14 +16,14 @@
             <li class="product ng-scope browser not-active">
                 业务监控
             </li>
-            <li class="product ng-scope system not-active">
+            <!-- <li class="product ng-scope system not-active">
                 系统监控
-            </li>
+            </li> -->
             <li class="product ng-scope alerts not-active">
                 <a href="/apm/ui/alerts">告警平台</a>
             </li>
             <li class="product ng-scope infrastructure not-active">
-                使用文档
+                使用帮助
             </li>
         </ul>
         <span class="hover-cursor">
@@ -117,10 +118,10 @@ export default {
     },
     logout() {
       this.$store.dispatch('Logout').then(() => {
-        this.$router.push('/apm/ui/login') // In order to re-instantiate the vue-router object to avoid bugs
+        this.$router.push('/') // In order to re-instantiate the vue-router object to avoid bugs
       }).catch(error => {
         // 登出错误，登陆数据已经清除，返回登陆页面
-        this.$router.push('/apm/ui/login')
+        this.$router.push('/')
       })
     },
   },
@@ -158,12 +159,26 @@ export default {
     -webkit-transition: all 250ms ease-in-out;
     transition: all 250ms ease-in-out;
     // position: fixed;
-    top: 6px;
+    // top: 6px;
     left: 0;
     z-index: 100;
     background-color: #474747;
     // box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
+// .nav::before {
+//     content: '';
+//     position: absolute;
+//     display: block;
+//     top: 0;
+//     left: 0;
+//     right: 0;
+//     margin: 0;
+//     padding: 0;
+//     height: 6px;
+//     background-color: #F2BC56;
+//     z-index: 1019;
+// }
+
 .product-switcher ul {
     list-style: none;
     margin-bottom: 0;
@@ -177,7 +192,7 @@ export default {
     left: 0;
     box-shadow: 2px 0 3px rgba(0, 0, 0, 0.4);
     clip: rect(auto, 493.33333px, auto, -10px);
-    padding: 4.5px 0;
+    padding: 6px 0;
 }
 
 .product-switcher .notched {
@@ -235,7 +250,7 @@ export default {
 .product-switcher .apm {
     -webkit-transition: left 180ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
     transition: left 180ms cubic-bezier(0.455, 0.03, 0.515, 0.955);
-    background-color: #348899;
+    background-color: #39c;
     z-index: 1025;
     left: 9px;
 }
@@ -305,12 +320,14 @@ export default {
 .product-switcher.open .alerts {
     z-index: 1104;
     box-shadow: none;
-    left: 743px;
+    // left: 743px;
+    left: 558px;
 }
 .product-switcher.open .infrastructure {
     z-index: 1103;
     box-shadow: none;
-    left: 928px;
+    // left: 928px;
+    left: 743px;
 }
 .product-switcher.open .plugins {
     z-index: 1102;

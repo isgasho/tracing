@@ -216,11 +216,17 @@ func (web *Web) appDash(c echo.Context) error {
 		start = start.Add(time.Minute)
 	}
 
-	// 把start-end分为30个时间点
+	// 把start-end分为30个桶
 	timeline := make([]string, 0)
 	timeBucks := make(map[string]*AppStat)
 	current := start
-	step := int(end.Sub(start).Minutes())/30 + 1
+	var step int
+	if end.Sub(start).Minutes() <= 60 {
+		step = 1
+	} else {
+		step = int(end.Sub(start).Minutes())/30 + 1
+	}
+
 	for {
 		if current.Unix() > end.Unix() {
 			break
