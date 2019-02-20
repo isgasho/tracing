@@ -10,6 +10,7 @@ import (
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"github.com/mafanr/vgo/util"
+	"github.com/mafanr/vgo/vgo/misc"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -43,15 +44,12 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 				}
 
 				if !gVgo.appStore.checkApp(agentInfo.AppName) {
-					insertApp := `
-					INSERT
-					INTO apps(app_name)
-					VALUES (?)`
-					if err := gVgo.storage.cql.Query(
-						insertApp,
+					query := gVgo.storage.cql.Query(
+						misc.InsertApp,
 						agentInfo.AppName,
-					).Exec(); err != nil {
-						g.L.Warn("inster apps error", zap.String("error", err.Error()), zap.String("SQL", insertApp))
+					)
+					if err := query.Exec(); err != nil {
+						g.L.Warn("inster apps error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 						return err
 					}
 				}
@@ -82,6 +80,9 @@ func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
 					g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
+
+				g.L.Info("AgentOffline", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
+
 				// 清理内存缓存Agent信息
 				gVgo.appStore.RemoveAgent(agentInfo)
 

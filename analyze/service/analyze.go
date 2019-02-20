@@ -14,7 +14,7 @@ import (
 type Analyze struct {
 	stats        Stats        // 离线统计
 	blink        Blink        // 实时计算
-	serDiscovery SerDiscovery // 服务发现
+	srvDiscovery SrvDiscovery // 服务发现
 	cql          *g.Cassandra
 	appStore     *AppStore
 	hash         *g.Hash
@@ -31,7 +31,7 @@ func New() *Analyze {
 		blink:        newBlink(),
 		cql:          g.NewCassandra(),
 		hash:         g.NewHash(),
-		serDiscovery: newEtcd(),
+		srvDiscovery: newEtcd(),
 		analyzes:     make(map[string]string),
 	}
 	gAnalyze = analyze
@@ -49,11 +49,11 @@ func (analyze *Analyze) Start() error {
 
 	reportDir := initDir(misc.Conf.Etcd.ReportDir)
 
-	if err := analyze.serDiscovery.Init(reportDir+reportValue, reportValue, watchDir); err != nil {
+	if err := analyze.srvDiscovery.Init(reportDir+reportValue, reportValue, watchDir); err != nil {
 		g.L.Fatal("Start etcd.Start", zap.String("error", err.Error()))
 	}
 
-	if err := analyze.serDiscovery.Start(); err != nil {
+	if err := analyze.srvDiscovery.Start(); err != nil {
 		g.L.Fatal("Start etcd.Start", zap.String("error", err.Error()))
 	}
 
@@ -91,8 +91,8 @@ func (analyze *Analyze) Close() error {
 		analyze.cql.Close()
 	}
 
-	if analyze.serDiscovery != nil {
-		analyze.serDiscovery.Close()
+	if analyze.srvDiscovery != nil {
+		analyze.srvDiscovery.Close()
 	}
 
 	g.L.Info("Close ok!")

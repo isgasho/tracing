@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/analyze/misc"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
 	"go.uber.org/zap"
@@ -52,33 +53,32 @@ func (agentStats *AgentStats) statsCounter(agentID string, index int64, stats []
 	return nil
 }
 
-var gInsertCPULoadRecord string = `INSERT INTO jvm_cpu_stats (app_name, agent_id, input_date, jvm, system) VALUES (?,?,?,?,?);`
-var gInsertJVMMemoryRecord string = `INSERT INTO jvm_memory_stats (app_name , agent_id , input_date , heap_used , non_heap ) VALUES (?,?,?,?,?);`
-
 // sqlRecord ...
 func (agentStats *AgentStats) statRecord(app *App, recordTime int64) error {
 
 	for index, cpu := range agentStats.cpus {
-		if err := gAnalyze.cql.Session.Query(gInsertCPULoadRecord,
+		query := gAnalyze.cql.Session.Query(misc.InsertCPULoadRecord,
 			app.AppName,
 			agentStats.agentID,
 			index,
 			cpu.Jvm,
 			cpu.System,
-		).Exec(); err != nil {
-			g.L.Warn("statRecord error", zap.String("error", err.Error()), zap.String("SQL", gInsertCPULoadRecord))
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("statRecord error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		}
 	}
 
 	for index, memory := range agentStats.memorys {
-		if err := gAnalyze.cql.Session.Query(gInsertJVMMemoryRecord,
+		query := gAnalyze.cql.Session.Query(misc.InsertJVMMemoryRecord,
 			app.AppName,
 			agentStats.agentID,
 			index,
 			memory.HeapUsed,
 			memory.NonHeap,
-		).Exec(); err != nil {
-			g.L.Warn("statRecord error", zap.String("error", err.Error()), zap.String("SQL", gInsertJVMMemoryRecord))
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("statRecord error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		}
 	}
 	return nil
@@ -108,13 +108,10 @@ func NewJvmMemory() *JvmMemory {
 	return &JvmMemory{}
 }
 
-var gQueryAgentStat string = `SELECT timestamp, stat_info  FROM agent_stats WHERE app_name=? AND  agent_id=? and timestamp>? and timestamp<=?;`
-
-// SELECT timestamp, stat_info  FROM agent_stats WHERE app_name='AAA' AND  agent_id='AAA1' and timestamp>1547009635072 and timestamp<=1547009695072;
 // statsCounter ...
 func statsCounter(app *App, startTime, endTime int64, es map[int64]*Element) error {
 	for _, agent := range app.Agents {
-		iterAgentStat := gAnalyze.appStore.cql.Session.Query(gQueryAgentStat, app.AppName, agent.AgentID, startTime, endTime).Iter()
+		iterAgentStat := gAnalyze.appStore.cql.Session.Query(misc.QueryAgentStat, app.AppName, agent.AgentID, startTime, endTime).Iter()
 		var timestamp int64
 		var statInfo []byte
 		for iterAgentStat.Scan(&timestamp, &statInfo) {

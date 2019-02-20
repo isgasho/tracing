@@ -27,14 +27,16 @@ type Config struct {
 	}
 
 	Storage struct {
-		Cluster           []string
-		Keyspace          string
-		NumConns          int
-		SpanCacheLen      int // 缓存长度
-		SpanChunkCacheLen int //
-		SpanStoreInterval int // 毫秒
-		AgentStatUseTTL   bool
-		AgentStatTTL      int64
+		Cluster             []string
+		Keyspace            string
+		NumConns            int
+		SpanCacheLen        int // 缓存长度
+		SpanChunkCacheLen   int // 缓存长度
+		MetricCacheLen      int // 缓存长度
+		SpanStoreInterval   int // 毫秒
+		SystemStoreInterval int // 毫秒
+		AgentStatUseTTL     bool
+		AgentStatTTL        int64
 	}
 
 	Mysql struct {

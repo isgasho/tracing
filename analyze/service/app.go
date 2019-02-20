@@ -8,7 +8,7 @@ type App struct {
 	AppName       string
 	lastCountTime int64
 	Agents        map[string]*Agent
-	URLs          map[string]struct{}
+	APIs          map[string]struct{}
 }
 
 // NewApp ...
@@ -16,7 +16,7 @@ func NewApp(appName string) *App {
 	return &App{
 		AppName: appName,
 		Agents:  make(map[string]*Agent),
-		URLs:    make(map[string]struct{}),
+		APIs:    make(map[string]struct{}),
 	}
 }
 
@@ -33,16 +33,16 @@ func (app *App) storeAgent(agent *Agent) {
 	app.Unlock()
 }
 
-func (app *App) getURL(url string) (struct{}, bool) {
+func (app *App) getAPI(url string) (struct{}, bool) {
 	app.RLock()
-	v, ok := app.URLs[url]
+	v, ok := app.APIs[url]
 	app.RUnlock()
 	return v, ok
 }
 
-func (app *App) storeURL(url string) {
+func (app *App) storeAPI(url string) {
 	app.Lock()
-	app.URLs[url] = struct{}{}
+	app.APIs[url] = struct{}{}
 	app.Unlock()
 }
 func (app *App) delAgent(agentID string) {

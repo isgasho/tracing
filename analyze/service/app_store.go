@@ -55,11 +55,12 @@ func (appStore *AppStore) LoadAppAndCounter() {
 	for {
 		select {
 		case <-ticker.C:
+			// 定时加载app，然后计算每一个APP的数据
 			if err := appStore.loadApp(); err != nil {
 				g.L.Warn("loadApp", zap.String("error", err.Error()))
 				break
 			}
-
+			// 计算模块
 			if err := gAnalyze.stats.Counter(); err != nil {
 				g.L.Warn("Counter", zap.String("error", err.Error()))
 				break
@@ -102,8 +103,8 @@ func (appStore *AppStore) loadApp() error {
 
 		// 从 agent_stat 中取最早的启动时间记录
 		if lastCountTime == 0 {
-			queryStartTime := `SELECT start_time  FROM agent_stats  WHERE app_name=? LIMIT 1;`
-			iterStartTime := appStore.cql.Session.Query(queryStartTime, app.AppName).Iter()
+
+			iterStartTime := appStore.cql.Session.Query(misc.QueryStartTime, app.AppName).Iter()
 			iterStartTime.Scan(&lastCountTime)
 
 			if err := iterStartTime.Close(); err != nil {
@@ -116,8 +117,8 @@ func (appStore *AppStore) loadApp() error {
 		app.lastCountTime = lastCountTime
 
 		// load agents
-		queryAgents := `SELECT agent_id, is_live FROM agents WHERE app_name=?;`
-		agentsIter := appStore.cql.Session.Query(queryAgents, appName).Iter()
+
+		agentsIter := appStore.cql.Session.Query(misc.QueryAgents, appName).Iter()
 
 		var agentID string
 		var isLive bool

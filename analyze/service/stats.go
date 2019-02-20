@@ -42,6 +42,7 @@ func (s *stats) Close() error {
 func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	defer wg.Done()
 	// 如果最后一次计算点为0，那么放弃本次计算
+	// if app.lastCountTime == 0 || len(app.Agents) == 0 {
 	if app.lastCountTime == 0 {
 		// log.Println("如果最后一次计算点为0，那么放弃本次计算")
 		return
@@ -59,40 +60,42 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 		return
 	}
 
+	//	计算出每个分钟点，并生成map
 	es := GetElements(queryStartTime, queryEndTime)
-	queryTraceID := `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and input_date>? and input_date<=?;`
-	iterTraceID := gAnalyze.appStore.cql.Session.Query(queryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
+
+	// 根据时间范围查出所有符合范围的traceID
+	iterTraceID := gAnalyze.appStore.cql.Session.Query(misc.QueryTraceID, app.AppName, queryStartTime, queryEndTime).Iter()
 
 	defer func() {
 		if err := iterTraceID.Close(); err != nil {
 			g.L.Warn("close iter error:", zap.Error(err))
 		}
 	}()
-	// SELECT trace_id, span_id FROM app_operation_index WHERE app_name='helm' and input_date>1548514140000 and input_date<=1548514200000;
+
 	var traceID string
 	var spanID int64
 
-	// log.Println("查询")
+	// 根据traceID 查出span并进行计算
 	for iterTraceID.Scan(&traceID, &spanID) {
-		// log.Println("查询到T让测ID", app.AppName, traceID, spanID)
 		spanCounter(traceID, spanID, es)
 	}
-	// log.Println("查询 2 ", app.AppName, queryStartTime, queryEndTime)
+
+	// 统计jvm信息
 	statsCounter(app, queryStartTime, queryEndTime, es)
 
-	// @TODO记录计算结果
+	// 记录计算结果
 	for recordTime, e := range es {
 		spanCounterRecord(app, recordTime, e)
 	}
 
-	// @TODO
-	// 记录计算时间到表
-	if err := gAnalyze.cql.Session.Query(gUpdateLastCounterTime, queryEndTime, app.AppName).Exec(); err != nil {
-		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", gUpdateLastCounterTime))
+	// 将本次计算时间记录到表中
+	query := gAnalyze.cql.Session.Query(misc.UpdateLastCounterTime, queryEndTime, app.AppName)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("update Last Counter Time error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return
 	}
+	// 缓存到内存
 	app.lastCountTime = queryEndTime
-	// log.Println("插入时间")
 }
 
 // Counter ...

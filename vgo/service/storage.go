@@ -14,17 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
-// type Storage interface {
-// 	Start() error
-// 	Close() error
-// 	AgentStore(agentInfo *util.AgentInfo) error
-// }
-
 // Storage ...
 type Storage struct {
 	cql           *gocql.Session
 	spanChan      chan *trace.TSpan
 	spanChunkChan chan *trace.TSpanChunk
+	metricsChan   chan *util.MetricData
 }
 
 // NewStorage ...
@@ -32,6 +27,7 @@ func NewStorage() *Storage {
 	return &Storage{
 		spanChan:      make(chan *trace.TSpan, misc.Conf.Storage.SpanCacheLen+500),
 		spanChunkChan: make(chan *trace.TSpanChunk, misc.Conf.Storage.SpanChunkCacheLen+500),
+		metricsChan:   make(chan *util.MetricData, misc.Conf.Storage.MetricCacheLen+500),
 	}
 }
 
@@ -56,10 +52,9 @@ func (s *Storage) Init() error {
 
 // Start ...
 func (s *Storage) Start() error {
-
 	go s.spanStore()
 	go s.spanChunkStore()
-
+	go s.systemStore()
 	return nil
 }
 
@@ -97,7 +92,6 @@ func (s *Storage) AgentStore(agentInfo *util.AgentInfo) error {
 
 // AgentInfoStore ...
 func (s *Storage) AgentInfoStore(appName, agentID string, startTime int64, agentInfo []byte) error {
-
 	query := s.cql.Query(
 		misc.AgentInofInsert,
 		appName,
@@ -175,7 +169,6 @@ func (s *Storage) AppStringStore(appName string, strInfo *trace.TStringMetaData)
 		g.L.Warn("AgentStringStore error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
-
 	return nil
 }
 
@@ -461,6 +454,63 @@ func (s *Storage) storeServiceType() error {
 
 	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
 		g.L.Warn("storeServiceType", zap.String("error", err.Error()), zap.String("SQL", inputServiceType))
+		return err
+	}
+	return nil
+}
+
+// systemStore ...
+func (s *Storage) systemStore() {
+	ticker := time.NewTicker(time.Duration(misc.Conf.Storage.SystemStoreInterval) * time.Millisecond)
+	var metricQueue []*util.MetricData
+	for {
+		select {
+		case metric, ok := <-s.metricsChan:
+			if ok {
+				metricQueue = append(metricQueue, metric)
+				if len(metricQueue) >= misc.Conf.Storage.MetricCacheLen {
+					// 插入
+					if err := s.WriteMetric(metricQueue); err != nil {
+						g.L.Warn("writeMetric error", zap.String("error", err.Error()))
+					}
+					// 清空缓存
+					metricQueue = metricQueue[:0]
+				}
+			}
+			break
+		case <-ticker.C:
+			if len(metricQueue) > 0 {
+				// 插入
+				if err := s.WriteMetric(metricQueue); err != nil {
+					g.L.Warn("writeMetric error", zap.String("error", err.Error()))
+				}
+				// 清空缓存
+				metricQueue = metricQueue[:0]
+			}
+			break
+		}
+	}
+}
+
+// WriteMetric ...
+func (s *Storage) WriteMetric(metrics []*util.MetricData) error {
+	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+
+	for _, metric := range metrics {
+		b, err := json.Marshal(&metric.Payload)
+		if err != nil {
+			g.L.Warn("json", zap.String("error", err.Error()))
+			continue
+		}
+		batchInsert.Query(misc.InsertSystems,
+			metric.AppName,
+			metric.AgentID,
+			metric.Time,
+			b)
+	}
+
+	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
+		g.L.Warn("insert metric", zap.String("error", err.Error()), zap.String("SQL", misc.InsertSystems))
 		return err
 	}
 	return nil

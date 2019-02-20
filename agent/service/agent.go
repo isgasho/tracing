@@ -27,6 +27,7 @@ type Agent struct {
 	uploadC                  chan *util.VgoPacket
 	downloadC                chan *util.VgoPacket
 	pinpoint                 *Pinpoint
+	systemCollector          *SystemCollector
 	isReportAgentInfo        bool
 	isReportAgentInfoSuccess bool
 }
@@ -36,13 +37,14 @@ var gAgent *Agent
 // New ...
 func New() *Agent {
 	gAgent = &Agent{
-		syncCall:  NewSyncCall(),
-		client:    NewTCPClient(),
-		agentInfo: util.NewAgentInfo(),
-		quitC:     make(chan bool, 1),
-		uploadC:   make(chan *util.VgoPacket, 100),
-		downloadC: make(chan *util.VgoPacket, 100),
-		pinpoint:  NewPinpoint(),
+		syncCall:        NewSyncCall(),
+		client:          NewTCPClient(),
+		agentInfo:       util.NewAgentInfo(),
+		quitC:           make(chan bool, 1),
+		uploadC:         make(chan *util.VgoPacket, 100),
+		downloadC:       make(chan *util.VgoPacket, 100),
+		pinpoint:        NewPinpoint(),
+		systemCollector: NewSystemCollector(),
 	}
 	return gAgent
 }
@@ -79,7 +81,7 @@ func (a *Agent) initAppName() error {
 
 	// g.L.Info("initAppName", zap.String("AppName", a.appName))
 
-	return nil
+	// return nil
 }
 
 // setAgentInfo ...
@@ -111,6 +113,9 @@ func (a *Agent) Start() error {
 	if err := a.pinpoint.Start(); err != nil {
 		g.L.Fatal("Start:a.pinpoint.Start", zap.Error(err))
 	}
+
+	// 启动系统信息采集
+	go a.systemCollector.Start()
 
 	return nil
 }
@@ -187,6 +192,12 @@ func (a *Agent) write(data *util.VgoPacket) {
 
 // Close ...
 func (a *Agent) Close() error {
+
+	// 是否启用系统信息采集
+	if misc.Conf.System.OnOff {
+		a.systemCollector.Close()
+	}
+
 	return nil
 }
 
