@@ -2,10 +2,11 @@ package system
 
 import (
 	"fmt"
-	"log"
 	"time"
 
+	"github.com/mafanr/vgo/agent/misc"
 	"github.com/mafanr/vgo/agent/service"
+
 	"github.com/mafanr/vgo/util"
 
 	"github.com/shirou/gopsutil/cpu"
@@ -31,37 +32,37 @@ func NewCPUStats(ps PS) *CPUStats {
 }
 
 // Gather ....
-func (cpu *CPUStats) Gather() (*util.Metric, error) {
+func (cpu *CPUStats) Gather() ([]*util.Metric, error) {
 	times, err := cpu.ps.CPUTimes(cpu.PerCPU, cpu.TotalCPU)
 	if err != nil {
 		return nil, fmt.Errorf("error getting CPU info: %s", err)
 	}
 	now := time.Now()
 
+	metrics := make([]*util.Metric, 0)
+
 	for i, cts := range times {
 		tags := map[string]string{
 			"cpu": cts.CPU,
 		}
 
-		total := totalCpuTime(cts)
+		total := totalCPUTime(cts)
 		fields := map[string]interface{}{}
 		// Add in percentage
 		if len(cpu.lastStats) == 0 {
-			// metric := &util.Metric{
-			// 	Name:     "cpu",
-			// 	Tags:     tags,
-			// 	Fields:   fields,
-			// 	Time:     now.Unix(),
-			// 	Interval: cpu.Interval,
-			// }
+			metric := &util.Metric{
+				Name:     "cpu",
+				Tags:     tags,
+				Fields:   fields,
+				Time:     now.Unix(),
+				Interval: misc.Conf.System.Interval,
+			}
 
-			// log.Println(metric)
-			// agent.Writer(cpu.TransName, []*system.Metric{metric})
-			// cpu.data.Writer([]*system.Metric{metric})
+			metrics = append(metrics, metric)
 			continue
 		}
 		lastCts := cpu.lastStats[i]
-		lastTotal := totalCpuTime(lastCts)
+		lastTotal := totalCPUTime(lastCts)
 		totalDelta := total - lastTotal
 
 		if totalDelta < 0 {
@@ -81,17 +82,13 @@ func (cpu *CPUStats) Gather() (*util.Metric, error) {
 			Tags:     tags,
 			Fields:   fields,
 			Time:     now.Unix(),
-			Interval: cpu.Interval,
+			Interval: misc.Conf.System.Interval,
 		}
-
-		metric.Tags["app"] = cpu.appname
-		log.Println(metric)
-		// agent.Writer(cpu.TransName, []*system.Metric{metric})
+		metrics = append(metrics, metric)
 	}
-
 	cpu.lastStats = times
 
-	return nil, nil
+	return metrics, nil
 }
 
 // Init ...
@@ -100,7 +97,7 @@ func (cpu *CPUStats) Init() error {
 	return nil
 }
 
-func totalCpuTime(t cpu.TimesStat) float64 {
+func totalCPUTime(t cpu.TimesStat) float64 {
 	total := t.User + t.System + t.Nice + t.Iowait + t.Irq + t.Softirq + t.Steal +
 		t.Guest + t.GuestNice + t.Idle
 	return total

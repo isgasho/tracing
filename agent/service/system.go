@@ -85,7 +85,7 @@ func (s *SystemCollector) Start() {
 					continue
 				}
 				// 存放
-				metrics.Payload = append(metrics.Payload, metric)
+				metrics.Payload = append(metrics.Payload, metric...)
 			}
 			metrics.Time = time.Now().Unix()
 			// 编码
@@ -97,6 +97,10 @@ func (s *SystemCollector) Start() {
 				continue
 			}
 			packet.Payload = payload
+
+			if len(metrics.Payload) == 0 {
+				continue
+			}
 
 			// 发送
 			if err := gAgent.client.WritePacket(packet); err != nil {

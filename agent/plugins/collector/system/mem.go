@@ -1,19 +1,17 @@
 package system
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/mafanr/vgo/agent/misc"
 	"github.com/mafanr/vgo/agent/service"
-
 	"github.com/mafanr/vgo/util"
-
-	"github.com/shirou/gopsutil/host"
-	"github.com/shirou/gopsutil/load"
 )
 
-// SystemStats ...
-type SystemStats struct {
+// MemStats  ...
+type MemStats struct {
+	ps        PS
 	stop      chan bool
 	appname   string
 	Interval  int    `toml:"interval"`
@@ -21,28 +19,23 @@ type SystemStats struct {
 }
 
 // Gather ...
-func (sys *SystemStats) Gather() ([]*util.Metric, error) {
-	loadavg, err := load.Avg()
+func (mem *MemStats) Gather() ([]*util.Metric, error) {
+	vm, err := mem.ps.VMStat()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting virtual memory info: %s", err)
 	}
 
-	hostinfo, err := host.Info()
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
+	if vm.Total == 0 {
+		return nil, fmt.Errorf("mem total is zeor")
 	}
 
 	fields := map[string]interface{}{
-		"load1":  loadavg.Load1,
-		"uptime": int64(hostinfo.Uptime),
+		"available":         int64(vm.Available),
+		"available_percent": int64(100 * float64(vm.Available) / float64(vm.Total)),
 	}
 
 	metric := &util.Metric{
-		Name:     "system",
+		Name:     "mem",
 		Fields:   fields,
 		Time:     time.Now().Unix(),
 		Interval: misc.Conf.System.Interval,
@@ -53,12 +46,14 @@ func (sys *SystemStats) Gather() ([]*util.Metric, error) {
 }
 
 // Init ...
-func (sys *SystemStats) Init() error {
+func (mem *MemStats) Init() error {
+
 	return nil
 }
 
 func init() {
-	service.AddCollector("system", &SystemStats{
+	service.AddCollector("mem", &MemStats{
 		stop: make(chan bool, 1),
+		ps:   &systemPS{},
 	})
 }

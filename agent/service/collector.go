@@ -13,7 +13,7 @@ var clock sync.RWMutex
 // Collector ...
 type Collector interface {
 	Init() error
-	Gather() (*util.Metric, error)
+	Gather() ([]*util.Metric, error)
 }
 
 // AddCollector ....

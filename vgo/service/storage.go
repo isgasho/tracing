@@ -499,7 +499,7 @@ func (s *Storage) WriteMetric(metrics []*util.MetricData) error {
 	for _, metric := range metrics {
 		b, err := json.Marshal(&metric.Payload)
 		if err != nil {
-			g.L.Warn("json", zap.String("error", err.Error()))
+			g.L.Warn("json", zap.String("error", err.Error()), zap.Any("data", metric.Payload))
 			continue
 		}
 		batchInsert.Query(misc.InsertSystems,
@@ -507,6 +507,7 @@ func (s *Storage) WriteMetric(metrics []*util.MetricData) error {
 			metric.AgentID,
 			metric.Time,
 			b)
+
 	}
 
 	if err := s.cql.ExecuteBatch(batchInsert); err != nil {

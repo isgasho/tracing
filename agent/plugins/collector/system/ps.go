@@ -7,6 +7,7 @@ import (
 	"github.com/shirou/gopsutil/net"
 )
 
+// PS ...
 type PS interface {
 	CPUTimes(perCPU, totalCPU bool) ([]cpu.TimesStat, error)
 	// DiskUsage(mountPointFilter []string, fstypeExclude []string) ([]*disk.UsageStat, error)
@@ -20,6 +21,7 @@ type PS interface {
 
 type systemPS struct{}
 
+// CPUTimes ...
 func (s *systemPS) CPUTimes(perCPU, totalCPU bool) ([]cpu.TimesStat, error) {
 	var cpuTimes []cpu.TimesStat
 	if perCPU {
@@ -94,14 +96,17 @@ func (s *systemPS) CPUTimes(perCPU, totalCPU bool) ([]cpu.TimesStat, error) {
 // 	return net.ProtoCounters(nil)
 // }
 
+// NetIO ...
 func (s *systemPS) NetIO() ([]net.IOCountersStat, error) {
 	return net.IOCounters(true)
 }
 
+// NetConnections ...
 func (s *systemPS) NetConnections() ([]net.ConnectionStat, error) {
 	return net.Connections("all")
 }
 
+// DiskIO ...
 func (s *systemPS) DiskIO() (map[string]disk.IOCountersStat, error) {
 	// m, err := disk.IOCounters()
 	// if err == misc.NotImplementedError {
@@ -112,6 +117,7 @@ func (s *systemPS) DiskIO() (map[string]disk.IOCountersStat, error) {
 	return nil, nil
 }
 
+// VMStat ...
 func (s *systemPS) VMStat() (*mem.VirtualMemoryStat, error) {
 	return mem.VirtualMemory()
 }

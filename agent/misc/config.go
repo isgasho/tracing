@@ -38,11 +38,13 @@ type Config struct {
 	}
 
 	CPU struct {
-		Interval int
 	}
 
 	Systemload struct {
-		Interval int
+	}
+
+	Ifstat struct {
+		Interfaces []string
 	}
 }
 
