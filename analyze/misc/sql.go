@@ -24,3 +24,10 @@ var UpdateLastCounterTime string = `UPDATE apps SET last_count_time=? WHERE app_
 var InsertAPIs string = `INSERT INTO app_apis (app_name, api) VALUES (?, ?) ;`
 
 var QueryTraceID string = `SELECT trace_id, span_id FROM app_operation_index WHERE app_name=? and input_date>? and input_date<=?;`
+
+var InserRPCDetailsRecord string = ` INSERT INTO api_details_stats (app_name, api, input_date, method_id, service_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
+
+var InserExceptionRecord string = `INSERT INTO exception_stats (app_name, method_id, exception_info, input_date, total_elapsed, max_elapsed, 
+	min_elapsed, count) VALUES (?,?,?,?,?,?,?,?);`
+
+var InserSQLRecord string = `INSERT INTO sql_stats (app_name, sql, input_date, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?);`

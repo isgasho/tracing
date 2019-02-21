@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/analyze/misc"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"go.uber.org/zap"
 )
@@ -12,8 +13,8 @@ type SpanEvents struct {
 	spanEvents map[int32]*SpanEvent
 }
 
-var gCounterQueryAPI string = `SELECT api_info FROM agent_apis WHERE api_id=? 
-		and agent_id=? and app_name=? and input_date=?;`
+// var gCounterQueryAPI string = `SELECT api_info FROM agent_apis WHERE api_id=?
+// 		and agent_id=? and app_name=? and input_date=?;`
 
 func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEvent, chunkEvents []*trace.TSpanEvent) error {
 	if len(spanEvents.rpc) == 0 {
@@ -74,12 +75,10 @@ func (spanEvents *SpanEvents) eventsCounter(rpc string, events []*trace.TSpanEve
 	return nil
 }
 
-var gInserRPCDetailsRecord string = ` INSERT INTO api_details_stats (app_name, api, input_date, method_id, service_type, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?,?);`
-
 // eventRecord ...
 func (spanEvents *SpanEvents) eventRecord(app *App, recordTime int64) error {
 	for apiID, spanEvent := range spanEvents.spanEvents {
-		if err := gAnalyze.cql.Session.Query(gInserRPCDetailsRecord,
+		query := gAnalyze.cql.Session.Query(misc.InserRPCDetailsRecord,
 			app.AppName,
 			spanEvents.rpc,
 			recordTime,
@@ -91,8 +90,9 @@ func (spanEvents *SpanEvents) eventRecord(app *App, recordTime int64) error {
 			spanEvent.averageElapsed,
 			spanEvent.count,
 			spanEvent.errCount,
-		).Exec(); err != nil {
-			g.L.Warn("eventRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserRPCDetailsRecord))
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("eventRecord error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		}
 	}
 	return nil

@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/analyze/misc"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"go.uber.org/zap"
 )
@@ -86,12 +87,10 @@ func (spanSQLs *SpanSQLs) sqlCounter(events []*trace.TSpanEvent, chunkEvents []*
 	return nil
 }
 
-var gInserSQLRecord string = `INSERT INTO sql_stats (app_name, sql, input_date, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?);`
-
 // sqlRecord ...
 func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {
 	for sqlID, sql := range spanSQLs.sqls {
-		if err := gAnalyze.cql.Session.Query(gInserSQLRecord,
+		query := gAnalyze.cql.Session.Query(misc.InserSQLRecord,
 			app.AppName,
 			sqlID,
 			recordTime,
@@ -100,8 +99,10 @@ func (spanSQLs *SpanSQLs) sqlRecord(app *App, recordTime int64) error {
 			sql.minElapsed,
 			sql.averageElapsed, sql.count,
 			sql.errCount,
-		).Exec(); err != nil {
-			g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", gInserSQLRecord))
+		)
+
+		if err := query.Exec(); err != nil {
+			g.L.Warn("sqlRecord error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		}
 	}
 	return nil

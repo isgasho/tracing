@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/mafanr/g"
+	"github.com/mafanr/vgo/analyze/misc"
 	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
 	"go.uber.org/zap"
 )
@@ -18,15 +19,12 @@ func NewSpanExceptions() *SpanExceptions {
 	}
 }
 
-var gInserExceptionRecord string = `INSERT INTO exception_stats (app_name, method_id, exception_info, input_date, total_elapsed, max_elapsed, 
-	min_elapsed, count) VALUES (?,?,?,?,?,?,?,?);`
-
 // ExceptionRecord ...
 func (spanExceptions *SpanExceptions) exceptionRecord(app *App, inputDate int64) error {
 
 	for apiID, apiEx := range spanExceptions.apiExceptions {
 		for exStr, exinfo := range apiEx.exceptions {
-			query := gAnalyze.cql.Session.Query(gInserExceptionRecord,
+			query := gAnalyze.cql.Session.Query(misc.InserExceptionRecord,
 				app.AppName,
 				apiID,
 				exStr,
