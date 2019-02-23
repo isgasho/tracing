@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Row class="subnav" style="background-color:#595959;border-bottom: 1px solid #474747;color:#eaeaea;padding: 8px 10px;padding-bottom:6px;vertical-align:middle;font-size:13px;margin-top:6px">
+    <Row class="subnav" style="background-color:#595959;border-bottom: 1px solid #474747;color:#eaeaea;padding: 8px 10px;padding-bottom:6px;vertical-align:middle;font-size:13px;margin-top:0px">
           <span class="item">总应用数：<span class="count bg-second">300</span></span>
           <span class="item">不健康应用数： <span class="count bg-second">0</span></span>
           <span class="item">最近3小时告警数： <span class="count bg-second">0</span></span>

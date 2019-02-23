@@ -13,12 +13,12 @@ func StartEndDate(c echo.Context) (start time.Time, end time.Time, err error) {
 	endRaw := c.FormValue("end")
 
 	// start和end的时间字符串转成秒级时间戳:2019-01-10 00:00:00
-	start, err = utils.StringToTime2(startRaw)
+	start, err = utils.StringToTime(startRaw)
 	if err != nil {
 		return
 	}
 
-	end, err = utils.StringToTime2(endRaw)
+	end, err = utils.StringToTime(endRaw)
 	if err != nil {
 		return
 	}

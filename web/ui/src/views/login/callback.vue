@@ -31,7 +31,7 @@ export default {
               Cookies.remove('lastPath')
                this.$router.push({ path: opath })
             } else {
-              this.$router.push('/')
+              this.$router.push('/apm/ui/list')
             }
            
         })

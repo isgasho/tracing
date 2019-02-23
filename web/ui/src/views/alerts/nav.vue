@@ -56,11 +56,11 @@ export default {
 
 <style lang="less" scoped> 
 .nav {
-    border-bottom: 1px solid black;
+    // border-bottom: 1px solid black;
     background-color: #595959;
     color:white;
-    padding-top:11px;
-    padding-bottom:5px;
+    padding-top:8px;
+    padding-bottom:6px;
     font-size:13px;
     .item {
         margin-left: 15px;
@@ -72,7 +72,7 @@ export default {
 .item.selected {
     font-weight: 700;
     background-color: #6b6b6b;
-    padding-top:7px;
+    padding-top:11px;
     padding-bottom:10px
 }
 

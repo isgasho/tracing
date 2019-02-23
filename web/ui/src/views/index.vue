@@ -95,7 +95,7 @@ export default {
 .nav {
     border-bottom: 1px solid transparent;
     box-shadow: 0 0 6px 6px rgba(0,0,0,.07);
-    height:76px;
+    height:65px;
     display: flex;
     align-items: center;
     align-content: center;
