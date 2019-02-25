@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mafanr/g"
+	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/vgo/util"

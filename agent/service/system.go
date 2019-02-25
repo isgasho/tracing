@@ -3,9 +3,9 @@ package service
 import (
 	"time"
 
+	"github.com/imdevlab/g"
 	"github.com/imdevlab/vgo/agent/misc"
 	"github.com/imdevlab/vgo/util"
-	"github.com/mafanr/g"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
