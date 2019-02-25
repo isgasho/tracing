@@ -3,7 +3,7 @@ package service
 import (
 	"sync"
 
-	"github.com/mafanr/vgo/util"
+	"github.com/imdevlab/vgo/util"
 )
 
 // Collectors ...

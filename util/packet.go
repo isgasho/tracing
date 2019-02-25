@@ -5,7 +5,7 @@ import (
 	"io"
 
 	"github.com/golang/snappy"
-	"github.com/mafanr/g"
+	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 )
 

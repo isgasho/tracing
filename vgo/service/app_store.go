@@ -4,8 +4,8 @@ import (
 	"net"
 	"sync"
 
-	"github.com/mafanr/vgo/util"
-	"github.com/mafanr/vgo/vgo/misc"
+	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/vgo/vgo/misc"
 )
 
 // AppStore ...

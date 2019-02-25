@@ -3,8 +3,8 @@ package service
 import (
 	"net/http"
 
+	"github.com/imdevlab/g"
 	"github.com/labstack/echo"
-	"github.com/mafanr/g"
 )
 
 func queryServiceMap(c echo.Context) error {

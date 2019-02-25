@@ -7,9 +7,9 @@ import (
 	"strconv"
 
 	"github.com/gocql/gocql"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/web/misc"
 	"github.com/labstack/echo"
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/web/misc"
 	"go.uber.org/zap"
 )
 

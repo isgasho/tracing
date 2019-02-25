@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/mafanr/vgo/vgo/cmd"
+import "github.com/imdevlab/vgo/vgo/cmd"
 
 func main() {
 	cmd.Execute()

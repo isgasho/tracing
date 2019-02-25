@@ -3,8 +3,8 @@ package service
 import (
 	"encoding/json"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/proto/pinpoint/proto"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/proto/pinpoint/proto"
 	"go.uber.org/zap"
 )
 

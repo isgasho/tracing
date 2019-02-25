@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/mafanr/g/utils"
+	"github.com/imdevlab/g/utils"
 )
 
 // Element ...

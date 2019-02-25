@@ -3,11 +3,11 @@ package service
 import (
 	"fmt"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
-	"github.com/mafanr/vgo/util"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/vgo/util"
 	"go.uber.org/zap"
 )
 

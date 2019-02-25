@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/imdevlab/g"
 	"github.com/labstack/echo"
-	"github.com/mafanr/g"
 	"go.uber.org/zap"
 )
 

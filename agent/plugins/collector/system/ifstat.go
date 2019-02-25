@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mafanr/vgo/agent/misc"
-	"github.com/mafanr/vgo/agent/service"
-	"github.com/mafanr/vgo/util"
+	"github.com/imdevlab/vgo/agent/misc"
+	"github.com/imdevlab/vgo/agent/service"
+	"github.com/imdevlab/vgo/util"
 	"github.com/shirou/gopsutil/net"
 )
 

@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/mafanr/g"
+	"github.com/imdevlab/g"
 )
 
 // Blink ...

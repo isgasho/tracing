@@ -8,7 +8,7 @@ import (
 	"github.com/mafanr/g"
 	"go.uber.org/zap"
 
-	"github.com/mafanr/vgo/util"
+	"github.com/imdevlab/vgo/util"
 )
 
 // SyncCall ...

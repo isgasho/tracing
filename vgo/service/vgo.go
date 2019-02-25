@@ -8,9 +8,9 @@ import (
 	"github.com/vmihailenco/msgpack"
 
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/util"
-	"github.com/mafanr/vgo/vgo/misc"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/vgo/vgo/misc"
 	"go.uber.org/zap"
 )
 

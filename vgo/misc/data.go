@@ -3,8 +3,8 @@ package misc
 import (
 	"fmt"
 
+	"github.com/imdevlab/g"
 	"github.com/jmoiron/sqlx"
-	"github.com/mafanr/g"
 	"go.uber.org/zap"
 )
 

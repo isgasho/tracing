@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mafanr/g"
+	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
-	"github.com/mafanr/vgo/analyze/misc"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/vgo/analyze/misc"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
 )
 
 // spanCounter ...

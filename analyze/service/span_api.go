@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/analyze/misc"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/analyze/misc"
 	"go.uber.org/zap"
 )
 

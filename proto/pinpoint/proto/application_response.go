@@ -6,7 +6,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/mafanr/g"
+	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 )
 

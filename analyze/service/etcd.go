@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/mafanr/vgo/analyze/misc"
+	"github.com/imdevlab/vgo/analyze/misc"
 
-	"github.com/mafanr/g"
+	"github.com/imdevlab/g"
 	"go.etcd.io/etcd/clientv3"
 	"go.uber.org/zap"
 )

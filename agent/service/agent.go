@@ -7,12 +7,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/mafanr/vgo/agent/misc"
+	"github.com/imdevlab/vgo/agent/misc"
 
 	"github.com/vmihailenco/msgpack"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/util"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/util"
 
 	"go.uber.org/zap"
 )

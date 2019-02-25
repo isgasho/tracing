@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/pinpoint"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
-	"github.com/mafanr/vgo/util"
-	"github.com/mafanr/vgo/vgo/misc"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/vgo/vgo/misc"
 	"github.com/sunface/talent"
 	"go.uber.org/zap"
 )

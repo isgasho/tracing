@@ -20,9 +20,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/analyze/misc"
-	"github.com/mafanr/vgo/analyze/service"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/analyze/misc"
+	"github.com/imdevlab/vgo/analyze/service"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"

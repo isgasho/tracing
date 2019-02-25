@@ -1,9 +1,9 @@
 package service
 
 import (
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/analyze/misc"
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/analyze/misc"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
 	"go.uber.org/zap"
 )
 

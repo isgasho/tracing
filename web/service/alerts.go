@@ -6,9 +6,9 @@ import (
 	"time"
 
 	"github.com/gocql/gocql"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/util"
 	"github.com/labstack/echo"
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/util"
 	"go.uber.org/zap"
 )
 

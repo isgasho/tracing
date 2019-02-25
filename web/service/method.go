@@ -3,10 +3,10 @@ package service
 import (
 	"net/http"
 
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/g/utils"
+	"github.com/imdevlab/vgo/web/misc"
 	"github.com/labstack/echo"
-	"github.com/mafanr/g"
-	"github.com/mafanr/g/utils"
-	"github.com/mafanr/vgo/web/misc"
 	"go.uber.org/zap"
 )
 

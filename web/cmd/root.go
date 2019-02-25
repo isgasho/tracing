@@ -20,9 +20,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/web/misc"
-	"github.com/mafanr/vgo/web/service"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/web/misc"
+	"github.com/imdevlab/vgo/web/service"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

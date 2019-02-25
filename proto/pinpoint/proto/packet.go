@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/mafanr/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
 )
 
 const TCP_MAX_PACKET_SIZE int = 16 * 1024

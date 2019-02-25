@@ -20,10 +20,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/mafanr/g"
-	"github.com/mafanr/vgo/agent/misc"
-	_ "github.com/mafanr/vgo/agent/plugins/collector/all"
-	"github.com/mafanr/vgo/agent/service"
+	"github.com/imdevlab/g"
+	"github.com/imdevlab/vgo/agent/misc"
+	_ "github.com/imdevlab/vgo/agent/plugins/collector/all"
+	"github.com/imdevlab/vgo/agent/service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )
