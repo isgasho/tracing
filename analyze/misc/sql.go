@@ -31,3 +31,9 @@ var InserExceptionRecord string = `INSERT INTO exception_stats (app_name, method
 	min_elapsed, count) VALUES (?,?,?,?,?,?,?,?);`
 
 var InserSQLRecord string = `INSERT INTO sql_stats (app_name, sql, input_date, elapsed, max_elapsed, min_elapsed, average_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?);`
+
+var InserServiceMapRecord string = `INSERT INTO service_map (app_name, input_date, service_type, parent_service_name, parent_service_type, req_recv_count, err_count, total_elapsed)
+ VALUES (?,?,?,?,?,?,?,?);`
+
+var InserDBMapRecord string = `INSERT INTO service_db_map (app_name, input_date, service_type, db_type, req_send_count, err_count, total_elapsed)
+ VALUES (?,?,?,?,?,?,?);`

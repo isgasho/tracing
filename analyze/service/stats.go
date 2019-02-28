@@ -55,7 +55,7 @@ func (s *stats) counter(app *App, wg *sync.WaitGroup) {
 	queryEndTime = app.lastCountTime + misc.Conf.Stats.Range*1000
 
 	// 结束时间要比当前时间少三分钟，这样可以确保数据准确性
-	if (queryEndTime + 3*60*1000) >= time.Now().UnixNano()/1e6 {
+	if (queryEndTime + 1*60*1000) >= time.Now().UnixNano()/1e6 {
 		// log.Println("上次计算时间间隔太短,等待")
 		return
 	}

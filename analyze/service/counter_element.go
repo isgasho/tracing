@@ -11,6 +11,7 @@ type Element struct {
 	exceptions *SpanExceptions
 	stats      *AgentStats
 	sqls       *SpanSQLs
+	srvMaps    *SrvMaps
 }
 
 // NewElement ...
@@ -21,6 +22,7 @@ func NewElement() *Element {
 		exceptions: NewSpanExceptions(),
 		stats:      NewAgentStats(),
 		sqls:       NewSpanSQLs(),
+		srvMaps:    NewServiceMapsCounter(),
 	}
 }
 

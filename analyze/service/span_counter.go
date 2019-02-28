@@ -81,6 +81,8 @@ DoSpan:
 			e.sqls.sqlCounter(spanEvents, chunkEvents)
 			// 异常统计
 			e.exceptions.exceptionCounter(spanEvents, chunkEvents)
+			// 应用拓扑图
+			e.srvMaps.srvMapsCounter(appName, serviceType, parentAppName, parentAppType, elapsed, isErr, spanEvents, chunkEvents)
 		}
 	}
 
@@ -108,5 +110,6 @@ func spanCounterRecord(app *App, inputDate int64, e *Element) error {
 	e.sqls.sqlRecord(app, inputDate)
 	e.stats.statRecord(app, inputDate)
 	e.exceptions.exceptionRecord(app, inputDate)
+	e.srvMaps.srvMapsRecord(app, inputDate)
 	return nil
 }

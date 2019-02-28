@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"log"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -197,11 +198,14 @@ func (s *Storage) spanStore() {
 		case <-ticker.C:
 			if len(spansQueue) > 0 {
 				// 插入
-				for _, sapn := range spansQueue {
-					if err := s.WriteSpan(sapn); err != nil {
+				for _, span := range spansQueue {
+					if err := s.WriteSpan(span); err != nil {
 						g.L.Warn("writeSpan error", zap.String("error", err.Error()))
 						continue
 					}
+
+					log.Println(span)
+
 				}
 				// 清空缓存
 				spansQueue = spansQueue[:0]

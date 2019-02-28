@@ -363,3 +363,35 @@ CREATE TABLE IF NOT EXISTS system (
     PRIMARY KEY (app_name, agent_id, input_date)
 ) WITH gc_grace_seconds = 10800;
  
+
+CREATE TABLE IF NOT EXISTS service_map (
+    app_name            text,               -- 应用名
+    input_date          bigint,             -- 插入时间
+    service_type        int,                -- 应用类型
+    parent_service_name text,               -- 父应用名
+    parent_service_type int,                -- 父应用类型
+    req_recv_count      int,                -- 被请求次数
+    err_count           int,                -- 错误次数
+    total_elapsed       int,                -- 总耗时
+    PRIMARY KEY (app_name, input_date, parent_service_name)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+CREATE TABLE IF NOT EXISTS service_db_map (
+    app_name            text,               -- 应用名
+    input_date          bigint,             -- 插入时间
+    service_type        int,                -- 应用类型
+    db_type             int,                -- 数据库类型
+    req_send_count      int,                -- 请求次数
+    err_count           int,                -- 错误次数
+    total_elapsed       int,                -- 总耗时
+    PRIMARY KEY (app_name, input_date, db_type)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON service_db_map (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
