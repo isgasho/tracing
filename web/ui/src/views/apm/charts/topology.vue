@@ -35,7 +35,7 @@ export default {
         var self = this
         setTimeout(function () {
             console.log(self.graphData)
-                 self.myDiagram.model = new go.GraphLinksModel(self.graphData.value.agentNodeModels, self.graphData.value.agentLinkModels);
+            self.myDiagram.model = new go.GraphLinksModel(self.graphData.value.agentNodeModels, self.graphData.value.agentLinkModels);
         }, 100);
     },
     watch: {
