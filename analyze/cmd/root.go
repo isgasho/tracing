@@ -21,8 +21,8 @@ import (
 	"syscall"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/analyze/misc"
-	"github.com/imdevlab/vgo/analyze/service"
+	"github.com/imdevlab/tracing/analyze/misc"
+	"github.com/imdevlab/tracing/analyze/service"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"

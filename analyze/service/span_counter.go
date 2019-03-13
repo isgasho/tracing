@@ -8,8 +8,8 @@ import (
 	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
-	"github.com/imdevlab/vgo/analyze/misc"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/analyze/misc"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
 )
 
 // spanCounter ...

@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/imdevlab/vgo/analyze/cmd"
+import "github.com/imdevlab/tracing/analyze/cmd"
 
 func main() {
 	cmd.Execute()

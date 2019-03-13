@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/analyze/misc"
+	"github.com/imdevlab/tracing/analyze/misc"
 	"go.uber.org/zap"
 )
 

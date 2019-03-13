@@ -9,15 +9,15 @@ import (
 	"net"
 	"time"
 
-	"github.com/imdevlab/vgo/agent/misc"
+	"github.com/imdevlab/tracing/agent/misc"
 
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/util"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/proto/pinpoint/proto"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/pinpoint"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/proto/pinpoint/proto"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
 	"go.uber.org/zap"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/g/utils"
-	"github.com/imdevlab/vgo/web/misc"
+	"github.com/imdevlab/tracing/web/misc"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
 )

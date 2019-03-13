@@ -7,12 +7,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/imdevlab/vgo/agent/misc"
+	"github.com/imdevlab/tracing/agent/misc"
 
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/util"
 
 	"go.uber.org/zap"
 )
@@ -24,8 +24,8 @@ type Agent struct {
 	syncID                   uint32
 	agentInfo                *util.AgentInfo
 	quitC                    chan bool
-	uploadC                  chan *util.VgoPacket
-	downloadC                chan *util.VgoPacket
+	uploadC                  chan *util.TracingPacket
+	downloadC                chan *util.TracingPacket
 	pinpoint                 *Pinpoint
 	systemCollector          *SystemCollector
 	isReportAgentInfo        bool
@@ -41,8 +41,8 @@ func New() *Agent {
 		client:          NewTCPClient(),
 		agentInfo:       util.NewAgentInfo(),
 		quitC:           make(chan bool, 1),
-		uploadC:         make(chan *util.VgoPacket, 100),
-		downloadC:       make(chan *util.VgoPacket, 100),
+		uploadC:         make(chan *util.TracingPacket, 100),
+		downloadC:       make(chan *util.TracingPacket, 100),
 		pinpoint:        NewPinpoint(),
 		systemCollector: NewSystemCollector(),
 	}
@@ -153,7 +153,7 @@ func (a *Agent) reportAgentInfo() {
 
 			// 获取ID
 			id := gAgent.getSyncID()
-			packet := &util.VgoPacket{
+			packet := &util.TracingPacket{
 				Type:       util.TypeOfPinpoint,
 				Version:    util.VersionOf01,
 				IsSync:     util.TypeOfSyncYes,
@@ -186,7 +186,7 @@ func (a *Agent) reportAgentInfo() {
 	}
 }
 
-func (a *Agent) write(data *util.VgoPacket) {
+func (a *Agent) write(data *util.TracingPacket) {
 
 }
 

@@ -3,10 +3,10 @@ package system
 import (
 	"time"
 
-	"github.com/imdevlab/vgo/agent/misc"
-	"github.com/imdevlab/vgo/agent/service"
+	"github.com/imdevlab/tracing/agent/misc"
+	"github.com/imdevlab/tracing/agent/service"
 
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/util"
 
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/load"

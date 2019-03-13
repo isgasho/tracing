@@ -1,5 +1,5 @@
 package all
 
 import (
-	_ "github.com/imdevlab/vgo/agent/plugins/collector/system"
+	_ "github.com/imdevlab/tracing/agent/plugins/collector/system"
 )

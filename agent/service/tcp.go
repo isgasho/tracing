@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/agent/misc"
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/agent/misc"
+	"github.com/imdevlab/tracing/util"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -48,11 +48,11 @@ func (t *TCPClient) Init() error {
 		keepLiveTc.Stop()
 	}()
 
-	// connect vgo
+	// connect tracing
 	for {
-		t.conn, err = net.Dial("tcp", misc.Conf.Agent.VgoAddr)
+		t.conn, err = net.Dial("tcp", misc.Conf.Agent.TracingAddr)
 		if err != nil {
-			g.L.Warn("Init:net.Dial", zap.String("err", err.Error()), zap.String("addr", misc.Conf.Agent.VgoAddr))
+			g.L.Warn("Init:net.Dial", zap.String("err", err.Error()), zap.String("addr", misc.Conf.Agent.TracingAddr))
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -118,8 +118,8 @@ func (t *TCPClient) KeepLive() error {
 		return err
 	}
 
-	// packet := util.NewVgoPacket(util.TypeOfCmd, util.VersionOf01, util.TypeOfSyncNo, util.TypeOfCompressNo, 0, buf)
-	packet := &util.VgoPacket{
+	// packet := util.NewTracingPacket(util.TypeOfCmd, util.VersionOf01, util.TypeOfSyncNo, util.TypeOfCompressNo, 0, buf)
+	packet := &util.TracingPacket{
 		Type:       util.TypeOfCmd,
 		Version:    util.VersionOf01,
 		IsSync:     util.TypeOfSyncNo,
@@ -137,8 +137,8 @@ func (t *TCPClient) KeepLive() error {
 }
 
 // ReadPacket ...
-func (t *TCPClient) ReadPacket(rdr io.Reader) (*util.VgoPacket, error) {
-	packet := &util.VgoPacket{}
+func (t *TCPClient) ReadPacket(rdr io.Reader) (*util.TracingPacket, error) {
+	packet := &util.TracingPacket{}
 	if err := packet.Decode(rdr); err != nil {
 		g.L.Warn("ReadPacket:packet.Decode", zap.String("error", err.Error()))
 		return nil, err
@@ -147,7 +147,7 @@ func (t *TCPClient) ReadPacket(rdr io.Reader) (*util.VgoPacket, error) {
 }
 
 // WritePacket ...
-func (t *TCPClient) WritePacket(packet *util.VgoPacket) error {
+func (t *TCPClient) WritePacket(packet *util.TracingPacket) error {
 	body := packet.Encode()
 	if t.conn != nil {
 		_, err := t.conn.Write(body)

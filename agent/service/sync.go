@@ -8,39 +8,39 @@ import (
 	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/util"
 )
 
 // SyncCall ...
 type SyncCall struct {
 	sync.RWMutex
-	Chans map[uint32]chan *util.VgoPacket
+	Chans map[uint32]chan *util.TracingPacket
 }
 
 // NewSyncCall ...
 func NewSyncCall() *SyncCall {
 	return &SyncCall{
-		Chans: make(map[uint32]chan *util.VgoPacket),
+		Chans: make(map[uint32]chan *util.TracingPacket),
 	}
 }
 
 // newChan 创建新的chan
-func (sc *SyncCall) newChan(id uint32, length int) (chan *util.VgoPacket, bool) {
-	packC := make(chan *util.VgoPacket, length)
+func (sc *SyncCall) newChan(id uint32, length int) (chan *util.TracingPacket, bool) {
+	packC := make(chan *util.TracingPacket, length)
 	sc.Lock()
 	defer sc.Unlock()
 	sc.Chans[id] = packC
 	return packC, true
 }
 
-func (sc *SyncCall) addChan(id uint32, packetC chan *util.VgoPacket) {
+func (sc *SyncCall) addChan(id uint32, packetC chan *util.TracingPacket) {
 	sc.Lock()
 	defer sc.Unlock()
 	sc.Chans[id] = packetC
 }
 
 // syncRead 阻塞等待
-func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.VgoPacket, error) {
+func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.TracingPacket, error) {
 	sc.RLock()
 	packetC, ok := sc.Chans[id]
 	sc.RUnlock()
@@ -69,7 +69,7 @@ func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.VgoPack
 }
 
 // syncWrite 阻塞写
-func (sc *SyncCall) syncWrite(id uint32, packet *util.VgoPacket) error {
+func (sc *SyncCall) syncWrite(id uint32, packet *util.TracingPacket) error {
 	sc.RLock()
 	packetC, ok := sc.Chans[id]
 	sc.RUnlock()

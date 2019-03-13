@@ -2,9 +2,9 @@ package service
 
 import (
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/analyze/misc"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/analyze/misc"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/util"
 	"go.uber.org/zap"
 )
 

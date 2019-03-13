@@ -9,8 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// VgoPacket 通用报文
-type VgoPacket struct {
+// TracingPacket 通用报文
+type TracingPacket struct {
 	Type       byte   `msgp:"t"`  // 类型
 	Version    byte   `msgp:"v"`  // 版本
 	IsSync     byte   `msgp:"is"` // 是否同步
@@ -20,9 +20,9 @@ type VgoPacket struct {
 	Payload    []byte `msgp:"p"`  // 数据
 }
 
-// // NewVgoPacket ...
-// func NewVgoPacket(pType byte, version byte, isSync byte, isCompress byte, id uint32, payload []byte) *VgoPacket {
-// 	return &VgoPacket{
+// // NewTracingPacket ...
+// func NewTracingPacket(pType byte, version byte, isSync byte, isCompress byte, id uint32, payload []byte) *TracingPacket {
+// 	return &TracingPacket{
 // 		Type:       pType,
 // 		Version:    version,
 // 		IsSync:     isSync,
@@ -32,13 +32,13 @@ type VgoPacket struct {
 // 	}
 // }
 
-// NewVgoPacket ...
-func NewVgoPacket() *VgoPacket {
-	return &VgoPacket{}
+// NewTracingPacket ...
+func NewTracingPacket() *TracingPacket {
+	return &TracingPacket{}
 }
 
 // Encode encode
-func (v *VgoPacket) Encode() []byte {
+func (v *TracingPacket) Encode() []byte {
 	// 压缩
 	if v.IsCompress == TypeOfCompressYes {
 		if len(v.Payload) > 0 {
@@ -65,7 +65,7 @@ func (v *VgoPacket) Encode() []byte {
 }
 
 // Decode decode
-func (v *VgoPacket) Decode(rdr io.Reader) error {
+func (v *TracingPacket) Decode(rdr io.Reader) error {
 	buf := make([]byte, 12)
 	if _, err := io.ReadFull(rdr, buf); err != nil {
 		g.L.Warn("Decode:io.ReadFull", zap.String("err", err.Error()))

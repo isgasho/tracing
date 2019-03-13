@@ -4,12 +4,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/imdevlab/vgo/agent/misc"
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/agent/misc"
+	"github.com/imdevlab/tracing/util"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/proto/pinpoint/proto"
+	"github.com/imdevlab/tracing/proto/pinpoint/proto"
 	"go.uber.org/zap"
 )
 
@@ -142,7 +142,7 @@ func (pinpoint *Pinpoint) tcpCollector() {
 	pinpointData.AppName = gAgent.agentInfo.AppName
 	pinpointData.AgentID = gAgent.agentInfo.AgentID
 
-	packet := &util.VgoPacket{
+	packet := &util.TracingPacket{
 		Type:       util.TypeOfPinpoint,
 		Version:    util.VersionOf01,
 		IsSync:     util.TypeOfSyncNo,
@@ -191,7 +191,7 @@ func (pinpoint *Pinpoint) udpCollector() {
 	pinpointData.AppName = gAgent.agentInfo.AppName
 	pinpointData.AgentID = gAgent.agentInfo.AgentID
 
-	packet := &util.VgoPacket{
+	packet := &util.TracingPacket{
 		Type:       util.TypeOfPinpoint,
 		Version:    util.VersionOf01,
 		IsSync:     util.TypeOfSyncNo,

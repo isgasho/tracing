@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/imdevlab/vgo/web/cmd"
+import "github.com/imdevlab/tracing/web/cmd"
 
 func main() {
 	cmd.Execute()

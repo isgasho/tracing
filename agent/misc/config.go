@@ -16,7 +16,7 @@ type Config struct {
 	}
 
 	Agent struct {
-		VgoAddr          string
+		TracingAddr      string
 		KeepLiveInterval int
 		UseEnv           bool
 		ENV              string

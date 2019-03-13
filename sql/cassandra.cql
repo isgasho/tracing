@@ -1,7 +1,7 @@
-CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
+CREATE KEYSPACE tracing_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
-USE vgo_v1_datacenter;
+USE tracing_v1_datacenter;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS account (
@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS agents (
     is_live             BOOLEAN,
     is_container        BOOLEAN,
     operating_env       int,
-    vgo_addr            text,
+    tracing_addr            text,
     agent_info          text,
     PRIMARY KEY (app_name, agent_id)
 ) WITH gc_grace_seconds = 10800;

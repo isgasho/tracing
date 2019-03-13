@@ -21,8 +21,8 @@ import (
 	"syscall"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/web/misc"
-	"github.com/imdevlab/vgo/web/service"
+	"github.com/imdevlab/tracing/web/misc"
+	"github.com/imdevlab/tracing/web/service"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,7 +54,7 @@ to quickly create a Cobra application.`,
 		chSig := make(chan os.Signal)
 		signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)
 		sig := <-chSig
-		g.L.Info("vgo received signal", zap.Any("signal", sig))
+		g.L.Info("tracing received signal", zap.Any("signal", sig))
 		web.Close()
 	},
 }

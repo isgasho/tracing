@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/proto/pinpoint/proto"
+	"github.com/imdevlab/tracing/proto/pinpoint/proto"
 	"go.uber.org/zap"
 )
 

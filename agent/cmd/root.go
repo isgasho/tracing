@@ -21,9 +21,9 @@ import (
 	"syscall"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/agent/misc"
-	_ "github.com/imdevlab/vgo/agent/plugins/collector/all"
-	"github.com/imdevlab/vgo/agent/service"
+	"github.com/imdevlab/tracing/agent/misc"
+	_ "github.com/imdevlab/tracing/agent/plugins/collector/all"
+	"github.com/imdevlab/tracing/agent/service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

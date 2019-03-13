@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/imdevlab/g/utils"
-	"github.com/imdevlab/vgo/web/misc"
+	"github.com/imdevlab/tracing/web/misc"
 
 	"go.uber.org/zap"
 

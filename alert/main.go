@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/imdevlab/vgo/alert/cmd"
+import "github.com/imdevlab/tracing/alert/cmd"
 
 func main() {
 	cmd.Execute()

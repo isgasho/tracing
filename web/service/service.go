@@ -8,7 +8,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/web/misc"
+	"github.com/imdevlab/tracing/web/misc"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"go.uber.org/zap"

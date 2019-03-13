@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/pinpoint"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
-	"github.com/imdevlab/vgo/util"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/util"
 	"go.uber.org/zap"
 )
 
