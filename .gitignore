@@ -1,6 +1,6 @@
 .idea/
 .bin/
 tracing/tracing
-agent/bin/agent
+agent/agent
 analyze/analyze
 web/web
