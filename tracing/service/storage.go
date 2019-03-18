@@ -7,10 +7,10 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/pinpoint"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
-	"github.com/imdevlab/vgo/util"
-	"github.com/imdevlab/vgo/vgo/misc"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/util"
+	"github.com/imdevlab/tracing/tracing/misc"
 	"github.com/sunface/talent"
 	"go.uber.org/zap"
 )

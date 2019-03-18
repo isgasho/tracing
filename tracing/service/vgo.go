@@ -9,8 +9,8 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/util"
-	"github.com/imdevlab/vgo/vgo/misc"
+	"github.com/imdevlab/tracing/tracing/misc"
+	"github.com/imdevlab/tracing/util"
 	"go.uber.org/zap"
 )
 
@@ -112,7 +112,7 @@ func (v *Vgo) acceptAgent() error {
 
 func (v *Vgo) agentWork(conn net.Conn) {
 	quitC := make(chan bool, 1)
-	packetC := make(chan *util.VgoPacket, 100)
+	packetC := make(chan *util.TracingPacket, 100)
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -161,7 +161,7 @@ func (v *Vgo) agentWork(conn net.Conn) {
 	}
 }
 
-func (v *Vgo) dealCmd(conn net.Conn, packet *util.VgoPacket) error {
+func (v *Vgo) dealCmd(conn net.Conn, packet *util.TracingPacket) error {
 	cmd := util.NewCMD()
 	if err := msgpack.Unmarshal(packet.Payload, cmd); err != nil {
 		g.L.Warn("dealCmd:msgpack.Unmarshal", zap.String("error", err.Error()))
@@ -179,7 +179,7 @@ func (v *Vgo) dealCmd(conn net.Conn, packet *util.VgoPacket) error {
 	return nil
 }
 
-func (v *Vgo) dealSystem(packet *util.VgoPacket) error {
+func (v *Vgo) dealSystem(packet *util.TracingPacket) error {
 	metric := util.NewMetricData()
 	if err := msgpack.Unmarshal(packet.Payload, metric); err != nil {
 		g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
@@ -189,7 +189,7 @@ func (v *Vgo) dealSystem(packet *util.VgoPacket) error {
 	return nil
 }
 
-func (v *Vgo) agentRead(conn net.Conn, packetC chan *util.VgoPacket, quitC chan bool) {
+func (v *Vgo) agentRead(conn net.Conn, packetC chan *util.TracingPacket, quitC chan bool) {
 	defer func() {
 		if err := recover(); err != nil {
 			return
@@ -201,7 +201,7 @@ func (v *Vgo) agentRead(conn net.Conn, packetC chan *util.VgoPacket, quitC chan 
 	}()
 	reader := bufio.NewReaderSize(conn, util.MaxMessageSize)
 	for {
-		packet := util.NewVgoPacket()
+		packet := util.NewTracingPacket()
 		if err := packet.Decode(reader); err != nil {
 			g.L.Warn("agentRead:msg.Decode", zap.String("err", err.Error()))
 			return

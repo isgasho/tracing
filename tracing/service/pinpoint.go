@@ -6,11 +6,11 @@ import (
 	"net"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/pinpoint"
-	"github.com/imdevlab/vgo/proto/pinpoint/thrift/trace"
-	"github.com/imdevlab/vgo/util"
-	"github.com/imdevlab/vgo/vgo/misc"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/util"
+	"github.com/imdevlab/tracing/tracing/misc"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -25,7 +25,7 @@ func NewPinpoint() *Pinpoint {
 }
 
 // dealUpload 处理pinpoint上行数据
-func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.VgoPacket) error {
+func (p *Pinpoint) dealUpload(conn net.Conn, inPacket *util.TracingPacket) error {
 	packet := &util.PinpointData{}
 	if err := msgpack.Unmarshal(inPacket.Payload, packet); err != nil {
 		g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))

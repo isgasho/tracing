@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/imdevlab/vgo/vgo/misc"
+	"github.com/imdevlab/tracing/tracing/misc"
 
 	"go.etcd.io/etcd/clientv3"
 )
