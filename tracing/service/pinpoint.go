@@ -9,8 +9,8 @@ import (
 	"github.com/imdevlab/tracing/proto/pinpoint/thrift"
 	"github.com/imdevlab/tracing/proto/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/util"
 	"github.com/imdevlab/tracing/tracing/misc"
+	"github.com/imdevlab/tracing/util"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )

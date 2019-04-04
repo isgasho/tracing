@@ -2,15 +2,14 @@ package service
 
 import (
 	"encoding/json"
-	"log"
 	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/proto/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/proto/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/util"
 	"github.com/imdevlab/tracing/tracing/misc"
+	"github.com/imdevlab/tracing/util"
 	"github.com/sunface/talent"
 	"go.uber.org/zap"
 )
@@ -204,7 +203,7 @@ func (s *Storage) spanStore() {
 						continue
 					}
 
-					log.Println(span)
+					// log.Println(span)
 
 				}
 				// 清空缓存

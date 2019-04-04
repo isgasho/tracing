@@ -69,8 +69,8 @@ func (pinpoint *Pinpoint) AgentStat() error {
 	if err != nil {
 		g.L.Fatal("AgentStat ListenUDP", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
 	}
-	data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
 	for {
+		data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
 		listener.SetReadDeadline(time.Now().Add(2 * time.Second))
 		n, _, err := listener.ReadFrom(data)
 		if err != nil {
@@ -101,8 +101,9 @@ func (pinpoint *Pinpoint) AgentSpan() error {
 	if err != nil {
 		g.L.Fatal("AgentSpan ListenUDP", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
 	}
-	data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
+
 	for {
+		data := make([]byte, proto.UDP_MAX_PACKET_SIZE)
 		listener.SetReadDeadline(time.Now().Add(2 * time.Second))
 		n, _, err := listener.ReadFrom(data)
 		if err != nil {
