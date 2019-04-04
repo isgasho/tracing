@@ -275,6 +275,8 @@ func (s *Storage) writeSpan(span *trace.TSpan) error {
 	spanEvenlist, _ := json.Marshal(span.GetSpanEventList())
 	exceptioninfo, _ := json.Marshal(span.GetExceptionInfo())
 
+	// log.Println("span打印", span.GetRPC(), string(span.GetTransactionId()))
+
 	query := s.cql.Query(
 		misc.InsertSpan,
 		span.TransactionId,
@@ -285,7 +287,7 @@ func (s *Storage) writeSpan(span *trace.TSpan) error {
 		span.ParentSpanId,
 		span.StartTime,
 		span.Elapsed,
-		span.RPC,
+		span.GetRPC(),
 		span.ServiceType,
 		span.GetEndPoint(),
 		span.GetRemoteAddr(),

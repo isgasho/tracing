@@ -174,7 +174,7 @@ func (v *Vgo) dealCmd(conn net.Conn, packet *util.TracingPacket) error {
 			g.L.Warn("dealCmd:msgpack.Unmarshal", zap.String("error", err.Error()))
 			return err
 		}
-		g.L.Debug("dealCmd:ping", zap.String("addr", conn.RemoteAddr().String()))
+		// g.L.Debug("dealCmd:ping", zap.String("addr", conn.RemoteAddr().String()))
 	}
 	return nil
 }
