@@ -1,7 +1,7 @@
 package misc
 
 var AgentInsert string = `INSERT INTO agents (app_name, agent_id, service_type, socket_id, host_name, ip,
-	pid, version, start_time, end_time, is_live, is_container, operating_env, vgo_addr) 
+	pid, version, start_time, end_time, is_live, is_container, operating_env, tracing_addr) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
 var AgentInofInsert string = `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 
