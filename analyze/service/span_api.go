@@ -43,7 +43,7 @@ func (spanUrls *SpanAPIs) apiCounter(apiStr string, elapsed int, isError int) er
 
 	if elapsed < misc.Conf.Stats.SatisfactionTime {
 		api.satisfactionCount++
-	} else if elapsed > misc.Conf.Stats.TolerateTime {
+	} else if elapsed < misc.Conf.Stats.TolerateTime {
 		api.tolerateCount++
 	}
 
