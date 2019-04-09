@@ -1,7 +1,7 @@
-CREATE KEYSPACE tracing_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
+CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
-USE tracing_v1_datacenter;
+USE vgo_v1_datacenter;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS account (
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS admin (
     id text,
     priv text,
     PRIMARY KEY (id)
-） WITH gc_grace_seconds = 10800;
+) WITH gc_grace_seconds = 10800;
 INSERT INTO admin (id,priv) VALUES ('13269','super_admin');
 
 -- 告警用户组表
