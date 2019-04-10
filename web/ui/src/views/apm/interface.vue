@@ -188,7 +188,7 @@ export default {
         }).then(res => {   
             this.apiStats = res.data.data
             // 初始化时，默认对平均耗时排序
-            this.sortApi({key:'average_elapsed',order:'desc'})
+            this.sortApi({key:'count',order:'desc'})
 
             this.$Loading.finish();
         }).catch(error => {

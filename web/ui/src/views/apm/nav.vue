@@ -1,17 +1,17 @@
 <template>
   <div class="apm-nav">
       <Row style="line-height:22px">
-          <Col span="3" style="border-right: 1px solid #d2d2d2;border-bottom:3px solid #e0ebd1;height:67px" class="padding-left-20 left-nav">
+          <Col span="3" style="border-right: 1px solid #d2d2d2;border-bottom:3px solid #e0ebd1;height:57px" class="padding-left-20 left-nav">
              <div  style="margin-top:20px" class="no-border">
               <span>
-                <Select v-model="$store.state.apm.appName" style="width:140px" @on-change="selAppName" filterable>
+                <Select v-model="$store.state.apm.appName" size="small" style="width:140px" @on-change="selAppName" filterable>
                   <Option v-for="item in appNames" :value="item" :key="item">{{ item }}</Option>
                 </Select>
               </span></div>
           </Col>
-          <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:62px">
+          <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:52px">
             <div class="color-primary font-size-16 padding-top-10 hover-cursor">
-              <DatePicker :split-panels=true  confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
+              <DatePicker :split-panels=true  size="small" confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
             </div>
           </Col>
       </Row>
@@ -117,12 +117,7 @@ export default {
   },
   methods: {
     getDate() {
-      var d = this.$store.state.apm.selDate
-      if (d == '') {
-        return [new Date((new Date()).getTime() - 3600 * 1000).toLocaleString('chinese',{hour12:false}).replace(/\//g,'-'),new Date().toLocaleString('chinese',{hour12:false}).replace(/\//g,'-')]
-      } else {
         return   JSON.parse(this.$store.state.apm.selDate)
-      }
     },
     clearDate() {
        this.$store.dispatch('setSelDate', '')

@@ -30,8 +30,7 @@ export default {
   },
   methods: {
     handleLogin() {
-      let host = config.dev.host + ":" + config.dev.port
-      let url = "http://sitetest.tf56.com/openssoWeb/opensso/login?clientNo=1" + "&redirectUrl=http://" + host + "/apm/ui/callback"
+      let url = "http://sitetest.tf56.com/openssoWeb/opensso/login?clientNo=1" + "&redirectUrl=http://" + window.location.origin+ "/apm/ui/callback"
       window.location.href = url
     }
   },

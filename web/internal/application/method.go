@@ -1,26 +1,17 @@
-package service
+package app
 
+/* 函数方法、关键事务统计 */
 import (
 	"net/http"
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/g/utils"
-	"github.com/imdevlab/tracing/web/misc"
+	"github.com/imdevlab/tracing/web/internal/misc"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
 )
 
-type SqlStat struct {
-	ID             int     `json:"-"`
-	SQL            string  `json:"sql"`
-	MaxElapsed     int     `json:"max_elapsed"`
-	MinElapsed     int     `json:"min_elapsed"`
-	Count          int     `json:"count"`
-	AverageElapsed float64 `json:"average_elapsed"`
-	ErrorCount     int     `json:"error_count"`
-}
-
-func (web *Web) sqlStats(c echo.Context) error {
+func Methods(c echo.Context) error {
 	start, end, err := misc.StartEndDate(c)
 	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
@@ -31,6 +22,7 @@ func (web *Web) sqlStats(c echo.Context) error {
 	}
 
 	appName := c.FormValue("app_name")
+
 	if appName == "" {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
@@ -39,17 +31,21 @@ func (web *Web) sqlStats(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT sql,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM sql_stats WHERE app_name = ? and input_date > ? and input_date < ? `
-	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
+	q := misc.Cql.Query(`SELECT method_id,api,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and input_date > ? and input_date < ? `, appName, start.Unix(), end.Unix())
+	iter := q.Iter()
 
-	var sqlID, maxE, minE, count, errCount int
+	var apiID, serType, elapsed, maxE, minE, count, errCount int
 	var averageE float64
-	ad := make(map[int]*SqlStat)
-	for iter.Scan(&sqlID, &maxE, &minE, &averageE, &count, &errCount) {
-		am, ok := ad[sqlID]
+	var totalElapsed int
+	var api string
+	ad := make(map[int]*ApiMethod)
+	for iter.Scan(&apiID, &api, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
+		am, ok := ad[apiID]
 		if !ok {
-			ad[sqlID] = &SqlStat{sqlID, "", maxE, minE, count, averageE, errCount}
+			av, _ := utils.DecimalPrecision(averageE)
+			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, av, errCount, 0, ""}
 		} else {
+			am.Elapsed += elapsed
 			// 取最大值
 			if maxE > am.MaxElapsed {
 				am.MaxElapsed = maxE
@@ -64,27 +60,33 @@ func (web *Web) sqlStats(c echo.Context) error {
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
 			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + averageE*float64(count)) / float64((am.Count + count)))
 		}
+
+		totalElapsed += elapsed
+	}
+
+	ads := make([]*ApiMethod, 0, len(ad))
+	for _, am := range ad {
+		// 计算耗时占比
+		am.RatioElapsed = am.Elapsed * 100 / totalElapsed
+		// 通过apiID 获取api name
+		q := misc.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id=?`, appName, am.ID)
+		var apiInfo string
+		var line int
+		err := q.Scan(&apiInfo, &line)
+		if err != nil {
+			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+
+			continue
+		}
+
+		am.Line = line
+		am.Method = apiInfo
+
+		ads = append(ads, am)
 	}
 
 	if err := iter.Close(); err != nil {
 		g.L.Warn("close iter error:", zap.Error(err))
-	}
-
-	ads := make([]*SqlStat, 0, len(ad))
-	for _, am := range ad {
-		// 通过apiID 获取api name
-		q := web.Cql.Query(`SELECT sql_info FROM app_sqls WHERE app_name = ? and sql_id=?`, appName, am.ID)
-		var sql string
-		err := q.Scan(&sql)
-		if err != nil {
-			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
-			continue
-		}
-
-		s, _ := g.B64.DecodeString(sql)
-		am.SQL = utils.Bytes2String(s)
-
-		ads = append(ads, am)
 	}
 
 	return c.JSON(http.StatusOK, g.Result{

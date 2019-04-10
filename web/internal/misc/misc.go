@@ -3,9 +3,12 @@ package misc
 import (
 	"time"
 
+	"github.com/gocql/gocql"
 	"github.com/imdevlab/g/utils"
 	"github.com/labstack/echo"
 )
+
+var Cql *gocql.Session
 
 // 获取开始和截止日期
 func StartEndDate(c echo.Context) (start time.Time, end time.Time, err error) {

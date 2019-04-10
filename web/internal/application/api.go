@@ -1,12 +1,13 @@
-package service
+package app
 
+/* 接口统计 */
 import (
 	"log"
 	"net/http"
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/g/utils"
-	"github.com/imdevlab/tracing/web/misc"
+	"github.com/imdevlab/tracing/web/internal/misc"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
 )
@@ -33,7 +34,7 @@ type ApiStat struct {
 // }
 
 // 单个应用下，所有接口的统计信息
-func (web *Web) apiStats(c echo.Context) error {
+func ApiStats(c echo.Context) error {
 	appName := c.FormValue("app_name")
 	start, end, err := misc.StartEndDate(c)
 	if err != nil {
@@ -46,7 +47,7 @@ func (web *Web) apiStats(c echo.Context) error {
 
 	// 读取相应数据，按照时间填到对应的桶中
 	q := `SELECT api,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `
-	iter := web.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
+	iter := misc.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
 
 	// apps := make(map[string]*AppStat)
 	var maxElapsed, minElapsed, count, errCount int
@@ -75,7 +76,7 @@ func (web *Web) apiStats(c echo.Context) error {
 	}
 
 	if err := iter.Close(); err != nil {
-		log.Println("close iter error:", err, web.Cql.Closed())
+		log.Println("close iter error:", err, misc.Cql.Closed())
 	}
 
 	// 对每个桶里的数据进行计算
@@ -106,7 +107,7 @@ type ApiMethod struct {
 	Method string `json:"method"`
 }
 
-func (web *Web) apiDetail(c echo.Context) error {
+func ApiDetail(c echo.Context) error {
 	start, end, err := misc.StartEndDate(c)
 	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
@@ -128,7 +129,7 @@ func (web *Web) apiDetail(c echo.Context) error {
 	}
 
 	q := `SELECT method_id,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and api = ? and input_date > ? and input_date < ? `
-	iter := web.Cql.Query(q, appName, api, start.Unix(), end.Unix()).Iter()
+	iter := misc.Cql.Query(q, appName, api, start.Unix(), end.Unix()).Iter()
 
 	var apiID, serType, elapsed, maxE, minE, count, errCount int
 	var averageE float64
@@ -167,7 +168,7 @@ func (web *Web) apiDetail(c echo.Context) error {
 		// 计算耗时占比
 		am.RatioElapsed = am.Elapsed * 100 / totalElapsed
 		// 通过apiID 获取api name
-		q := web.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id =?`, appName, am.ID)
+		q := misc.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id =?`, appName, am.ID)
 		var apiInfo string
 		var line int
 		err := q.Scan(&apiInfo, &line)

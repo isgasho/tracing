@@ -3,12 +3,14 @@ package service
 import (
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/web/misc"
+	"github.com/imdevlab/tracing/web/internal/alerts"
+	app "github.com/imdevlab/tracing/web/internal/application"
+	"github.com/imdevlab/tracing/web/internal/misc"
+	"github.com/imdevlab/tracing/web/internal/session"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"go.uber.org/zap"
@@ -17,11 +19,7 @@ import (
 // 后台服务
 // Stats 离线计算
 type Web struct {
-	Cql       *gocql.Session
-	cache     *cache
-	sessions  *sync.Map
-	usersMap  *sync.Map
-	usersList []*User
+	cache *cache
 }
 
 // New ...
@@ -52,9 +50,6 @@ func (s *RetryPolicy) GetRetryType(err error) gocql.RetryType {
 
 // Start ...
 func (s *Web) Start() error {
-	// 用户登录session
-	s.sessions = &sync.Map{}
-
 	// 初始化内部缓存
 	s.cache = &cache{}
 	// 初始化Cql连接
@@ -68,16 +63,15 @@ func (s *Web) Start() error {
 
 	// cluster.RetryPolicy = &RetryPolicy{NumRetries: -1, Interval: 2}
 
-	session, err := cluster.CreateSession()
+	csession, err := cluster.CreateSession()
 	if err != nil {
 		g.L.Fatal("Init web cql connections error", zap.String("error", err.Error()))
 		return err
 	}
-	s.Cql = session
+	misc.Cql = csession
 
 	// 初始化全体用户列表(缓存以提升性能)
-	s.usersList = make([]*User, 0)
-	s.usersMap = &sync.Map{}
+
 	go s.loopLoadUsers()
 
 	go func() {
@@ -92,58 +86,58 @@ func (s *Web) Start() error {
 
 		// 回调相关
 		//同步回调接口
-		e.POST("/apm/web/login", s.login)
-		e.POST("/apm/web/logout", s.logout)
+		e.POST("/apm/web/login", session.Login)
+		e.POST("/apm/web/logout", session.Logout)
 		// 应用查询接口
 		//查询应用列表
-		e.GET("/apm/web/appList", s.appList, s.checkLogin)
-		e.GET("/apm/web/appListWithSetting", s.appListWithSetting, s.checkLogin)
+		e.GET("/apm/web/appList", app.List, s.checkLogin)
+		e.GET("/apm/web/appListWithSetting", app.ListWithSetting, s.checkLogin)
 		//获取指定应用的一段时间内的状态
-		e.GET("/apm/web/appDash", s.appDash, s.checkLogin)
+		e.GET("/apm/web/appDash", app.Dashboard, s.checkLogin)
 		//查询所有的app名
-		e.GET("/apm/web/appNames", s.appNames)
-		e.GET("/apm/web/appNamesWithSetting", s.appNamesWithSetting, s.checkLogin)
+		e.GET("/apm/web/appNames", app.QueryAll)
+		e.GET("/apm/web/appNamesWithSetting", app.QueryAllWithSetting, s.checkLogin)
 
 		// 查询APP底下的所有API
-		e.GET("/apm/web/appApis", s.appApis)
+		e.GET("/apm/web/appApis", app.QueryApis)
 
 		//应用接口统计
-		e.GET("/apm/web/apiStats", s.apiStats)
+		e.GET("/apm/web/apiStats", app.ApiStats)
 		//获取指定接口的详细方法统计
-		e.GET("/apm/web/apiDetail", s.apiDetail)
+		e.GET("/apm/web/apiDetail", app.ApiDetail)
 
 		// 应用Method统计
-		e.GET("/apm/web/appMethods", s.appMethods)
+		e.GET("/apm/web/appMethods", app.Methods)
 
 		// 数据库统计
-		e.GET("/apm/web/sqlStats", s.sqlStats)
+		e.GET("/apm/web/sqlStats", app.SqlStats)
 
 		//查询所有服务器名
-		e.GET("/apm/web/agentList", s.agentList, s.checkLogin)
+		e.GET("/apm/web/agentList", app.QueryAgents, s.checkLogin)
 
-		e.GET("/apm/web/serviceMap", queryServiceMap, s.checkLogin)
+		e.GET("/apm/web/serviceMap", app.QueryServiceMap, s.checkLogin)
 
 		// 链路查询
-		e.GET("/apm/web/queryTraces", s.queryTraces, s.checkLogin)
-		e.GET("/apm/web/trace", queryTrace, s.checkLogin)
+		e.GET("/apm/web/queryTraces", app.QueryTraces, s.checkLogin)
+		e.GET("/apm/web/trace", app.QueryTrace, s.checkLogin)
 
 		// 告警平台
-		e.POST("/apm/web/createGroup", s.createGroup, s.checkLogin)
-		e.POST("/apm/web/editGroup", s.editGroup, s.checkLogin)
-		e.POST("/apm/web/deleteGroup", s.deleteGroup, s.checkLogin)
-		e.GET("/apm/web/queryGroups", s.queryGroups)
+		e.POST("/apm/web/createGroup", alerts.CreateGroup, s.checkLogin)
+		e.POST("/apm/web/editGroup", alerts.EditGroup, s.checkLogin)
+		e.POST("/apm/web/deleteGroup", alerts.DeleteGroup, s.checkLogin)
+		e.GET("/apm/web/queryGroups", alerts.QueryGroups)
 
-		e.POST("/apm/web/createPolicy", s.createPolicy, s.checkLogin)
-		e.POST("/apm/web/editPolicy", s.editPolicy, s.checkLogin)
-		e.GET("/apm/web/queryPolicies", s.queryPolicies, s.checkLogin)
-		e.GET("/apm/web/queryPolicy", s.queryPolicy)
-		e.POST("/apm/web/deletePolicy", s.deletePolicy, s.checkLogin)
+		e.POST("/apm/web/createPolicy", alerts.CreatePolicy, s.checkLogin)
+		e.POST("/apm/web/editPolicy", alerts.EditPolicy, s.checkLogin)
+		e.GET("/apm/web/queryPolicies", alerts.QueryPolicies, s.checkLogin)
+		e.GET("/apm/web/queryPolicy", alerts.QueryPolicy)
+		e.POST("/apm/web/deletePolicy", alerts.DeletePolicy, s.checkLogin)
 
-		e.POST("/apm/web/createAppAlert", s.createAppAlert, s.checkLogin)
-		e.POST("/apm/web/editAppAlert", s.editAppAlert, s.checkLogin)
-		e.POST("/apm/web/deleteAppAlert", s.deleteAppAlert, s.checkLogin)
+		e.POST("/apm/web/createAppAlert", alerts.CreateApp, s.checkLogin)
+		e.POST("/apm/web/editAppAlert", alerts.EditApp, s.checkLogin)
+		e.POST("/apm/web/deleteAppAlert", alerts.DeleteApp, s.checkLogin)
 
-		e.GET("/apm/web/alertsAppList", s.alertsAppList, s.checkLogin)
+		e.GET("/apm/web/alertsAppList", alerts.AppList, s.checkLogin)
 
 		// 管理员面板
 		e.GET("/apm/web/userList", s.userList, s.checkLogin)
@@ -168,7 +162,7 @@ func (s *Web) Close() error {
 
 func (web *Web) checkLogin(f echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		li := web.getLoginInfo(c)
+		li := session.GetLoginInfo(c)
 		if li == nil {
 			return c.JSON(http.StatusOK, g.Result{
 				Status:  http.StatusUnauthorized,

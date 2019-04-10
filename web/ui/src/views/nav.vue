@@ -27,32 +27,38 @@
             </li>
         </ul>
         <span class="hover-cursor">
-            <span style="color:white;float:right;margin-top:6px;margin-right:29px;font-size:15px">
+            <span style="color:white;float:right;margin-top:6px;margin-right:29px;font-size:14px">
                
-             <Dropdown>
-                {{$store.state.user.name}}/{{$store.state.user.id}}
-                <DropdownMenu slot="list">
-                    <DropdownItem  @click.native="goSetting">个人设置</DropdownItem>
-                    <DropdownItem v-show="$store.state.user.priv!='normal'" @click.native="goAdmin">管理面板</DropdownItem>
-                    <DropdownItem @click.native="logout">退出登录</DropdownItem>
-                </DropdownMenu>
-            </Dropdown>    
-            </span>
-            <span style="color:white;float:right;margin-top:6px;margin-right:9px;font-size:15px">
-                <img alt="Icon-unknown_user" class="gravatar" height="30" src="https://gravatar.com/avatar/13eb272664a43d2a962cb7c1e778ddab?s=34&amp;d=https://rpm.newrelic.com/images/v5/template/icon-unknown_user.png?a848d37" width="30">
+                <Dropdown>
+                    {{$store.state.user.name}}/{{$store.state.user.id}}
+                    <DropdownMenu slot="list">
+                        <DropdownItem  @click.native="goSetting">个人设置</DropdownItem>
+                        <DropdownItem v-show="$store.state.user.priv!='normal'" @click.native="goAdmin">管理面板</DropdownItem>
+                        <DropdownItem @click.native="logout">退出登录</DropdownItem>
+                    </DropdownMenu>
+                </Dropdown>    
             </span>
         </span>
-        <span  :style="{'background':getBG()}" style="float:right;color:white;margin-top:.4px;margin-right:40px;padding:6px 10px">
+        <span  style="float:right;color:white;margin-top:.4px;margin-right:20px;padding-top:13px;">
+            <screenfull id="screenfull" />
+        </span>
+        <span  :style="{'background':getBG()}" style="float:right;color:white;margin-top:.4px;margin-right:40px;padding:6px 10px;font-size:14px">
             {{getMeta()}}
         </span>
+
+ 
       </Row>
       <router-view></router-view>
   </div>
 </template> 
  
 <script>
+import Screenfull from '@/views/components/Screenfull'
 export default {
   name: 'Nav',
+  components: {
+    Screenfull
+  },
   data () {
     return {
         isOpen:false
@@ -133,6 +139,14 @@ export default {
 
 <style lang="less" scoped> 
 @import "../theme/gvar.less";
+ .right-menu-item {
+      display: inline-block;
+      padding: 0 8px;
+      height: 100%;
+      font-size: 18px;
+      color: #5a5e66;
+      vertical-align: text-bottom;
+ }
 // .nav {
 //     top: 0;
 //     width: 100%;

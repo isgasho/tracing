@@ -1,4 +1,4 @@
-package service
+package app
 
 import (
 	"fmt"
@@ -8,7 +8,8 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/web/misc"
+	"github.com/imdevlab/tracing/web/internal/misc"
+	"github.com/imdevlab/tracing/web/internal/tests"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
 )
@@ -48,7 +49,7 @@ type TraceSeries struct {
 }
 
 // traceSeries":[{"name":"success","color":"rgb(18, 147, 154,.5)","data":[{"x":1545200556716,"y":7,"traceId":"yunbaoParkApp3^1545036617750^4217","agentId":"agencyBookKeep3","startTime":"1545200556716","url":"/agencyBookKeep/financialstatementscs/getOneAccountingDataByParams","traceIp":"127.0.0.1"},
-func (web *Web) queryTraces(c echo.Context) error {
+func QueryTraces(c echo.Context) error {
 	appName := c.FormValue("app_name")
 	api := c.FormValue("api")
 	min, _ := strconv.Atoi(c.FormValue("min_elapsed"))
@@ -63,15 +64,15 @@ func (web *Web) queryTraces(c echo.Context) error {
 	var q *gocql.Query
 	if api == "" {
 		if max == 0 {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min)
+			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min)
 		} else {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min, max)
+			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min, max)
 		}
 	} else {
 		if max == 0 {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min)
+			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min)
 		} else {
-			q = web.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min, max)
+			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min, max)
 		}
 	}
 
@@ -107,7 +108,7 @@ func (web *Web) queryTraces(c echo.Context) error {
 		ct.Suc = false
 	} else {
 		ct.Suc = true
-		ct.Xaxis = []int64{traces[0].InputDate / 1000, traces[len(traces)-1].InputDate / 1000}
+		ct.Xaxis = []int64{start.UnixNano() / 1e6, end.UnixNano() / 1e6}
 		ct.Title = fmt.Sprintf("success: %d, error: %d", len(traces), 0)
 
 		sucData := &TraceSeries{
@@ -131,9 +132,9 @@ func (web *Web) queryTraces(c echo.Context) error {
 	})
 }
 
-func queryTrace(c echo.Context) error {
+func QueryTrace(c echo.Context) error {
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
-		Data:   traceTest,
+		Data:   tests.SingleTraceData,
 	})
 }

@@ -49,7 +49,13 @@ export default {
                     type: 'scatter',
                     zoomType: 'xy',
                     events: {
-                        selection: selectPointsByDrag
+                        selection: selectPointsByDrag,
+                        click: function(e) {
+                            console.log(
+                                Highcharts.dateFormat('%Y-%m-%d %H:%M:%S', e.xAxis[0].value),
+                                e.yAxis[0].value
+                            )
+                        }
                     }
                 },
                 title: {
@@ -70,9 +76,9 @@ export default {
                         format: '{value: %m-%d %H:%M}',
                         setp: 1
                     },
-                    // tickPositions: [],
-                    startOnTick: false,
-                    endOnTick: false,
+                    tickPositions: [],
+                    startOnTick: true,
+                    endOnTick: true,
                     showLastLabel: false,
                     tickWidth: 0,
                     gridLineWidth: 0
@@ -105,7 +111,7 @@ export default {
                 plotOptions: {
                     scatter: {
                         marker: {
-                            radius: 5,
+                            radius: 3,
                             states: {
                                 hover: {
                                     enabled: true,
@@ -121,7 +127,7 @@ export default {
                             }
                         },
                         tooltip: {
-                            pointFormat: '{point.x: %m-%d %H:%M:%S}, {point.y}ms '
+                            pointFormat: '{point.x: %m-%d %H:%M:%S}'
                         },
                         enableMouseTracking: true,
                         turboThreshold: "disable"

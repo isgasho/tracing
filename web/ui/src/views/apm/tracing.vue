@@ -14,15 +14,15 @@
           
           <div class="margin-top-10">
             <div class="font-size-16">最低响应时间(ms)</div>
-            <Input  v-model="minElapsed" placeholder="e.g.  100，留空代表不限制" style="width: 400px" size="large" />
+            <Input  v-model="minElapsed" placeholder="e.g.  100，留空代表不限制" style="width: 100%" size="large" />
           </div>
            <div class="margin-top-40">
             <div class="font-size-16">最大响应时间(ms)</div>
-            <Input   v-model="maxElapsed" placeholder="e.g. 3000，留空代表并不限制" style="width: 400px" size="large" />
+            <Input   v-model="maxElapsed" placeholder="e.g. 3000，留空代表并不限制" style="width: 100%" size="large" />
           </div>
           <div class="margin-top-40">
             <div class="font-size-16">限定搜索数目</div>
-            <InputNumber :max="100" :min="1"  :step="5" v-model="resultLimit" style="width: 400px" size="large"></InputNumber>
+            <InputNumber :max="100" :min="1"  :step="5" v-model="resultLimit" style="width: 100%" size="large"></InputNumber>
           </div>
 
           <div class="margin-top-20">
@@ -36,19 +36,19 @@
 
      <div v-show="selectedTraces.length > 0" class="margin-top-10" style="padding-left:20px;padding-right:20px;">
           <span><Tag style="background: rgb(18, 147, 154,.5)" size="large">{{selSucCount}} 成功</Tag> <Tag style="background:rgba(223, 83, 83, .5)" size="large">{{selErrCount}} 错误</Tag></span>
-          <span style="float:right" class="no-border">
+          <!-- <span style="float:right" class="no-border">
             <Select style="width:200px"  value="1">
                 <Option value="1">时间最近</Option>
                 <Option value="2">时间最远</Option>
                 <Option value="3">链路最短</Option>
                 <Option value="3">链路最长</Option>
             </Select>
-          </span>
+          </span> -->
 
         <div style="padding-left:10px;padding-right:10px" class="margin-top-20 margin-bottom-40">
           <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="selectedTraces" class="margin-top-15" @on-row-click="showTrace"></Table>
         </div>
-        </div>
+      </div>
 
     <!-- 链路展示Modal -->
     <Modal v-model="traceVisible" :footer-hide="true" :z-index="500" fullscreen>
@@ -209,8 +209,13 @@ export default {
           }
       }).then(res => {
         this.tracesData = res.data.data
-        console.log(this.tracesData)
         this.$Loading.finish();
+        if (!this.tracesData.is_suc) {
+          this.$Message.info({
+            content: '没有查询到数据',
+            duration: 3 
+          })
+        }
       }).catch(error => {
         this.$Loading.error();
       })

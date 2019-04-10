@@ -1,4 +1,4 @@
-package service
+package session
 
 import (
 	"encoding/json"
@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/imdevlab/g/utils"
-	"github.com/imdevlab/tracing/web/misc"
+	"github.com/imdevlab/tracing/web/internal/misc"
 
 	"go.uber.org/zap"
 
@@ -34,7 +34,7 @@ type UserInfo struct {
 	SsoToken string `json:"ssoToken"`
 }
 
-func (web *Web) login(c echo.Context) error {
+func Login(c echo.Context) error {
 	subToken := c.FormValue("subToken")
 	// 通过subtoken获取用户和ssotoken
 	body := "{'subToken':'" + subToken + "'}"
@@ -53,7 +53,7 @@ func (web *Web) login(c echo.Context) error {
 	// 查询该用户是否是管理员
 	var priv string
 	q := `SELECT priv FROM admin WHERE id=?`
-	err = web.Cql.Query(q, uid).Scan(&priv)
+	err = misc.Cql.Query(q, uid).Scan(&priv)
 	if priv == "" {
 		priv = g.PRIV_NORMAL
 	}
@@ -76,20 +76,20 @@ func (web *Web) login(c echo.Context) error {
 	}
 
 	//sub token验证成功，保存session
-	web.sessions.Store(user.SsoToken, &Session{
+	Sessions.Store(user.SsoToken, &Session{
 		User:       user,
 		CreateTime: time.Now(),
 	})
 
 	// 更新数据库中的user表
 	q = `UPDATE account SET name=?,mobile=?,email=?,last_login_date=? WHERE id=?`
-	err = web.Cql.Query(q, user.Name, user.Mobile, user.Email, utils.Time2StringSecond(time.Now()), user.ID).Exec()
+	err = misc.Cql.Query(q, user.Name, user.Mobile, user.Email, utils.Time2StringSecond(time.Now()), user.ID).Exec()
 	if err != nil {
 		g.L.Info("插入用户信息失败", zap.Error(err))
 	}
 	// 更新登录次数
 	q = `UPDATE login_count SET count  = count + 1 WHERE id=?`
-	err = web.Cql.Query(q, user.ID).Exec()
+	err = misc.Cql.Query(q, user.ID).Exec()
 	if err != nil {
 		g.L.Info("更新登录次数失败", zap.Error(err))
 	}
@@ -100,7 +100,7 @@ func (web *Web) login(c echo.Context) error {
 	})
 }
 
-func (a *Web) loginMock(c echo.Context) error {
+func LoginMock(c echo.Context) error {
 	user := &UserInfo{
 		ID:       "13269",
 		Name:     "孙飞",
@@ -109,7 +109,7 @@ func (a *Web) loginMock(c echo.Context) error {
 	}
 
 	//sub token验证成功，保存session
-	a.sessions.Store(user.SsoToken, &Session{
+	Sessions.Store(user.SsoToken, &Session{
 		User:       user,
 		CreateTime: time.Now(),
 	})
@@ -120,10 +120,10 @@ func (a *Web) loginMock(c echo.Context) error {
 	})
 }
 
-func (a *Web) logout(c echo.Context) error {
+func Logout(c echo.Context) error {
 	token := getToken(c)
 	// 删除用户的session
-	a.sessions.Delete(token)
+	Sessions.Delete(token)
 
 	// 请求sso 注销token
 	body := "{'ssoToken':'" + token + "', 'clientNo':'1' }"
@@ -136,9 +136,9 @@ func (a *Web) logout(c echo.Context) error {
 	})
 }
 
-func (a *Web) userInfo(c echo.Context) error {
+func GetUserInfo(c echo.Context) error {
 	token := getToken(c)
-	sess, ok := a.sessions.Load(token)
+	sess, ok := Sessions.Load(token)
 	if !ok {
 		// 用户未登陆或者session失效
 		return c.JSON(http.StatusOK, g.Result{
@@ -203,9 +203,9 @@ func getToken(c echo.Context) string {
 	return c.Request().Header.Get("X-Token")
 }
 
-func (web *Web) getLoginInfo(c echo.Context) *UserInfo {
+func GetLoginInfo(c echo.Context) *UserInfo {
 	token := getToken(c)
-	sess, ok := web.sessions.Load(token)
+	sess, ok := Sessions.Load(token)
 	if !ok {
 		// 用户未登陆或者session失效
 		return nil

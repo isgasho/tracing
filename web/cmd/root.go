@@ -21,8 +21,8 @@ import (
 	"syscall"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/web/misc"
-	"github.com/imdevlab/tracing/web/service"
+	"github.com/imdevlab/tracing/web/internal/misc"
+	web "github.com/imdevlab/tracing/web/internal/web"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -48,7 +48,7 @@ to quickly create a Cobra application.`,
 		g.InitLogger(misc.Conf.Common.LogLevel)
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
-		web := service.New()
+		web := web.New()
 		web.Start()
 		// 等待服务器停止信号
 		chSig := make(chan os.Signal)

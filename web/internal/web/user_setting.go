@@ -5,6 +5,8 @@ import (
 	"strconv"
 
 	"github.com/imdevlab/g"
+	"github.com/imdevlab/tracing/web/internal/misc"
+	"github.com/imdevlab/tracing/web/internal/session"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
 )
@@ -13,8 +15,8 @@ func (web *Web) setUser(c echo.Context) error {
 	appNameS := c.FormValue("app_names")
 	appShow, _ := strconv.Atoi(c.FormValue("app_show"))
 
-	li := web.getLoginInfo(c)
-	q := web.Cql.Query(`UPDATE  account SET app_show=?,app_names=? WHERE id=?`, appShow, appNameS, li.ID)
+	li := session.GetLoginInfo(c)
+	q := misc.Cql.Query(`UPDATE  account SET app_show=?,app_names=? WHERE id=?`, appShow, appNameS, li.ID)
 	err := q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
@@ -36,11 +38,11 @@ type AppSetting struct {
 }
 
 func (web *Web) getAppSetting(c echo.Context) error {
-	li := web.getLoginInfo(c)
+	li := session.GetLoginInfo(c)
 
 	var appNames string
 	var appShow int
-	q := web.Cql.Query(`SELECT app_show,app_names from  account  WHERE id=?`, li.ID)
+	q := misc.Cql.Query(`SELECT app_show,app_names from  account  WHERE id=?`, li.ID)
 	err := q.Scan(&appShow, &appNames)
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))

@@ -28,7 +28,7 @@
                </div>
           </Col>
           <Col span="8" style="padding:8px 10px;padding-left:20px">
-                <div class="font-size-18">服务器列表</div>
+                <div class="font-size-18">节点最新状态</div>
                 <Table :columns="trLabels" :data="agentList"  class="margin-top-10"></Table>
           </Col>
      </Row>
@@ -49,7 +49,7 @@ export default {
     return {
         trLabels: [
             {
-                title: '服务器名',
+                title: '节点名',
                 key: 'host_name'
             },
             {
