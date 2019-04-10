@@ -16,12 +16,16 @@ type Config struct {
 	}
 
 	Agent struct {
-		TracingAddr      string
-		KeepLiveInterval int
-		UseEnv           bool
-		ENV              string
-		IsContainer      bool
-		OperatingEnv     int32
+	}
+
+	Collector struct {
+		Keeplive int
+	}
+
+	Etcd struct {
+		Addrs    []string
+		WatchDir string
+		TimeOut  int
 	}
 
 	Pinpoint struct {
@@ -30,21 +34,6 @@ type Config struct {
 		SpanAddr           string // udp addr for span
 		SpanReportInterval int    // 全链路信息上报频率 单位毫秒
 		SpanQueueLen       int
-	}
-
-	System struct {
-		OnOff    bool
-		Interval int
-	}
-
-	CPU struct {
-	}
-
-	Systemload struct {
-	}
-
-	Ifstat struct {
-		Interfaces []string
 	}
 }
 

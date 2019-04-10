@@ -1,277 +1,154 @@
 package service
 
 import (
-	"log"
-	"os"
-	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/imdevlab/tracing/agent/misc"
-
+	"github.com/shaocongcong/tracing/pkg/proto/network"
+	"github.com/shaocongcong/tracing/pkg/proto/ttype"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/util"
-
 	"go.uber.org/zap"
 )
 
 // Agent ...
 type Agent struct {
-	syncCall                 *SyncCall
-	client                   *TCPClient
-	syncID                   uint32
-	agentInfo                *util.AgentInfo
-	quitC                    chan bool
-	uploadC                  chan *util.TracingPacket
-	downloadC                chan *util.TracingPacket
-	pinpoint                 *Pinpoint
-	systemCollector          *SystemCollector
-	isReportAgentInfo        bool
-	isReportAgentInfoSuccess bool
+	appName      string             // 服务名
+	agentID      string             // 服务agent ID
+	etcd         *Etcd              // 服务发现
+	collector    *Collector         // 监控指标上报
+	pinpoint     *Pinpoint          // pinpoint采集服务
+	isLive       bool               // app是否存活
+	isReportInfo bool               // 是否已经上报agentInfo
+	syncID       uint32             // 同步请求ID
+	syncCall     *SyncCall          // 同步请求
+	agentInfo    *network.AgentInfo // 监控上报的agent info原信息
 }
 
 var gAgent *Agent
 
-// New ...
+// New new agent
 func New() *Agent {
 	gAgent = &Agent{
-		syncCall:        NewSyncCall(),
-		client:          NewTCPClient(),
-		agentInfo:       util.NewAgentInfo(),
-		quitC:           make(chan bool, 1),
-		uploadC:         make(chan *util.TracingPacket, 100),
-		downloadC:       make(chan *util.TracingPacket, 100),
-		pinpoint:        NewPinpoint(),
-		systemCollector: NewSystemCollector(),
+		etcd:      newEtcd(),
+		collector: newCollector(),
+		pinpoint:  newPinpoint(),
+		syncCall:  NewSyncCall(),
 	}
 	return gAgent
 }
 
-// getSyncID ...
-func (a *Agent) getSyncID() uint32 {
-	return atomic.AddUint32(&a.syncID, 1)
-}
-
-// initAppName ...
-func (a *Agent) initAppName() error {
-
-	return nil
-	// 使用环境变量
-	// if misc.Conf.Agent.UseEnv {
-	// 	if misc.Conf.Agent.ENV == "" {
-	// 		g.L.Fatal("initAppName:.", zap.Error(fmt.Errorf("env is nil")))
-	// 	}
-	// 	name := os.Getenv(misc.Conf.Agent.ENV)
-	// 	if name == "" {
-	// 		g.L.Fatal("initAppName:os.Getenv", zap.Error(fmt.Errorf("get env is nil")), zap.String("env", misc.Conf.Agent.ENV))
-	// 	}
-	// 	a.appName = name
-	// } else {
-	// 	// 从配置文件获取
-	// 	if len(misc.Conf.Agent.AppName) > 0 {
-	// 		a.appName = misc.Conf.Agent.AppName
-	// 	} else {
-	// 		// 从主机名获取
-	// 		_, agentName := getAgentIDAndName()
-	// 		a.appName = agentName
-	// 	}
-	// }
-
-	// g.L.Info("initAppName", zap.String("AppName", a.appName))
-
-	// return nil
-}
-
-// setAgentInfo ...
-func (a *Agent) setAgentInfo(agentID string) {
-	// a.agentID = agentID
-}
-
-// Start ...
+// Start 启动
 func (a *Agent) Start() error {
-	// 获取App name
-	if err := a.initAppName(); err != nil {
-		g.L.Fatal("Start:a.initAppInfo", zap.Error(err))
+
+	// 获取Appname
+	if err := a.getAppname(); err != nil {
+		g.L.Warn("get app name", zap.String("error", err.Error()))
+		return err
 	}
 
-	// 启动upload
-	go a.upload()
+	// etcd 初始化
+	if err := a.etcd.Init(); err != nil {
+		g.L.Warn("etcd init", zap.String("error", err.Error()))
+		return err
+	}
 
-	// 初始化处理下行命令等
-	go a.download()
+	// 启动服务发现
+	if err := a.etcd.Start(); err != nil {
+		g.L.Warn("etcd start", zap.String("error", err.Error()))
+		return err
+	}
 
-	// 初始化tcp client
-	go a.client.Init()
-
-	// 上报agent信息
-	go a.reportAgentInfo()
-
-	g.L.Info("Start:a.pinpoint.Start", zap.Any("agentConf", misc.Conf.Agent))
-	// start pinpoint
+	// 监控采集服务启动
 	if err := a.pinpoint.Start(); err != nil {
-		g.L.Fatal("Start:a.pinpoint.Start", zap.Error(err))
+		g.L.Warn("pinpoint start", zap.String("error", err.Error()))
+		return err
 	}
 
-	// 启动系统信息采集
-	go a.systemCollector.Start()
+	// agent 信息上报服务
+	go reportAgentInfo()
+
+	g.L.Info("Agent start ok")
 
 	return nil
 }
 
-func (a *Agent) reportAgentInfo() {
+// Close 关闭
+func (a *Agent) Close() error {
+	return nil
+}
+
+// getAppname 获取本机App名
+func (a *Agent) getAppname() error {
+	a.appName = "test"
+	a.agentID = "test-1"
+	return nil
+}
+
+// @TODO 上报agent info机制需要优化，在各种断线&collector服务切换的情况都需要考虑
+func reportAgentInfo() {
 	for {
 		time.Sleep(3 * time.Second)
-		if a.isReportAgentInfo {
-			pinpointData := util.NewPinpointData()
-			pinpointData.Type = util.TypeOfTCPData
-			pinpointData.AppName = a.agentInfo.AppName
-			pinpointData.AgentID = a.agentInfo.AgentID
-			agentInfoBuf, err := msgpack.Marshal(a.agentInfo)
+		if !gAgent.isReportInfo {
+			infoPack := network.NewSpansPacket()
+			infoPack.Type = ttype.TypeOfTCPData
+			infoPack.AppName = gAgent.appName
+			infoPack.AgentID = gAgent.agentID
+			infoBuf, err := msgpack.Marshal(infoPack)
 			if err != nil {
-				g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				continue
 			}
-
-			spanData := &util.SpanDataModel{
-				Spans: agentInfoBuf,
+			spanData := &network.Spans{
+				Spans: infoBuf,
 			}
 
-			if a.agentInfo.IsLive == false {
-				spanData.Type = util.TypeOfAgentOffline
+			if gAgent.isLive == false {
+				spanData.Type = ttype.TypeOfAgentOffline
 			} else {
-				spanData.Type = util.TypeOfRegister
+				spanData.Type = ttype.TypeOfRegister
 			}
 
-			pinpointData.Payload = append(pinpointData.Payload, spanData)
-			payload, err := msgpack.Marshal(pinpointData)
+			infoPack.Payload = append(infoPack.Payload, spanData)
+			payload, err := msgpack.Marshal(infoPack)
 			if err != nil {
-				g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				continue
 			}
 
-			// 获取ID
 			id := gAgent.getSyncID()
-			packet := &util.TracingPacket{
-				Type:       util.TypeOfPinpoint,
-				Version:    util.VersionOf01,
-				IsSync:     util.TypeOfSyncYes,
-				IsCompress: util.TypeOfCompressNo,
+			packet := &network.TracePack{
+				Type:       ttype.TypeOfPinpoint,
+				IsSync:     ttype.TypeOfSyncYes,
+				IsCompress: ttype.TypeOfCompressNo,
 				ID:         id,
 				Payload:    payload,
 			}
 
-			if err := gAgent.client.WritePacket(packet); err != nil {
-				g.L.Warn("ApplicationCodeRegister:gAgent.client.WritePacket", zap.String("error", err.Error()))
+			if err := gAgent.collector.write(packet); err != nil {
+				g.L.Warn("write info", zap.String("error", err.Error()))
 				continue
 			}
 
 			// 创建chan
 			if _, ok := gAgent.syncCall.newChan(id, 10); !ok {
-				g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.newChan", zap.String("error", "创建sync chan失败"))
+				g.L.Warn("syncCall newChan", zap.String("error", "创建sync chan失败"))
 				continue
 			}
 
 			// 阻塞同步等待，并关闭chan
 			if _, err := gAgent.syncCall.syncRead(id, 10, true); err != nil {
-				g.L.Warn("ApplicationCodeRegister:gAgent.syncCall.syncRead", zap.String("error", err.Error()))
+				g.L.Warn("syncRead", zap.String("error", err.Error()))
 				continue
 			}
 
-			// 上报成功无须上报
-			a.isReportAgentInfo = false
-			a.isReportAgentInfoSuccess = true
+			gAgent.isReportInfo = true
 		}
 	}
 }
 
-func (a *Agent) write(data *util.TracingPacket) {
-
-}
-
-// Close ...
-func (a *Agent) Close() error {
-
-	// 是否启用系统信息采集
-	if misc.Conf.System.OnOff {
-		a.systemCollector.Close()
-	}
-
-	return nil
-}
-
-func (a *Agent) upload() {
-	defer func() {
-		if err := recover(); err != nil {
-			g.L.Warn("report:.", zap.Stack("server"), zap.Any("err", err))
-		}
-	}()
-
-	for {
-		select {
-		case p, ok := <-a.uploadC:
-			if ok {
-				if err := a.client.WritePacket(p); err != nil {
-					g.L.Warn("report:client.WritePacket", zap.String("error", err.Error()))
-				}
-			}
-			break
-		}
-	}
-}
-
-func (a *Agent) download() {
-	for {
-		select {
-		case p, ok := <-a.downloadC:
-			if ok {
-				g.L.Info("cmd", zap.Any("msg", p))
-			}
-		case <-a.quitC:
-			return
-		}
-	}
-}
-
-// getAgentIDAndName ...
-func getAgentIDAndName() (agentId, agentName string) {
-	host, err := os.Hostname()
-	if err != nil {
-		log.Fatalln("[FATAL] get hostname error: ", err)
-	}
-	hostS := strings.Split(host, "-")
-	if len(hostS) == 1 {
-		return host, host
-	} else if len(hostS) == 3 {
-		var id string
-		if strings.ToLower(hostS[2]) == "vip" {
-			id = "v"
-		} else if strings.ToLower(hostS[2]) == "yf" {
-			id = "y"
-		} else {
-			id = hostS[2]
-		}
-		return hostS[1] + id, hostS[1]
-	} else if len(hostS) == 4 {
-		var id string
-		if strings.ToLower(hostS[3]) == "vip" {
-			id = "v"
-		} else if strings.ToLower(hostS[3]) == "yf" {
-			id = "y"
-		} else {
-			id = hostS[3]
-		}
-		return hostS[1] + hostS[2] + id, hostS[1] + hostS[2]
-	}
-	return "", ""
-}
-
-// GetHostName get host name
-func GetHostName() (string, error) {
-	host, err := os.Hostname()
-	if err != nil {
-		return "", err
-	}
-	return host, err
+// getSyncID ...
+func (a *Agent) getSyncID() uint32 {
+	return atomic.AddUint32(&a.syncID, 1)
 }

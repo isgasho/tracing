@@ -1,7 +1,7 @@
-CREATE KEYSPACE vgo_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
+CREATE KEYSPACE tracing_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
     AND durable_writes = true;
 
-USE vgo_v1_datacenter;
+USE tracing_v1_datacenter;
 
 -- 用户表
 CREATE TABLE IF NOT EXISTS account (
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS admin (
     priv text,
     PRIMARY KEY (id)
 ) WITH gc_grace_seconds = 10800;
+
 INSERT INTO admin (id,priv) VALUES ('13269','super_admin');
 
 -- 告警用户组表
@@ -115,7 +116,7 @@ CREATE TABLE IF NOT EXISTS agents (
     is_live             BOOLEAN,
     is_container        BOOLEAN,
     operating_env       int,
-    tracing_addr            text,
+    tracing_addr        text,
     agent_info          text,
     PRIMARY KEY (app_name, agent_id)
 ) WITH gc_grace_seconds = 10800;
@@ -196,7 +197,7 @@ CREATE TABLE IF NOT EXISTS traces_chunk (
 
 CREATE TABLE IF NOT EXISTS apps (
     app_name        text,
-    last_count_time BIGINT,
+    -- last_count_time BIGINT,
     PRIMARY KEY (app_name)
 ) WITH gc_grace_seconds = 10800;  
 
@@ -275,10 +276,10 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON exception_stats (input_date)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
-
+-- app api表
 CREATE TABLE IF NOT EXISTS  app_apis (
-    app_name            text,
-    api                 text,
+    app_name            text, -- app name
+    api                 text, -- api信息
     PRIMARY KEY (app_name, api)
 ) WITH gc_grace_seconds = 10800;  
 

@@ -6,41 +6,40 @@ import (
 	"time"
 
 	"github.com/imdevlab/g"
+	"github.com/shaocongcong/tracing/pkg/proto/network"
 	"go.uber.org/zap"
-
-	"github.com/imdevlab/tracing/util"
 )
 
 // SyncCall ...
 type SyncCall struct {
 	sync.RWMutex
-	Chans map[uint32]chan *util.TracingPacket
+	Chans map[uint32]chan *network.TracePack
 }
 
 // NewSyncCall ...
 func NewSyncCall() *SyncCall {
 	return &SyncCall{
-		Chans: make(map[uint32]chan *util.TracingPacket),
+		Chans: make(map[uint32]chan *network.TracePack),
 	}
 }
 
 // newChan 创建新的chan
-func (sc *SyncCall) newChan(id uint32, length int) (chan *util.TracingPacket, bool) {
-	packC := make(chan *util.TracingPacket, length)
+func (sc *SyncCall) newChan(id uint32, length int) (chan *network.TracePack, bool) {
+	packC := make(chan *network.TracePack, length)
 	sc.Lock()
 	defer sc.Unlock()
 	sc.Chans[id] = packC
 	return packC, true
 }
 
-func (sc *SyncCall) addChan(id uint32, packetC chan *util.TracingPacket) {
+func (sc *SyncCall) addChan(id uint32, packetC chan *network.TracePack) {
 	sc.Lock()
 	defer sc.Unlock()
 	sc.Chans[id] = packetC
 }
 
 // syncRead 阻塞等待
-func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.TracingPacket, error) {
+func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*network.TracePack, error) {
 	sc.RLock()
 	packetC, ok := sc.Chans[id]
 	sc.RUnlock()
@@ -57,7 +56,7 @@ func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.Tracing
 	}()
 	select {
 	case <-ticker.C:
-		g.L.Warn("syncRead:ticker.C.timeout", zap.Uint32("id", id), zap.Int("timeOut", timeOut))
+		g.L.Warn("sync timeout", zap.Uint32("id", id), zap.Int("timeOut", timeOut))
 		break
 	case packet, ok := <-packetC:
 		if ok {
@@ -69,7 +68,7 @@ func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*util.Tracing
 }
 
 // syncWrite 阻塞写
-func (sc *SyncCall) syncWrite(id uint32, packet *util.TracingPacket) error {
+func (sc *SyncCall) syncWrite(id uint32, packet *network.TracePack) error {
 	sc.RLock()
 	packetC, ok := sc.Chans[id]
 	sc.RUnlock()
