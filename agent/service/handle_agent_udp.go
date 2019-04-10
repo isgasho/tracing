@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/proto/pinpoint/thrift"
@@ -18,6 +19,7 @@ func handleAgentUDP(data []byte) (*util.SpanDataModel, error) {
 	case *trace.TSpan:
 		spanModel.Type = util.TypeOfTSpan
 		spanModel.Spans = data
+		log.Println("trace id", string(m.GetTransactionId()))
 		break
 	case *trace.TSpanChunk:
 		spanModel.Type = util.TypeOfTSpanChunk
