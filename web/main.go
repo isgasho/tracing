@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/imdevlab/tracing/web/cmd"
+import "github.com/imdevlab/tracing/web/internal/cmd"
 
 func main() {
 	cmd.Execute()

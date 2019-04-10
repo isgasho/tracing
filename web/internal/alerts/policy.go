@@ -7,7 +7,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/util"
+	"github.com/imdevlab/tracing/pkg/util"
 	ecode "github.com/imdevlab/tracing/web/internal/error_code"
 	"github.com/imdevlab/tracing/web/internal/misc"
 	"github.com/imdevlab/tracing/web/internal/session"
