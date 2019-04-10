@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/shaocongcong/tracing/collector/cmd"
+import "github.com/imdevlab/tracing/collector/cmd"
 
 func main() {
 	cmd.Execute()

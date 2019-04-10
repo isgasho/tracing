@@ -4,8 +4,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/shaocongcong/tracing/pkg/proto/network"
-	"github.com/shaocongcong/tracing/pkg/proto/ttype"
+	"github.com/imdevlab/tracing/pkg/network"
+	"github.com/imdevlab/tracing/pkg/ttype"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/imdevlab/g"

@@ -14,7 +14,7 @@
 
 package main
 
-import "github.com/shaocongcong/tracing/agent/cmd"
+import "github.com/imdevlab/tracing/agent/cmd"
 
 func main() {
 	cmd.Execute()

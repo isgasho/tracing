@@ -6,12 +6,12 @@ import (
 	"net"
 
 	"github.com/imdevlab/g"
-	"github.com/shaocongcong/tracing/pkg/proto/network"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/pinpoint"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/trace"
-	"github.com/shaocongcong/tracing/pkg/proto/sql"
-	"github.com/shaocongcong/tracing/pkg/proto/ttype"
+	"github.com/imdevlab/tracing/pkg/network"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/sql"
+	"github.com/imdevlab/tracing/pkg/ttype"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )

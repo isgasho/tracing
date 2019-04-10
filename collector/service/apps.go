@@ -7,7 +7,7 @@ import (
 	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
 )
 
 // Apps 所有app服务信息

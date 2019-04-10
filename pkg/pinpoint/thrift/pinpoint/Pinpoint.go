@@ -10,7 +10,7 @@ import (
 	"fmt"
 
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/command"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/command"
 )
 
 // (needed to ensure safety because of naive import list construction.)

@@ -8,10 +8,9 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/util"
-	"github.com/shaocongcong/tracing/collector/misc"
-	"github.com/shaocongcong/tracing/pkg/proto/network"
-	"github.com/shaocongcong/tracing/pkg/proto/ttype"
+	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/pkg/network"
+	"github.com/imdevlab/tracing/pkg/ttype"
 	"github.com/vmihailenco/msgpack"
 )
 
@@ -120,7 +119,7 @@ func cmdPacket(conn net.Conn, packet *network.TracePack) error {
 	}
 	switch cmd.Type {
 	case ttype.TypeOfPing:
-		ping := util.NewPing()
+		ping := network.NewPing()
 		if err := msgpack.Unmarshal(cmd.Payload, ping); err != nil {
 			g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
 			return err

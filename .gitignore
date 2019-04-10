@@ -1,6 +1,7 @@
 .idea/
-.bin/
 tracing/tracing
 agent/agent
-analyze/analyze
+collector/collector
+alert/alert
 web/web
+.DS_Store

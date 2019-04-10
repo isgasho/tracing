@@ -10,10 +10,10 @@ import (
 	"github.com/imdevlab/g/utils"
 	"go.uber.org/zap"
 
-	"github.com/shaocongcong/tracing/collector/misc"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/pinpoint"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/trace"
-	"github.com/shaocongcong/tracing/pkg/proto/stats"
+	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/stats"
 )
 
 // 服务统计数据只实时计算1分钟的点，不做任何滑动窗口

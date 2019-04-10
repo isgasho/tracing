@@ -6,11 +6,11 @@ import (
 	"net"
 	"time"
 
-	"github.com/shaocongcong/tracing/pkg/proto/network"
-	"github.com/shaocongcong/tracing/pkg/proto/ttype"
+	"github.com/imdevlab/tracing/pkg/network"
+	"github.com/imdevlab/tracing/pkg/ttype"
 
 	"github.com/imdevlab/g"
-	"github.com/shaocongcong/tracing/collector/misc"
+	"github.com/imdevlab/tracing/collector/misc"
 	"go.uber.org/zap"
 )
 

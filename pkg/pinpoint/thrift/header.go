@@ -2,9 +2,9 @@ package thrift
 
 import (
 	"git.apache.org/thrift.git/lib/go/thrift"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/command"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/pinpoint"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/command"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
 )
 
 type Header struct {

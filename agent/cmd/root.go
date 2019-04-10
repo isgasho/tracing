@@ -7,8 +7,8 @@ import (
 	"syscall"
 
 	"github.com/imdevlab/g"
-	"github.com/shaocongcong/tracing/agent/misc"
-	"github.com/shaocongcong/tracing/agent/service"
+	"github.com/imdevlab/tracing/agent/misc"
+	"github.com/imdevlab/tracing/agent/service"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 )

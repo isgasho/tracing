@@ -6,12 +6,11 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/util"
-	"github.com/shaocongcong/tracing/collector/misc"
-	"github.com/shaocongcong/tracing/pkg/proto/network"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/pinpoint"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/trace"
-	"github.com/shaocongcong/tracing/pkg/proto/sql"
+	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/pkg/network"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/sql"
 	"github.com/sunface/talent"
 	"go.uber.org/zap"
 )
@@ -510,26 +509,26 @@ func (s *Storage) systemStore() {
 }
 
 // WriteMetric ...
-func (s *Storage) WriteMetric(metrics []*util.MetricData) error {
-	// batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+// func (s *Storage) WriteMetric(metrics []*util.MetricData) error {
+// batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
 
-	// for _, metric := range metrics {
-	// 	b, err := json.Marshal(&metric.Payload)
-	// 	if err != nil {
-	// 		g.L.Warn("json", zap.String("error", err.Error()), zap.Any("data", metric.Payload))
-	// 		continue
-	// 	}
-	// 	batchInsert.Query(misc.InsertSystems,
-	// 		metric.AppName,
-	// 		metric.AgentID,
-	// 		metric.Time,
-	// 		b)
+// for _, metric := range metrics {
+// 	b, err := json.Marshal(&metric.Payload)
+// 	if err != nil {
+// 		g.L.Warn("json", zap.String("error", err.Error()), zap.Any("data", metric.Payload))
+// 		continue
+// 	}
+// 	batchInsert.Query(misc.InsertSystems,
+// 		metric.AppName,
+// 		metric.AgentID,
+// 		metric.Time,
+// 		b)
 
-	// }
+// }
 
-	// if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-	// 	g.L.Warn("insert metric", zap.String("error", err.Error()), zap.String("SQL", misc.InsertSystems))
-	// 	return err
-	// }
-	return nil
-}
+// if err := s.cql.ExecuteBatch(batchInsert); err != nil {
+// 	g.L.Warn("insert metric", zap.String("error", err.Error()), zap.String("SQL", misc.InsertSystems))
+// 	return err
+// }
+// 	return nil
+// }

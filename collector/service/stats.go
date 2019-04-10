@@ -1,10 +1,10 @@
 package service
 
 import (
-	"github.com/shaocongcong/tracing/collector/misc"
-	"github.com/shaocongcong/tracing/pkg/proto/pinpoint/thrift/trace"
-	"github.com/shaocongcong/tracing/pkg/proto/stats"
-	"github.com/shaocongcong/tracing/pkg/proto/ttype"
+	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/stats"
+	"github.com/imdevlab/tracing/pkg/ttype"
 )
 
 // Stats 计算结果

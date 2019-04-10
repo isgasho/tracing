@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/shaocongcong/tracing/agent/misc"
+	"github.com/imdevlab/tracing/agent/misc"
 
 	"github.com/imdevlab/g"
 	"go.etcd.io/etcd/clientv3"

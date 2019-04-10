@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/snappy"
 	"github.com/imdevlab/g"
-	"github.com/shaocongcong/tracing/pkg/proto/ttype"
+	"github.com/imdevlab/tracing/pkg/ttype"
 	"go.uber.org/zap"
 )
 

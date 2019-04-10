@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/imdevlab/g"
-	"github.com/shaocongcong/tracing/pkg/proto/network"
+	"github.com/imdevlab/tracing/pkg/network"
 	"go.uber.org/zap"
 )
 
