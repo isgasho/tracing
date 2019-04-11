@@ -9,6 +9,7 @@ import (
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/collector/storage"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/ttype"
 	"github.com/vmihailenco/msgpack"
@@ -16,10 +17,10 @@ import (
 
 // Collector 采集服务
 type Collector struct {
-	etcd      *Etcd    // 服务上报
-	apps      *Apps    // app集合
-	tickers   *Tickers // 定时器
-	storage   *Storage // 存储
+	etcd      *Etcd            // 服务上报
+	apps      *Apps            // app集合
+	tickers   *Tickers         // 定时器
+	storage   *storage.Storage // 存储
 	tcpServer *tcpServer
 }
 
@@ -31,7 +32,7 @@ func New() *Collector {
 		etcd:      newEtcd(),
 		apps:      newApps(),
 		tickers:   newTickers(10),
-		storage:   newStorage(),
+		storage:   storage.NewStorage(),
 		tcpServer: newtcpServer(),
 	}
 	return gCollector

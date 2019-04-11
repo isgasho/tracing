@@ -10,7 +10,6 @@ import (
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/sql"
 	"github.com/imdevlab/tracing/pkg/ttype"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
@@ -37,12 +36,8 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 
 				// 检查内存中是否存在app信息，不存在存入数据库中
 				if !gCollector.apps.isAppExist(agentInfo.AppName) {
-					query := gCollector.storage.cql.Query(
-						sql.InsertApp,
-						agentInfo.AppName,
-					)
-					if err := query.Exec(); err != nil {
-						g.L.Warn("insert apps error", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+					if err := gCollector.storage.AppNameStore(agentInfo.AppName); err != nil {
+						g.L.Warn("insert apps error", zap.String("error", err.Error()))
 						return err
 					}
 				}
@@ -118,19 +113,19 @@ func udpRequest(appName, agentID string, data []byte) {
 	tStruct := thrift.Deserialize(data)
 	switch m := tStruct.(type) {
 	case *trace.TSpan:
-		gCollector.storage.spanChan <- m
+		gCollector.storage.SpanStore(m)
 		gCollector.apps.routerSapn(appName, agentID, m)
 		break
 	case *trace.TSpanChunk:
-		gCollector.storage.spanChunkChan <- m
+		gCollector.storage.SpanChunkStore(m)
 		break
 	case *pinpoint.TAgentStat:
-		if err := gCollector.storage.writeAgentStat(appName, agentID, m, data); err != nil {
+		if err := gCollector.storage.WriteAgentStat(appName, agentID, m, data); err != nil {
 			g.L.Warn("agent stat", zap.String("error", err.Error()))
 		}
 		break
 	case *pinpoint.TAgentStatBatch:
-		if err := gCollector.storage.writeAgentStatBatch(appName, agentID, m, data); err != nil {
+		if err := gCollector.storage.WriteAgentStatBatch(appName, agentID, m, data); err != nil {
 			g.L.Warn("stat batch", zap.String("error", err.Error()))
 		}
 		break

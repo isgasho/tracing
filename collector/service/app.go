@@ -124,7 +124,7 @@ func (a *App) stats() {
 func (a *App) statsSpan(span *trace.TSpan) error {
 	// api缓存并入库
 	if !a.apiIsExist(span.GetRPC()) {
-		if err := gCollector.storage.storeAPI(span); err != nil {
+		if err := gCollector.storage.StoreAPI(span); err != nil {
 			g.L.Warn("store api", zap.String("error", err.Error()))
 			return err
 		}
