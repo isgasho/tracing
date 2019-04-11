@@ -66,25 +66,23 @@ func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *stat
 	}
 
 	for _, event := range spanChunk.GetSpanEventList() {
-		{
-			isErr := false
-			// 是否有异常抛出
-			if event.GetExceptionInfo() != nil {
-				isErr = true
-			}
-			// 计算method
-			s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
-			// 计算sql
-			annotations := event.GetAnnotations()
-			for _, annotation := range annotations {
-				// 20为数据库类型
-				if annotation.GetKey() == 20 {
-					s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
-				}
-			}
-			// 异常计算
-			s.exceptionCount(event.GetApiId(), event)
+		isErr := false
+		// 是否有异常抛出
+		if event.GetExceptionInfo() != nil {
+			isErr = true
 		}
+		// 计算method
+		s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
+		// 计算sql
+		annotations := event.GetAnnotations()
+		for _, annotation := range annotations {
+			// 20为数据库类型
+			if annotation.GetKey() == 20 {
+				s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
+			}
+		}
+		// 异常计算
+		s.exceptionCount(event.GetApiId(), event)
 	}
 }
 
@@ -191,25 +189,23 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *stats.SrvMapStats) {
 		s.MethodStats.APIStr = span.GetRPC()
 	}
 	for _, event := range span.GetSpanEventList() {
-		{
-			isErr := false
-			// 是否有异常抛出
-			if event.GetExceptionInfo() != nil {
-				isErr = true
-			}
-			// 计算method
-			s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
-			// 计算sql
-			annotations := event.GetAnnotations()
-			for _, annotation := range annotations {
-				// 20为数据库类型
-				if annotation.GetKey() == 20 {
-					s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
-				}
-			}
-			// 异常计算
-			s.exceptionCount(event.GetApiId(), event)
+		isErr := false
+		// 是否有异常抛出
+		if event.GetExceptionInfo() != nil {
+			isErr = true
 		}
+		// 计算method
+		s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
+		// 计算sql
+		annotations := event.GetAnnotations()
+		for _, annotation := range annotations {
+			// 20为数据库类型
+			if annotation.GetKey() == 20 {
+				s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
+			}
+		}
+		// 异常计算
+		s.exceptionCount(event.GetApiId(), event)
 	}
 }
 
