@@ -10,14 +10,14 @@ import (
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
 )
 
-// Apps 所有app服务信息
-type Apps struct {
+// AppStore 所有app服务信息
+type AppStore struct {
 	sync.RWMutex
 	apps map[string]*App // app集合
 }
 
 // isExist app是否存在
-func (a *Apps) isAppExist(name string) bool {
+func (a *AppStore) isAppExist(name string) bool {
 	a.RLock()
 	_, ok := a.apps[name]
 	a.RUnlock()
@@ -27,7 +27,7 @@ func (a *Apps) isAppExist(name string) bool {
 	return true
 }
 
-func (a *Apps) storeAgent(name string, id string, startTime int64) {
+func (a *AppStore) storeAgent(name string, id string, startTime int64) {
 	a.RLock()
 	app, ok := a.apps[name]
 	a.RUnlock()
@@ -41,7 +41,7 @@ func (a *Apps) storeAgent(name string, id string, startTime int64) {
 }
 
 // isExist agent是否存在
-func (a *Apps) isAgentExist(name, agentid string) bool {
+func (a *AppStore) isAgentExist(name, agentid string) bool {
 
 	a.RLock()
 	app, ok := a.apps[name]
@@ -54,13 +54,13 @@ func (a *Apps) isAgentExist(name, agentid string) bool {
 	return app.isExist(agentid)
 }
 
-func newApps() *Apps {
-	return &Apps{
+func newAppStore() *AppStore {
+	return &AppStore{
 		apps: make(map[string]*App),
 	}
 }
 
-func (a *Apps) getApp(appName string) (*App, bool) {
+func (a *AppStore) getApp(appName string) (*App, bool) {
 	a.RLock()
 	app, ok := a.apps[appName]
 	a.RUnlock()
@@ -68,7 +68,7 @@ func (a *Apps) getApp(appName string) (*App, bool) {
 }
 
 // routerSapn 路由span
-func (a *Apps) routerSapn(appName, agentID string, span *trace.TSpan) error {
+func (a *AppStore) routerSapn(appName, agentID string, span *trace.TSpan) error {
 	app, ok := a.getApp(appName)
 	if !ok {
 		// 缓存App
@@ -91,7 +91,7 @@ func (a *Apps) routerSapn(appName, agentID string, span *trace.TSpan) error {
 }
 
 // routerSapnChunk 路由sapnChunk
-func (a *Apps) routersapnChunk(appName, agentID string, spanChunk *trace.TSpanChunk) error {
+func (a *AppStore) routersapnChunk(appName, agentID string, spanChunk *trace.TSpanChunk) error {
 	app, ok := a.getApp(appName)
 	if !ok {
 		// 缓存App

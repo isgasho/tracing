@@ -7,6 +7,7 @@ import (
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
@@ -478,23 +479,19 @@ func (s *Storage) StoreAPI(span *trace.TSpan) error {
 	return nil
 }
 
-func (s *Storage) storeServiceType() error {
-	// batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
-	// inputServiceType := `
-	// 	INSERT
-	// 	INTO service_type(service_type, info)
-	// 	VALUES (?, ?) ;`
-	// for svrID, info := range util.ServiceType {
-	// 	batchInsert.Query(
-	// 		inputServiceType,
-	// 		svrID,
-	// 		info)
-	// }
-
-	// if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-	// 	g.L.Warn("storeServiceType", zap.String("error", err.Error()), zap.String("SQL", inputServiceType))
-	// 	return err
-	// }
+// StoreSrvType 存储服务类型
+func (s *Storage) StoreSrvType() error {
+	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+	for svrID, info := range constant.ServiceType {
+		batchInsert.Query(
+			sql.InsertSrvType,
+			svrID,
+			info)
+	}
+	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
+		g.L.Warn("insert server type", zap.String("SQL", sql.InsertSrvType), zap.String("error", err.Error()))
+		return err
+	}
 	return nil
 }
 

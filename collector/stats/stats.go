@@ -88,6 +88,11 @@ func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *metr
 
 // apiCallCounter 接口被哪些服务调用计算
 func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
+	// spanID 为-1的情况该服务就是父节点，查不到被谁调用，这里可以考虑能不能抓到请求者到IP
+	if span.ParentSpanId == -1 {
+		return
+	}
+
 	api, ok := apiCall.APIS[span.GetApiId()]
 	if !ok {
 		api = metric.NewAPI()
@@ -108,6 +113,11 @@ func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
 
 // srvMapCounter 计算服务拓扑图
 func srvMapCounter(srvMap *metric.SrvMapStats, span *trace.TSpan) {
+	// spanID 为-1的情况该服务就是父节点
+	if span.ParentSpanId == -1 {
+		return
+	}
+
 	srvMap.AppType = span.GetServiceType()
 	srv, ok := srvMap.SrvMaps[span.GetParentApplicationName()]
 	if !ok {

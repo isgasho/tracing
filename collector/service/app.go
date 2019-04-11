@@ -95,7 +95,9 @@ func (a *App) stats() {
 			// 链路统计信息计算
 			a.tickerTrace()
 			// 拓扑信息计算
-			a.tickerMap()
+			a.reportSrvMap()
+			// 被调用统计
+			a.reportCall()
 			break
 		case span, ok := <-a.spanC:
 			if ok {
@@ -312,6 +314,27 @@ func (a *App) tickerTrace() error {
 
 	// log.Println("计算节点", time.Unix(key, 0).String())
 
+	// APIStats        *metric.APIStats        // api计算统计
+	// MethodStats     *metric.MethodStats     // 接口计算统计
+	// SQLStats        *metric.SQLStats        // sql语句计算统计
+	// ExceptionsStats *metric.ExceptionsStats // 异常计算统计
+
+	for apiStr, apiInfo := range a.points[key].APIStats.APIs {
+		log.Println("Api统计信息", apiStr, apiInfo)
+	}
+
+	for methodID, methodInfo := range a.points[key].MethodStats.Methods {
+		log.Println("method统计信息", a.points[key].MethodStats.APIStr, methodID, methodInfo)
+	}
+
+	for sqlID, sqlInfo := range a.points[key].SQLStats.SQLs {
+		log.Println("SQL统计信息", sqlID, sqlInfo)
+	}
+
+	for apiID, exInfo := range a.points[key].ExceptionsStats.APIEx {
+		log.Println("SQL统计信息", apiID, exInfo.Exceptions)
+	}
+
 	log.Println("api", a.points[key].APIStats)
 	log.Println("method", a.points[key].MethodStats)
 	log.Println("sql", a.points[key].SQLStats)
@@ -322,8 +345,73 @@ func (a *App) tickerTrace() error {
 }
 
 // 各类拓扑图定时计算上报
-func (a *App) tickerMap() error {
-	log.Println("apiCall", a.apiCall)
-	log.Println("srvMap", a.srvmap)
+func (a *App) reportSrvMap() error {
+	// log.Println("apiCall", a.apiCall)
+	// log.Println("srvMap", a.srvmap)
+	// 清空之前节点
+	a.orderlyKey = a.orderlyKey[:0]
+	// 赋值
+	for key := range a.srvmap {
+		a.orderlyKey = append(a.orderlyKey, key)
+	}
+	// 排序
+	sort.Sort(a.orderlyKey)
+	// 如果没有计算节点直接返回
+	if a.orderlyKey.Len() <= 0 {
+		return nil
+	}
+
+	key := a.orderlyKey[0]
+	// 延迟计算，防止defer 时间内span未上报
+	if time.Now().Unix() < key+misc.Conf.Stats.MapRange {
+		return nil
+	}
+
+	for parentName, parentInfo := range a.srvmap[key].SrvMaps {
+		log.Println("应用拓扑图统计信息", a.srvmap[key].AppType, parentName, parentInfo)
+	}
+
+	for dbType, dbInfo := range a.srvmap[key].DBMaps {
+		log.Println("数据库拓扑图统计信息", a.srvmap[key].AppType, dbType, dbInfo)
+	}
+
+	// 上报打点信息并删除该时间点信息
+	delete(a.srvmap, key)
+
+	return nil
+}
+
+// reportCall api被调用情况
+func (a *App) reportCall() error {
+	// log.Println("apiCall", a.apiCall)
+	// log.Println("apiCall", a.apiCall)
+	// 清空之前节点
+	a.orderlyKey = a.orderlyKey[:0]
+	// 赋值
+	for key := range a.apiCall {
+		a.orderlyKey = append(a.orderlyKey, key)
+	}
+	// 排序
+	sort.Sort(a.orderlyKey)
+	// 如果没有计算节点直接返回
+	if a.orderlyKey.Len() <= 0 {
+		return nil
+	}
+
+	key := a.orderlyKey[0]
+	// 延迟计算，防止defer 时间内span未上报
+	if time.Now().Unix() < key+misc.Conf.Stats.APICallRang {
+		return nil
+	}
+
+	for apiID, callInfo := range a.apiCall[key].APIS {
+		for parentName, parentInfo := range callInfo.Parents {
+			log.Println("服务被调用统计", apiID, parentName, parentInfo)
+		}
+	}
+
+	// 上报打点信息并删除该时间点信息
+	delete(a.apiCall, key)
+
 	return nil
 }

@@ -22,7 +22,7 @@ import (
 // Collector 采集服务
 type Collector struct {
 	etcd    *Etcd            // 服务上报
-	apps    *Apps            // app集合
+	apps    *AppStore        // app集合
 	tickers *ticker.Tickers  // 定时器
 	storage *storage.Storage // 存储
 }
@@ -33,7 +33,7 @@ var gCollector *Collector
 func New() *Collector {
 	gCollector = &Collector{
 		etcd:    newEtcd(),
-		apps:    newApps(),
+		apps:    newAppStore(),
 		tickers: ticker.NewTickers(10),
 		storage: storage.NewStorage(),
 	}
@@ -46,6 +46,12 @@ func (c *Collector) Start() error {
 	// 启动存储服务
 	if err := c.storage.Start(); err != nil {
 		g.L.Warn("storage start", zap.String("error", err.Error()))
+		return err
+	}
+
+	// 存储服务类型
+	if err := c.storage.StoreSrvType(); err != nil {
+		g.L.Warn("store server type", zap.String("error", err.Error()))
 		return err
 	}
 

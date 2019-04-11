@@ -61,3 +61,9 @@ var InsertOperIndex string = `
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 var InsertAPIs string = `INSERT INTO app_apis (app_name, api) VALUES (?, ?) ;`
+
+// 插入服务类型
+var InsertSrvType string = `
+INSERT
+INTO service_type(service_type, info)
+VALUES (?, ?) ;`
