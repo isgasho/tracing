@@ -31,6 +31,7 @@ func (s *Stats) spanCounter(span *trace.TSpan, srvMap *stats.SrvMapStats, apiCal
 	{
 		s.apiCounter(span)
 	}
+
 	// 计算API被哪些服务调用
 	{
 		apiCallCounter(apiCall, span)
@@ -46,6 +47,45 @@ func (s *Stats) spanCounter(span *trace.TSpan, srvMap *stats.SrvMapStats, apiCal
 	}
 
 	return nil
+}
+
+// counter 计算
+func (s *Stats) spanChunkCounter(spanChunk *trace.TSpanChunk, srvMap *stats.SrvMapStats, apiCall *stats.APICallStats) error {
+	// 计算method、sql、exceptions
+	{
+		s.eventsCounterSpanChunk(spanChunk, srvMap)
+	}
+	return nil
+}
+
+// eventsCounterSpanChunk  计算method、sql、exceptions,
+func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *stats.SrvMapStats) {
+	// 这里获取不到api str 是否要抛弃该数据包， 或者method就不要放在api这个key下面
+	if len(s.MethodStats.APIStr) == 0 {
+		// continue
+	}
+
+	for _, event := range spanChunk.GetSpanEventList() {
+		{
+			isErr := false
+			// 是否有异常抛出
+			if event.GetExceptionInfo() != nil {
+				isErr = true
+			}
+			// 计算method
+			s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
+			// 计算sql
+			annotations := event.GetAnnotations()
+			for _, annotation := range annotations {
+				// 20为数据库类型
+				if annotation.GetKey() == 20 {
+					s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
+				}
+			}
+			// 异常计算
+			s.exceptionCount(event.GetApiId(), event)
+		}
+	}
 }
 
 // apiCallCounter 接口被哪些服务调用计算

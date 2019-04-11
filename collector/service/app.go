@@ -103,7 +103,12 @@ func (a *App) stats() {
 				}
 			}
 			break
-		case <-a.spanChunkC:
+		case spanChunk, ok := <-a.spanChunkC:
+			if ok {
+				if err := a.statsSpanChunk(spanChunk); err != nil {
+					g.L.Warn("stats span", zap.String("error", err.Error()))
+				}
+			}
 			break
 		case <-a.statC:
 			break
@@ -133,7 +138,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		return err
 	}
 
-	// 获取时间戳
+	// 获取时间戳并将其精确到分钟
 	spanKey := t.Unix() - int64(t.Second())
 
 	// 查找时间点，不存在新申请
@@ -179,6 +184,67 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	}
 
 	lstats.spanCounter(span, srvMap, apiCall)
+
+	return nil
+}
+
+// statsSpanChunk 计算模块
+func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
+
+	// 计算当前spanChunk时间范围点
+	t, err := utils.MSToTime(spanChunk.GetKeyTime())
+	if err != nil {
+		g.L.Warn("ms to time", zap.Int64("time", spanChunk.GetKeyTime()), zap.String("error", err.Error()))
+		return err
+	}
+
+	// 获取时间戳
+	spanKey := t.Unix() - int64(t.Second())
+
+	// 查找时间点，不存在新申请
+	lstats, ok := a.points[spanKey]
+	if !ok {
+		lstats = newStats()
+		a.points[spanKey] = lstats
+	}
+
+	// 计算
+	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
+	if a.srvMapKey == 0 {
+		a.srvMapKey = spanKey + misc.Conf.Stats.MapRange
+	} else {
+		// 需要更新计算下标key
+		if a.srvMapKey+misc.Conf.Stats.MapRange > spanKey {
+			a.srvMapKey = spanKey + misc.Conf.Stats.MapRange
+		}
+	}
+
+	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
+	if a.apiCallKey == 0 {
+		a.apiCallKey = spanKey + misc.Conf.Stats.APICallRang
+	} else {
+		// 需要更新计算下标key
+		if a.apiCallKey+misc.Conf.Stats.APICallRang > spanKey {
+			a.apiCallKey = spanKey + misc.Conf.Stats.APICallRang
+		}
+	}
+
+	// 获取拓扑计算点
+	srvMap, ok := a.srvmap[a.srvMapKey]
+	if !ok {
+		// 新点保存
+		srvMap = stats.NewSrvMapStats()
+		a.srvmap[a.srvMapKey] = srvMap
+	}
+
+	// 获取Apicall计算节点
+	apiCall, ok := a.apiCall[a.apiCallKey]
+	if !ok {
+		apiCall = stats.NewAPICallStats()
+		a.apiCall[a.apiCallKey] = apiCall
+	}
+
+	lstats.spanChunkCounter(spanChunk, srvMap, apiCall)
 
 	return nil
 }
