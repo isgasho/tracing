@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // APIStats api统计
 type APIStats struct {

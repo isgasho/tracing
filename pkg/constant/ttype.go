@@ -1,4 +1,4 @@
-package ttype
+package constant
 
 // 第一级类型
 const (

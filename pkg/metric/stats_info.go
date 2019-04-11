@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // Info 统计信息
 type Info struct {

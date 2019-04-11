@@ -11,9 +11,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/collector/stats"
+	"github.com/imdevlab/tracing/pkg/metric"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/stats"
 )
 
 // 服务统计数据只实时计算1分钟的点，不做任何滑动窗口
@@ -32,12 +33,12 @@ type App struct {
 	statC      chan *pinpoint.TAgentStat      // jvm状态类型通道
 	statBatchC chan *pinpoint.TAgentStatBatch // 批量jvm状态类型通道
 	apis       map[string]struct{}            // 接口信息
-	orderlyKey OrderlyKey                     // 排序打点
-	points     map[int64]*Stats               // 计算点集合
+	orderlyKey stats.OrderlyKey               // 排序打点
+	points     map[int64]*stats.Stats         // 计算点集合
 	srvMapKey  int64                          // 拓扑计算当前计算key
-	srvmap     map[int64]*stats.SrvMapStats   // 服务拓扑图
+	srvmap     map[int64]*metric.SrvMapStats  // 服务拓扑图
 	apiCallKey int64                          // API被调用计算当前计算key
-	apiCall    map[int64]*stats.APICallStats  // API被调用
+	apiCall    map[int64]*metric.APICallStats // API被调用
 }
 
 func newApp(name string) *App {
@@ -50,9 +51,9 @@ func newApp(name string) *App {
 		statC:      make(chan *pinpoint.TAgentStat, 200),
 		statBatchC: make(chan *pinpoint.TAgentStatBatch, 200),
 		apis:       make(map[string]struct{}),
-		points:     make(map[int64]*Stats),
-		srvmap:     make(map[int64]*stats.SrvMapStats),
-		apiCall:    make(map[int64]*stats.APICallStats),
+		points:     make(map[int64]*stats.Stats),
+		srvmap:     make(map[int64]*metric.SrvMapStats),
+		apiCall:    make(map[int64]*metric.APICallStats),
 	}
 	app.start()
 	return app
@@ -144,7 +145,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	// 查找时间点，不存在新申请
 	lstats, ok := a.points[spanKey]
 	if !ok {
-		lstats = newStats()
+		lstats = stats.NewStats()
 		a.points[spanKey] = lstats
 	}
 	// 计算
@@ -172,18 +173,18 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	srvMap, ok := a.srvmap[a.srvMapKey]
 	if !ok {
 		// 新点保存
-		srvMap = stats.NewSrvMapStats()
+		srvMap = metric.NewSrvMapStats()
 		a.srvmap[a.srvMapKey] = srvMap
 	}
 
 	// 获取Apicall计算节点
 	apiCall, ok := a.apiCall[a.apiCallKey]
 	if !ok {
-		apiCall = stats.NewAPICallStats()
+		apiCall = metric.NewAPICallStats()
 		a.apiCall[a.apiCallKey] = apiCall
 	}
 
-	lstats.spanCounter(span, srvMap, apiCall)
+	lstats.SpanCounter(span, srvMap, apiCall)
 
 	return nil
 }
@@ -204,7 +205,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	// 查找时间点，不存在新申请
 	lstats, ok := a.points[spanKey]
 	if !ok {
-		lstats = newStats()
+		lstats = stats.NewStats()
 		a.points[spanKey] = lstats
 	}
 
@@ -233,18 +234,18 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	srvMap, ok := a.srvmap[a.srvMapKey]
 	if !ok {
 		// 新点保存
-		srvMap = stats.NewSrvMapStats()
+		srvMap = metric.NewSrvMapStats()
 		a.srvmap[a.srvMapKey] = srvMap
 	}
 
 	// 获取Apicall计算节点
 	apiCall, ok := a.apiCall[a.apiCallKey]
 	if !ok {
-		apiCall = stats.NewAPICallStats()
+		apiCall = metric.NewAPICallStats()
 		a.apiCall[a.apiCallKey] = apiCall
 	}
 
-	lstats.spanChunkCounter(spanChunk, srvMap, apiCall)
+	lstats.SpanChunkCounter(spanChunk, srvMap, apiCall)
 
 	return nil
 }
@@ -274,8 +275,13 @@ func (a *App) storeAPI(api string) {
 	a.Unlock()
 }
 
-func (a *App) routerSpan(appName, agentID string, span *trace.TSpan) error {
+func (a *App) recvSpan(appName, agentID string, span *trace.TSpan) error {
 	a.spanC <- span
+	return nil
+}
+
+func (a *App) recvSpanChunk(appName, agentID string, spanChunk *trace.TSpanChunk) error {
+	a.spanChunkC <- spanChunk
 	return nil
 }
 

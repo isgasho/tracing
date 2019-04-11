@@ -1,4 +1,4 @@
-package ttype
+package constant
 
 var ServiceType map[int]string
 

@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // ExceptionsStats 异常计算统计
 type ExceptionsStats struct {

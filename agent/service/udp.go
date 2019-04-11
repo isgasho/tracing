@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/imdevlab/tracing/pkg/network"
-	"github.com/imdevlab/tracing/pkg/ttype"
+	"github.com/imdevlab/tracing/pkg/constant"
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
@@ -18,19 +18,19 @@ func udpRead(data []byte) (*network.Spans, error) {
 	tStruct := thrift.Deserialize(data)
 	switch m := tStruct.(type) {
 	case *trace.TSpan:
-		spans.Type = ttype.TypeOfTSpan
+		spans.Type = constant.TypeOfTSpan
 		spans.Spans = data
 		break
 	case *trace.TSpanChunk:
-		spans.Type = ttype.TypeOfTSpanChunk
+		spans.Type = constant.TypeOfTSpanChunk
 		spans.Spans = data
 		break
 	case *pinpoint.TAgentStat:
-		spans.Type = ttype.TypeOfTAgentStat
+		spans.Type = constant.TypeOfTAgentStat
 		spans.Spans = data
 		break
 	case *pinpoint.TAgentStatBatch:
-		spans.Type = ttype.TypeOfTAgentStatBatch
+		spans.Type = constant.TypeOfTAgentStatBatch
 		spans.Spans = data
 		break
 	default:

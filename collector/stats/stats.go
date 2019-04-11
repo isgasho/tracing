@@ -1,32 +1,32 @@
-package service
+package stats
 
 import (
 	"github.com/imdevlab/tracing/collector/misc"
+	"github.com/imdevlab/tracing/pkg/constant"
+	"github.com/imdevlab/tracing/pkg/metric"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/stats"
-	"github.com/imdevlab/tracing/pkg/ttype"
 )
 
 // Stats 计算结果
 type Stats struct {
-	APIStats        *stats.APIStats        // api计算统计
-	MethodStats     *stats.MethodStats     // 接口计算统计
-	SQLStats        *stats.SQLStats        // sql语句计算统计
-	ExceptionsStats *stats.ExceptionsStats // 异常计算统计
+	APIStats        *metric.APIStats        // api计算统计
+	MethodStats     *metric.MethodStats     // 接口计算统计
+	SQLStats        *metric.SQLStats        // sql语句计算统计
+	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
 }
 
-// newStats ....
-func newStats() *Stats {
+// NewStats ....
+func NewStats() *Stats {
 	return &Stats{
-		APIStats:        stats.NewAPIStats(),
-		MethodStats:     stats.NewMethodStats(),
-		SQLStats:        stats.NewSQLStats(),
-		ExceptionsStats: stats.NewExceptionsStats(),
+		APIStats:        metric.NewAPIStats(),
+		MethodStats:     metric.NewMethodStats(),
+		SQLStats:        metric.NewSQLStats(),
+		ExceptionsStats: metric.NewExceptionsStats(),
 	}
 }
 
-// counter 计算
-func (s *Stats) spanCounter(span *trace.TSpan, srvMap *stats.SrvMapStats, apiCall *stats.APICallStats) error {
+// SpanCounter 计算
+func (s *Stats) SpanCounter(span *trace.TSpan, srvMap *metric.SrvMapStats, apiCall *metric.APICallStats) error {
 	// 计算API信息
 	{
 		s.apiCounter(span)
@@ -49,8 +49,8 @@ func (s *Stats) spanCounter(span *trace.TSpan, srvMap *stats.SrvMapStats, apiCal
 	return nil
 }
 
-// counter 计算
-func (s *Stats) spanChunkCounter(spanChunk *trace.TSpanChunk, srvMap *stats.SrvMapStats, apiCall *stats.APICallStats) error {
+// SpanChunkCounter counter 计算
+func (s *Stats) SpanChunkCounter(spanChunk *trace.TSpanChunk, srvMap *metric.SrvMapStats, apiCall *metric.APICallStats) error {
 	// 计算method、sql、exceptions
 	{
 		s.eventsCounterSpanChunk(spanChunk, srvMap)
@@ -59,7 +59,7 @@ func (s *Stats) spanChunkCounter(spanChunk *trace.TSpanChunk, srvMap *stats.SrvM
 }
 
 // eventsCounterSpanChunk  计算method、sql、exceptions,
-func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *stats.SrvMapStats) {
+func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *metric.SrvMapStats) {
 	// 这里获取不到api str 是否要抛弃该数据包， 或者method就不要放在api这个key下面
 	if len(s.MethodStats.APIStr) == 0 {
 		// continue
@@ -87,15 +87,15 @@ func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *stat
 }
 
 // apiCallCounter 接口被哪些服务调用计算
-func apiCallCounter(apiCall *stats.APICallStats, span *trace.TSpan) {
+func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
 	api, ok := apiCall.APIS[span.GetApiId()]
 	if !ok {
-		api = stats.NewAPI()
+		api = metric.NewAPI()
 		apiCall.APIS[span.GetApiId()] = api
 	}
 	parent, ok := api.Parents[span.GetParentApplicationName()]
 	if !ok {
-		parent = stats.NewParentInfo()
+		parent = metric.NewParentInfo()
 		parent.Type = span.GetParentApplicationType()
 		api.Parents[span.GetParentApplicationName()] = parent
 	}
@@ -107,11 +107,11 @@ func apiCallCounter(apiCall *stats.APICallStats, span *trace.TSpan) {
 }
 
 // srvMapCounter 计算服务拓扑图
-func srvMapCounter(srvMap *stats.SrvMapStats, span *trace.TSpan) {
+func srvMapCounter(srvMap *metric.SrvMapStats, span *trace.TSpan) {
 	srvMap.AppType = span.GetServiceType()
 	srv, ok := srvMap.SrvMaps[span.GetParentApplicationName()]
 	if !ok {
-		srv = stats.NewParentInfo()
+		srv = metric.NewParentInfo()
 		srv.Type = span.GetParentApplicationType()
 		srvMap.SrvMaps[span.GetParentApplicationName()] = srv
 	}
@@ -124,21 +124,21 @@ func srvMapCounter(srvMap *stats.SrvMapStats, span *trace.TSpan) {
 }
 
 // 计算sql拓扑图
-func sqlMapCounter(srvMap *stats.SrvMapStats, event *trace.TSpanEvent) {
+func sqlMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent) {
 	isDB := false
-	if event.ServiceType == ttype.MYSQL_EXECUTE_QUERY {
+	if event.ServiceType == constant.MYSQL_EXECUTE_QUERY {
 		isDB = true
-	} else if event.ServiceType == ttype.REDIS {
+	} else if event.ServiceType == constant.REDIS {
 		isDB = true
-	} else if event.ServiceType == ttype.ORACLE_EXECUTE_QUERY {
+	} else if event.ServiceType == constant.ORACLE_EXECUTE_QUERY {
 		isDB = true
-	} else if event.ServiceType == ttype.POSTGRESQL_EXECUTE_QUERY {
+	} else if event.ServiceType == constant.POSTGRESQL_EXECUTE_QUERY {
 		isDB = true
 	}
 	if isDB {
 		dbInfo, ok := srvMap.DBMaps[event.ServiceType]
 		if !ok {
-			dbInfo = stats.NewDBInfo()
+			dbInfo = metric.NewDBInfo()
 			srvMap.DBMaps[event.ServiceType] = dbInfo
 		}
 
@@ -154,7 +154,7 @@ func sqlMapCounter(srvMap *stats.SrvMapStats, event *trace.TSpanEvent) {
 func (s *Stats) apiCounter(span *trace.TSpan) {
 	apiInfo, ok := s.APIStats.Get(span.GetRPC())
 	if !ok {
-		apiInfo = stats.NewAPIInfo()
+		apiInfo = metric.NewAPIInfo()
 		s.APIStats.Store(span.GetRPC(), apiInfo)
 	}
 
@@ -184,7 +184,7 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 }
 
 // counterEvents 计算method、SQL信息
-func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *stats.SrvMapStats) {
+func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
 	if len(s.MethodStats.APIStr) == 0 {
 		s.MethodStats.APIStr = span.GetRPC()
 	}
@@ -212,7 +212,7 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *stats.SrvMapStats) {
 func (s *Stats) methodCount(apiID int32, elapsed int32, isErr bool) {
 	methodInfo, ok := s.MethodStats.Get(apiID)
 	if !ok {
-		methodInfo = stats.NewMethodInfo()
+		methodInfo = metric.NewMethodInfo()
 		s.MethodStats.Store(apiID, methodInfo)
 	}
 
@@ -237,7 +237,7 @@ func (s *Stats) methodCount(apiID int32, elapsed int32, isErr bool) {
 func (s *Stats) sqlCount(sqlID int32, elapsed int32, isErr bool) {
 	sqlInfo, ok := s.SQLStats.Get(sqlID)
 	if !ok {
-		sqlInfo = stats.NewSQLInfo()
+		sqlInfo = metric.NewSQLInfo()
 		s.SQLStats.Store(sqlID, sqlInfo)
 	}
 
@@ -268,13 +268,13 @@ func (s *Stats) exceptionCount(apiID int32, event *trace.TSpanEvent) {
 
 	apiEx, ok := s.ExceptionsStats.Get(apiID)
 	if !ok {
-		apiEx = stats.NewAPIExceptions()
+		apiEx = metric.NewAPIExceptions()
 		s.ExceptionsStats.Store(apiID, apiEx)
 	}
 
 	ex, ok := apiEx.Exceptions[exInfo.GetStringValue()]
 	if !ok {
-		ex = stats.NewExceptionInfo()
+		ex = metric.NewExceptionInfo()
 		apiEx.Exceptions[exInfo.GetStringValue()] = ex
 	}
 

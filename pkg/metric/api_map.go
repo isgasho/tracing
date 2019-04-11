@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // APICallStats api被调用情况
 type APICallStats struct {

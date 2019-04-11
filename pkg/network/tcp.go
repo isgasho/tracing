@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/snappy"
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/pkg/ttype"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"go.uber.org/zap"
 )
 
@@ -28,7 +28,7 @@ func NewTracePack() *TracePack {
 // Encode encode
 func (t *TracePack) Encode() []byte {
 	// 压缩
-	if t.IsCompress == ttype.TypeOfCompressYes {
+	if t.IsCompress == constant.TypeOfCompressYes {
 		if len(t.Payload) > 0 {
 			compressBuf := snappy.Encode(nil, t.Payload)
 			t.Payload = compressBuf
@@ -73,7 +73,7 @@ func (t *TracePack) Decode(rdr io.Reader) error {
 			return err
 		}
 		// 解压
-		if t.IsCompress == ttype.TypeOfCompressYes {
+		if t.IsCompress == constant.TypeOfCompressYes {
 			t.Payload, err = snappy.Decode(nil, payload)
 			if err != nil {
 				g.L.Warn("Decode:snappy.Decode", zap.String("error", err.Error()))

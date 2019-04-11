@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // MethodStats 接口计算统计
 type MethodStats struct {

@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // SrvMapStats 应用拓扑
 type SrvMapStats struct {

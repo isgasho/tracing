@@ -10,7 +10,7 @@ import (
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/ttype"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -24,10 +24,10 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 	}
 
 	switch packet.Type {
-	case ttype.TypeOfTCPData:
+	case constant.TypeOfTCPData:
 		for _, value := range packet.Payload {
 			switch value.Type {
-			case ttype.TypeOfRegister:
+			case constant.TypeOfRegister:
 				agentInfo := network.NewAgentInfo()
 				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
 					g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
@@ -57,7 +57,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 				}
 
 				break
-			case ttype.TypeOfAgentOffline:
+			case constant.TypeOfAgentOffline:
 
 				// 			// Agent下线处理
 				// 			agentInfo := util.NewAgentInfo()
@@ -85,7 +85,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 				// 			g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
 
 				break
-			case ttype.TypeOfAgentInfo, ttype.TypeOfSQLMetaData, ttype.TypeOfAPIMetaData, ttype.TypeOfStringMetaData:
+			case constant.TypeOfAgentInfo, constant.TypeOfSQLMetaData, constant.TypeOfAPIMetaData, constant.TypeOfStringMetaData:
 				if err := tcpRequestResponse(packet, value.Spans); err != nil {
 					g.L.Warn("tcpRequestResponse", zap.String("error", err.Error()))
 					return err
@@ -97,7 +97,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 			}
 		}
 		break
-	case ttype.TypeOfUDPData:
+	case constant.TypeOfUDPData:
 		for _, value := range packet.Payload {
 			udpRequest(packet.AppName, packet.AgentID, value.Spans)
 		}

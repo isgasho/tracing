@@ -81,9 +81,32 @@ func (a *Apps) routerSapn(appName, agentID string, span *trace.TSpan) error {
 		}
 	}
 
-	// 路由span
-	if err := app.routerSpan(appName, agentID, span); err != nil {
-		g.L.Warn("router span", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+	// 接收span
+	if err := app.recvSpan(appName, agentID, span); err != nil {
+		g.L.Warn("recv span", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+		return err
+	}
+
+	return nil
+}
+
+// routerSapnChunk 路由sapnChunk
+func (a *Apps) routersapnChunk(appName, agentID string, spanChunk *trace.TSpanChunk) error {
+	app, ok := a.getApp(appName)
+	if !ok {
+		// 缓存App
+		a.storeAgent(appName, agentID, spanChunk.AgentStartTime)
+
+		// 新App在重新找一次
+		app, ok = a.getApp(appName)
+		if !ok {
+			return fmt.Errorf("unfind app, app name is %s", appName)
+		}
+	}
+
+	// 接收spanChunk
+	if err := app.recvSpanChunk(appName, agentID, spanChunk); err != nil {
+		g.L.Warn("recv spanChunk", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
 		return err
 	}
 

@@ -9,7 +9,7 @@ import (
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/agent/misc"
 	"github.com/imdevlab/tracing/pkg/network"
-	"github.com/imdevlab/tracing/pkg/ttype"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -80,7 +80,7 @@ func (t *tcpClient) init(addr string) error {
 			}
 		}
 	}()
-	reader := bufio.NewReaderSize(t.conn, ttype.MaxMessageSize)
+	reader := bufio.NewReaderSize(t.conn, constant.MaxMessageSize)
 	for {
 		select {
 		case <-quitC:
@@ -93,7 +93,7 @@ func (t *tcpClient) init(addr string) error {
 			}
 			// 发给上层处理
 			switch packet.IsSync {
-			case ttype.TypeOfSyncYes:
+			case constant.TypeOfSyncYes:
 				if err := gAgent.syncCall.syncWrite(packet.ID, packet); err != nil {
 					g.L.Warn("syncWrite", zap.Error(err))
 				}
@@ -125,7 +125,7 @@ func (t *tcpClient) keeplive() error {
 	}
 
 	cmd := network.NewCMD()
-	cmd.Type = ttype.TypeOfPing
+	cmd.Type = constant.TypeOfPing
 	cmd.Payload = b
 
 	buf, err := msgpack.Marshal(cmd)
@@ -135,9 +135,9 @@ func (t *tcpClient) keeplive() error {
 	}
 
 	packet := &network.TracePack{
-		Type:       ttype.TypeOfCmd,
-		IsSync:     ttype.TypeOfSyncNo,
-		IsCompress: ttype.TypeOfCompressNo,
+		Type:       constant.TypeOfCmd,
+		IsSync:     constant.TypeOfSyncNo,
+		IsCompress: constant.TypeOfCompressNo,
 		ID:         0,
 		Payload:    buf,
 	}

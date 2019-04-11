@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/imdevlab/tracing/pkg/network"
-	"github.com/imdevlab/tracing/pkg/ttype"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/imdevlab/g"
@@ -92,7 +92,7 @@ func reportAgentInfo() {
 		time.Sleep(3 * time.Second)
 		if !gAgent.isReportInfo {
 			infoPack := network.NewSpansPacket()
-			infoPack.Type = ttype.TypeOfTCPData
+			infoPack.Type = constant.TypeOfTCPData
 			infoPack.AppName = gAgent.appName
 			infoPack.AgentID = gAgent.agentID
 			infoBuf, err := msgpack.Marshal(infoPack)
@@ -105,9 +105,9 @@ func reportAgentInfo() {
 			}
 
 			if gAgent.isLive == false {
-				spanData.Type = ttype.TypeOfAgentOffline
+				spanData.Type = constant.TypeOfAgentOffline
 			} else {
-				spanData.Type = ttype.TypeOfRegister
+				spanData.Type = constant.TypeOfRegister
 			}
 
 			infoPack.Payload = append(infoPack.Payload, spanData)
@@ -119,9 +119,9 @@ func reportAgentInfo() {
 
 			id := gAgent.getSyncID()
 			packet := &network.TracePack{
-				Type:       ttype.TypeOfPinpoint,
-				IsSync:     ttype.TypeOfSyncYes,
-				IsCompress: ttype.TypeOfCompressNo,
+				Type:       constant.TypeOfPinpoint,
+				IsSync:     constant.TypeOfSyncYes,
+				IsCompress: constant.TypeOfCompressNo,
 				ID:         id,
 				Payload:    payload,
 			}

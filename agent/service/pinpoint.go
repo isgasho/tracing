@@ -16,7 +16,7 @@ import (
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/ttype"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -139,14 +139,14 @@ func (p *Pinpoint) AgentSpan() error {
 func (p *Pinpoint) tcpCollector() {
 
 	spanPack := network.NewSpansPacket()
-	spanPack.Type = ttype.TypeOfTCPData
+	spanPack.Type = constant.TypeOfTCPData
 	spanPack.AppName = gAgent.appName
 	spanPack.AgentID = gAgent.agentID
 
 	tracePack := &network.TracePack{
-		Type:       ttype.TypeOfPinpoint,
-		IsSync:     ttype.TypeOfSyncNo,
-		IsCompress: ttype.TypeOfCompressYes,
+		Type:       constant.TypeOfPinpoint,
+		IsSync:     constant.TypeOfSyncNo,
+		IsCompress: constant.TypeOfCompressYes,
 	}
 
 	for {
@@ -182,14 +182,14 @@ func (p *Pinpoint) udpCollector() {
 	defer ticker.Stop()
 
 	spanPack := network.NewSpansPacket()
-	spanPack.Type = ttype.TypeOfUDPData
+	spanPack.Type = constant.TypeOfUDPData
 	spanPack.AppName = gAgent.appName
 	spanPack.AgentID = gAgent.agentID
 
 	tracePack := &network.TracePack{
-		Type:       ttype.TypeOfPinpoint,
-		IsSync:     ttype.TypeOfSyncNo,
-		IsCompress: ttype.TypeOfCompressYes,
+		Type:       constant.TypeOfPinpoint,
+		IsSync:     constant.TypeOfSyncNo,
+		IsCompress: constant.TypeOfCompressYes,
 	}
 
 	for {
@@ -485,19 +485,19 @@ func handletcp(message []byte) (*network.Spans, error) {
 	tStruct := thrift.Deserialize(message)
 	switch m := tStruct.(type) {
 	case *pinpoint.TAgentInfo:
-		spans.Type = ttype.TypeOfAgentInfo
+		spans.Type = constant.TypeOfAgentInfo
 		spans.Spans = message
 		break
 	case *trace.TSqlMetaData:
-		spans.Type = ttype.TypeOfSQLMetaData
+		spans.Type = constant.TypeOfSQLMetaData
 		spans.Spans = message
 		break
 	case *trace.TApiMetaData:
-		spans.Type = ttype.TypeOfAPIMetaData
+		spans.Type = constant.TypeOfAPIMetaData
 		spans.Spans = message
 		break
 	case *trace.TStringMetaData:
-		spans.Type = ttype.TypeOfStringMetaData
+		spans.Type = constant.TypeOfStringMetaData
 		spans.Spans = message
 		break
 	default:

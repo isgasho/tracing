@@ -1,4 +1,4 @@
-package stats
+package metric
 
 // SQLStats 接口计算统计
 type SQLStats struct {
