@@ -252,10 +252,10 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 
 func (a *App) start() {
 	// 获取任务ID
-	a.taskID = gCollector.tickers.getID()
+	a.taskID = gCollector.tickers.NewID()
 	g.L.Info("app start", zap.String("name", a.name), zap.Int64("taskID", a.taskID))
 	// 加入定时模块
-	gCollector.tickers.addTask(a.taskID, a.tickerC)
+	gCollector.tickers.AddTask(a.taskID, a.tickerC)
 	// 启动计算模块
 	go a.stats()
 }
