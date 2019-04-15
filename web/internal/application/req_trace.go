@@ -108,7 +108,7 @@ func QueryTraces(c echo.Context) error {
 		ct.Suc = false
 	} else {
 		ct.Suc = true
-		ct.Xaxis = []int64{start.UnixNano() / 1e6, end.UnixNano() / 1e6}
+		ct.Xaxis = []int64{start.Unix() / 1e6, end.Unix() / 1e6}
 		ct.Title = fmt.Sprintf("success: %d, error: %d", len(traces), 0)
 
 		sucData := &TraceSeries{
@@ -132,7 +132,48 @@ func QueryTraces(c echo.Context) error {
 	})
 }
 
+type TraceSpan struct {
+	ID          int64  `json:"id"`
+	AppName     string `json:"app_name"`
+	Method      string `json:"method"`
+	Duration    int    `json:"duration"`
+	Api         string `json:"api"`
+	Params      string `json:"params"`
+	ServiceType string `json:"service_type"`
+	AgentID     string `json:"agent_id"`
+	Class       string `json:"class"`
+	StartTime   string `json:"start_time"`
+}
+
 func QueryTrace(c echo.Context) error {
+	tid := c.FormValue("trace_id")
+
+	q := misc.Cql.Query(`SELECT span_id,parent_id,app_name,agent_id,input_date,elapsed,api,service_type,
+	end_point,remote_addr,err,span_event_list,method_id,annotations from traces where trace_id=?`, tid)
+	iter := q.Iter()
+
+	var spanID, pid, inputDate int64
+	var elapsed, serviceType, err, methodID int
+	var appName, agentID, api, endPoint, remoteAddr, events, annotations string
+	for iter.Scan(&spanID, &pid, &appName, &agentID, &inputDate, &elapsed, &api, &serviceType,
+		&endPoint, &remoteAddr, &err, &events, &methodID, &annotations) {
+		fmt.Println(spanID, pid, appName, agentID, inputDate, elapsed, api, serviceType, endPoint, remoteAddr, err, events, methodID, annotations)
+
+		q = misc.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id=?`, appName, methodID)
+		var apiInfo string
+		var line int
+		err := q.Scan(&apiInfo, &line)
+		if err != nil {
+			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+
+			continue
+		}
+		fmt.Println(apiInfo, line)
+	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
 		Data:   tests.SingleTraceData,

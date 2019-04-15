@@ -11,7 +11,9 @@
             <li class="product ng-scope insights active">
             </li>
             <li class="product ng-scope apm not-active">
-                <a href="/apm/ui/list">应用监控</a>
+                <router-link to="/apm/ui/list">
+                    <a>应用监控</a>
+                </router-link >
             </li>
             <li class="product ng-scope browser not-active">
                 业务监控
@@ -20,7 +22,9 @@
                 系统监控
             </li> -->
             <li class="product ng-scope alerts not-active">
-                <a href="/apm/ui/alerts">告警平台</a>
+                <router-link to="/apm/ui/alerts">
+                    <a>告警平台</a>
+                </router-link >
             </li>
             <li class="product ng-scope infrastructure not-active">
                 使用帮助

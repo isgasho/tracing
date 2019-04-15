@@ -16,7 +16,7 @@
             <div class="font-size-16">最低响应时间(ms)</div>
             <Input  v-model="minElapsed" placeholder="e.g.  100，留空代表不限制" style="width: 100%" size="large" />
           </div>
-           <div class="margin-top-40">
+          <div class="margin-top-40">
             <div class="font-size-16">最大响应时间(ms)</div>
             <Input   v-model="maxElapsed" placeholder="e.g. 3000，留空代表并不限制" style="width: 100%" size="large" />
           </div>
@@ -77,20 +77,25 @@
             </div>
         </div>
 
-        <div class="padding-top-5 trace-pane">
+        <div class="padding-top-5 trace-pane" style="padding-bottom:50px">
           <Row>
-            <Col span="10" class="title split-border">方法(点击具体方法名可查看详情)</Col>
-            <Col span="5"  class="title split-border">参数</Col>
-            <Col span="3" class="title split-border">耗时(ms)</Col>
-            <Col span="3" class="title split-border">API</Col>
+            <Col span="11" class="title split-border">方法(点击具体方法名可查看详情)</Col>
+            <Col span="5"  class="title">参数</Col>
+            <Col span="2" class="title">耗时(ms)</Col>
+            <Col span="3" class="title">API</Col>
             <Col span="3" class="title">所属应用</Col>
           </Row>
           <div  class="body">
             <Row v-for="r in traceData.value" v-show="isShow(r)" class="hover-cursor" @click.native="spanDetail(r)" :class="classObject(r)" >
-              <Col span="10" class="item split-border" :style="{paddingLeft:r.paddingLeft+'px'}"> {{getMethod(r.method)}}</Col>
-              <Col span="5"  class="item split-border"> {{r.params}}</Col>
-              <Col span="3" class="item split-border">{{r.self}}</Col>
-              <Col span="3" class="item split-border"> {{r.api}}</Col>
+              <Col span="11" class="item split-border" :style="{paddingLeft:r.paddingLeft+'px'}"> 
+                <Icon v-if="r.show=='expand'" type="ios-add" @click.stop="expand(r)" style="padding:3px 3px" />
+                <Icon v-else-if="r.show=='collapse'" type="ios-remove" @click.stop="collapse(r)" style="padding:3px 3px"/>
+                <!-- 这里的padding-left是为了让没有展开/收缩符号的文字跟有符号的文字左对齐 -->
+                <span :style="{paddingLeft:calcTextMarginLeft(r)+'px'}">{{getMethod(r.method)}}</span>
+              </Col>
+              <Col span="5"  class="item"> {{r.params}}</Col>
+              <Col span="2" class="item">{{r.self}}</Col>
+              <Col span="3" class="item"> {{r.api}}</Col>
               <Col span="3" class="item">{{r.agentName}}</Col>
             </Row>
           </div>
@@ -120,9 +125,9 @@
           <FormItem label="参数">
               {{selItem.params}}
           </FormItem>
-          <FormItem label="层级(Debug)">
+          <!-- <FormItem label="层级(Debug)">
               {{selItem.name}}
-          </FormItem>
+          </FormItem> -->
       </Form>
     </Drawer>
   </div>   
@@ -192,6 +197,24 @@ export default {
     
   },
   methods: {
+    calcTextMarginLeft(r) {
+      if (r.show != 'expand' && r.show != 'collapse') {
+        return 21
+      }
+      return 0
+    },
+    expand(r) {
+      r.show = 'collapse' 
+      for (var i=0;i<this.collapseList.length;i++) {
+        if (this.collapseList[i] == r.name) {
+          this.collapseList.splice(i,1)
+        }
+      }
+    },
+    collapse(r) {
+       r.show='expand'
+       this.collapseList.push(r.name)
+    },
     queryTraces() {
       this.$Loading.start();
       request({
@@ -209,6 +232,8 @@ export default {
           }
       }).then(res => {
         this.tracesData = res.data.data
+        this.selectedTraces = []
+        console.log("query traces:",this.tracesData)
         this.$Loading.finish();
         if (!this.tracesData.is_suc) {
           this.$Message.info({
@@ -224,6 +249,9 @@ export default {
       // 对于collapseList中的每个值，判断当前行是否在它的子树中，若在，则不显示，跳出循环
       // 若当前name是以collapseList的值为前缀，说明在子树中
       for (var i=0;i<this.collapseList.length;i++) {
+        if (r.name == this.collapseList[i]) {
+          continue
+        }
         var j = r.name.indexOf(this.collapseList[i]);
         if(j == 0){
           return false
@@ -276,10 +304,15 @@ export default {
           url: '/apm/web/trace',
           method: 'GET',
           params: {
-            traceId : t.traceId
+            trace_id : t.traceId
           }
       }).then(res => {
         this.traceData = JSON.parse(res.data.data)
+        for (var i=0;i<this.traceData.value.length;i++) {
+          if (this.traceData.value[i].hasChildren) {
+            this.traceData.value[i].show = 'collapse'
+          } 
+        }
         this.traceVisible = true
         console.log(this.selectedTrace)
         console.log(this.traceData)
@@ -318,7 +351,7 @@ export default {
     background: #f3f3f3;
     padding-left:5px;
     padding-top:6px;
-    padding-bottom:6px
+    padding-bottom:6px;
   }
   .body {
     .item {

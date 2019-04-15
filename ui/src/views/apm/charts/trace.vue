@@ -76,7 +76,7 @@ export default {
                         format: '{value: %m-%d %H:%M}',
                         setp: 1
                     },
-                    tickPositions: [],
+                    // tickPositions: [],
                     startOnTick: true,
                     endOnTick: true,
                     showLastLabel: false,
@@ -111,13 +111,13 @@ export default {
                 plotOptions: {
                     scatter: {
                         marker: {
-                            radius: 3,
-                            states: {
-                                hover: {
-                                    enabled: true,
-                                    // lineColor: 'rgb(100,100,100)'
-                                }
-                            }
+                            radius: 3
+                            // states: {
+                            //     hover: {
+                            //         enabled: true,
+                            //         // lineColor: 'rgb(100,100,100)'
+                            //     }
+                            // }
                         },
                         states: {
                             hover: {
@@ -126,10 +126,10 @@ export default {
                                 }
                             }
                         },
-                        tooltip: {
-                            pointFormat: '{point.x: %m-%d %H:%M:%S}'
-                        },
-                        enableMouseTracking: true,
+                        // tooltip: {
+                        //     pointFormat: '{point.x: %m-%d %H:%M:%S}'
+                        // },
+                        enableMouseTracking: false,
                         turboThreshold: "disable"
                     }
                 },
@@ -140,13 +140,11 @@ export default {
             function selectPointsByDrag(e) {
                 if (e.xAxis && e.yAxis) {
                     var traces = [];
-                    // if (self.tracesChart.series[0].visible === undefined || self.tracesChart.series[0].visible === true) {
                         var succesdata = self.tracesChart.series[0].data;
                         for (var i = 0; i < succesdata.length; i++) {
                             var point = succesdata[i];
                             if (point.x >= e.xAxis[0].min && point.x <= e.xAxis[0].max &&
                                 point.y >= e.yAxis[0].min && point.y <= e.yAxis[0].max) {
-                                // traces += point.traceId + ":" + point.agentId + ":" + point.startTime + ","
                                 var trace = {
                                     traceId: point.id,
                                     agentId: point.agent_id,
@@ -160,14 +158,11 @@ export default {
                               
                             }
                         }
-                    // }
-                    // if (self.tracesChart.series[1].visible === undefined || self.tracesChart.series[1].visible === true) {
                         var errordata = self.tracesChart.series[1].data;
                         for (var j = 0; j < errordata.length; j++) {
                             var point2 = errordata[j];
                             if (point2.x >= e.xAxis[0].min && point2.x <= e.xAxis[0].max &&
                                 point2.y >= e.yAxis[0].min && point2.y <= e.yAxis[0].max) {
-                                // traces += point2.traceId + ":" + point2.agentId + ":" + point2.startTime + ","
                                 var trace2 = {
                                     traceId: point2.id,
                                     agentId: point2.agent_id,
@@ -180,7 +175,6 @@ export default {
                                 traces.push(trace2);
                             }
                         }
-                    // }
 
                     if (traces !== "") {
                         self.$emit("selTraces", traces) 
