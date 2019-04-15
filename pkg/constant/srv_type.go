@@ -344,4 +344,6 @@ func init() {
 	// weblogic
 	ServiceType[1060] = "WEBSPHERE"
 	ServiceType[1061] = "WEBSPHERE_METHOD"
+
+	initAnnotationKeys()
 }
