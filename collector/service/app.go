@@ -312,32 +312,21 @@ func (a *App) tickerTrace() error {
 		return nil
 	}
 
-	// log.Println("计算节点", time.Unix(key, 0).String())
-
-	// APIStats        *metric.APIStats        // api计算统计
-	// MethodStats     *metric.MethodStats     // 接口计算统计
-	// SQLStats        *metric.SQLStats        // sql语句计算统计
-	// ExceptionsStats *metric.ExceptionsStats // 异常计算统计
-
 	for apiStr, apiInfo := range a.points[key].APIStats.APIs {
-		log.Println("Api统计信息", apiStr, apiInfo)
+		gCollector.storage.InsertAPIStats(a.name, key, apiStr, apiInfo)
 	}
 
 	for methodID, methodInfo := range a.points[key].MethodStats.Methods {
-		log.Println("method统计信息", a.points[key].MethodStats.APIStr, methodID, methodInfo)
+		gCollector.storage.InsertMethodStats(a.name, key, a.points[key].MethodStats.APIStr, methodID, methodInfo)
 	}
 
 	for sqlID, sqlInfo := range a.points[key].SQLStats.SQLs {
-		log.Println("SQL统计信息", sqlID, sqlInfo)
+		gCollector.storage.InsertSQLStats(a.name, key, sqlID, sqlInfo)
 	}
 
-	for apiID, exInfo := range a.points[key].ExceptionsStats.APIEx {
-		log.Println("SQL统计信息", apiID, exInfo.Exceptions)
+	for methodID, exceptions := range a.points[key].ExceptionsStats.MethodEx {
+		gCollector.storage.InsertExceptionStats(a.name, key, methodID, exceptions.Exceptions)
 	}
-
-	log.Println("api", a.points[key].APIStats)
-	log.Println("method", a.points[key].MethodStats)
-	log.Println("sql", a.points[key].SQLStats)
 
 	// 上报打点信息并删除该时间点信息
 	delete(a.points, key)

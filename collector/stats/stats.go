@@ -72,12 +72,12 @@ func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *metr
 			isErr = true
 		}
 		// 计算method
-		s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
+		s.methodCount(event.GetApiId(), int(event.GetServiceType()), event.EndElapsed, isErr)
 		// 计算sql
 		annotations := event.GetAnnotations()
 		for _, annotation := range annotations {
 			// 20为数据库类型
-			if annotation.GetKey() == 20 {
+			if annotation.GetKey() == constant.SQL_ID {
 				s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
 			}
 		}
@@ -205,7 +205,7 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
 			isErr = true
 		}
 		// 计算method
-		s.methodCount(event.GetApiId(), event.EndElapsed, isErr)
+		s.methodCount(event.GetApiId(), int(event.GetServiceType()), event.EndElapsed, isErr)
 		// 计算sql
 		annotations := event.GetAnnotations()
 		for _, annotation := range annotations {
@@ -219,10 +219,11 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
 	}
 }
 
-func (s *Stats) methodCount(apiID int32, elapsed int32, isErr bool) {
+func (s *Stats) methodCount(apiID int32, srvType int, elapsed int32, isErr bool) {
 	methodInfo, ok := s.MethodStats.Get(apiID)
 	if !ok {
 		methodInfo = metric.NewMethodInfo()
+		methodInfo.Type = srvType
 		s.MethodStats.Store(apiID, methodInfo)
 	}
 
@@ -269,17 +270,17 @@ func (s *Stats) sqlCount(sqlID int32, elapsed int32, isErr bool) {
 }
 
 // exceptionCount 异常统计
-func (s *Stats) exceptionCount(apiID int32, event *trace.TSpanEvent) {
+func (s *Stats) exceptionCount(methodID int32, event *trace.TSpanEvent) {
 	// 参看是否存在异常，不存在直接返回
 	exInfo := event.GetExceptionInfo()
 	if exInfo == nil {
 		return
 	}
 
-	apiEx, ok := s.ExceptionsStats.Get(apiID)
+	apiEx, ok := s.ExceptionsStats.Get(methodID)
 	if !ok {
 		apiEx = metric.NewAPIExceptions()
-		s.ExceptionsStats.Store(apiID, apiEx)
+		s.ExceptionsStats.Store(methodID, apiEx)
 	}
 
 	ex, ok := apiEx.Exceptions[exInfo.GetStringValue()]

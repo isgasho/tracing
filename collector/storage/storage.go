@@ -8,6 +8,7 @@ import (
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
+	"github.com/imdevlab/tracing/pkg/metric"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
@@ -490,6 +491,91 @@ func (s *Storage) StoreSrvType() error {
 	}
 	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
 		g.L.Warn("insert server type", zap.String("SQL", sql.InsertSrvType), zap.String("error", err.Error()))
+		return err
+	}
+	return nil
+}
+
+// InsertAPIStats ...
+func (s *Storage) InsertAPIStats(appName string, inputTime int64, apiStr string, apiInfo *metric.APIInfo) error {
+	query := s.cql.Query(sql.InsertAPIStats,
+		appName,
+		inputTime,
+		apiStr,
+		apiInfo.TotalElapsed,
+		apiInfo.MaxElapsed,
+		apiInfo.MinElapsed,
+		apiInfo.Count,
+		apiInfo.ErrCount,
+		apiInfo.SatisfactionCount,
+		apiInfo.TolerateCount,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("inster api stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		return err
+	}
+
+	return nil
+}
+
+// InsertMethodStats ...
+func (s *Storage) InsertMethodStats(appName string, inputTime int64, apiStr string, methodID int32, methodInfo *metric.MethodInfo) error {
+	query := s.cql.Query(sql.InsertMethodStats,
+		appName,
+		apiStr,
+		inputTime,
+		methodID,
+		methodInfo.Type,
+		methodInfo.TotalElapsed,
+		methodInfo.MaxElapsed,
+		methodInfo.MinElapsed,
+		methodInfo.Count,
+		methodInfo.ErrCount,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("insert method error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+		return err
+	}
+	return nil
+}
+
+// InsertExceptionStats ...
+func (s *Storage) InsertExceptionStats(appName string, inputTime int64, methodID int32, exceptions map[string]*metric.ExceptionInfo) error {
+	for exStr, exinfo := range exceptions {
+		query := s.cql.Query(sql.InsertExceptionStats,
+			appName,
+			methodID,
+			exStr,
+			inputTime,
+			exinfo.TotalElapsed,
+			exinfo.MaxElapsed,
+			exinfo.MinElapsed,
+			exinfo.Count,
+			exinfo.Type,
+		)
+		if err := query.Exec(); err != nil {
+			g.L.Warn("insert exception error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+			return err
+		}
+	}
+	return nil
+}
+
+// InsertSQLStats ...
+func (s *Storage) InsertSQLStats(appName string, inputTime int64, sqlID int32, sqlInfo *metric.SQLInfo) error {
+	query := s.cql.Query(sql.InserSQLStats,
+		appName,
+		sqlID,
+		inputTime,
+		sqlInfo.TotalElapsed,
+		sqlInfo.MaxElapsed,
+		sqlInfo.MinElapsed,
+		sqlInfo.Count,
+		sqlInfo.ErrCount,
+	)
+
+	if err := query.Exec(); err != nil {
+		g.L.Warn("sql stats insert error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 	return nil

@@ -67,3 +67,21 @@ var InsertSrvType string = `
 INSERT
 INTO service_type(service_type, info)
 VALUES (?, ?) ;`
+
+// API 记录语句
+var InsertAPIStats string = `INSERT INTO api_stats (app_name, input_date, api, total_elapsed, max_elapsed, min_elapsed, count, err_count, satisfaction, tolerate)
+ VALUES (?,?,?,?,?,?,?,?,?,?);`
+
+// InsertMethodStats ...
+var InsertMethodStats string = ` INSERT INTO method_stats (app_name, api, input_date,
+	 method_id, service_type, elapsed, max_elapsed, 
+	 min_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?);`
+
+//  InserSQLStats ...
+var InserSQLStats string = `INSERT INTO sql_stats (app_name, sql, 
+	input_date, elapsed, max_elapsed, min_elapsed, count, err_count) 
+VALUES (?,?,?,?,?,?,?,?);`
+
+// InsertExceptionStats ....
+var InsertExceptionStats string = `INSERT INTO exception_stats (app_name, method_id, exception_info, input_date, total_elapsed, max_elapsed, 
+	min_elapsed, count, service_type) VALUES (?,?,?,?,?,?,?,?,?);`

@@ -2,35 +2,35 @@ package metric
 
 // ExceptionsStats 异常计算统计
 type ExceptionsStats struct {
-	APIEx map[int32]*APIExceptions
+	MethodEx map[int32]*MethodExceptions
 }
 
 // NewExceptionsStats ...
 func NewExceptionsStats() *ExceptionsStats {
 	return &ExceptionsStats{
-		APIEx: make(map[int32]*APIExceptions),
+		MethodEx: make(map[int32]*MethodExceptions),
 	}
 }
 
-// Get 获取Api异常信息
-func (a *ExceptionsStats) Get(apiID int32) (*APIExceptions, bool) {
-	info, ok := a.APIEx[apiID]
+// Get 获取Method异常信息
+func (a *ExceptionsStats) Get(methodID int32) (*MethodExceptions, bool) {
+	info, ok := a.MethodEx[methodID]
 	return info, ok
 }
 
-// Store 存储Api异常信息
-func (a *ExceptionsStats) Store(apiID int32, info *APIExceptions) {
-	a.APIEx[apiID] = info
+// Store 存储methodID异常信息
+func (a *ExceptionsStats) Store(methodID int32, info *MethodExceptions) {
+	a.MethodEx[methodID] = info
 }
 
-// APIExceptions 异常
-type APIExceptions struct {
+// MethodExceptions 异常
+type MethodExceptions struct {
 	Exceptions map[string]*ExceptionInfo
 }
 
 // NewAPIExceptions ...
-func NewAPIExceptions() *APIExceptions {
-	return &APIExceptions{
+func NewAPIExceptions() *MethodExceptions {
+	return &MethodExceptions{
 		Exceptions: make(map[string]*ExceptionInfo),
 	}
 }

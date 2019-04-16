@@ -242,11 +242,10 @@ CREATE TABLE IF NOT EXISTS  api_stats (
     total_elapsed       int,
     max_elapsed         int,
     min_elapsed         int,
-    average_elapsed     double,
     count               int,
     err_count           int,
-    satisfaction        int,
-    tolerate            int,
+    satisfaction        int,    -- 满意
+    tolerate            int,    -- 可容忍
     PRIMARY KEY (app_name, api, input_date)
 ) WITH gc_grace_seconds = 10800;  
 
@@ -263,6 +262,7 @@ CREATE TABLE IF NOT EXISTS  exception_stats (
     method_id           int,
     exception_info      text,
     input_date          bigint,
+    service_type        int,
     total_elapsed       int,
     max_elapsed         int,
     min_elapsed         int,
@@ -285,7 +285,7 @@ CREATE TABLE IF NOT EXISTS  app_apis (
 
 
 
-CREATE TABLE IF NOT EXISTS api_details_stats (
+CREATE TABLE IF NOT EXISTS method_stats (
     app_name        text,
     api             text,
     method_id       int,
@@ -294,13 +294,12 @@ CREATE TABLE IF NOT EXISTS api_details_stats (
     elapsed         int,
     max_elapsed     int,
     min_elapsed     int,
-    average_elapsed double,
     count           int,
     err_count       int,
     PRIMARY KEY (app_name, api, input_date, method_id)
 ) WITH gc_grace_seconds = 10800;  
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON api_details_stats (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON method_stats (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
@@ -312,7 +311,6 @@ CREATE TABLE IF NOT EXISTS sql_stats (
     elapsed         int,
     max_elapsed     int,
     min_elapsed     int,
-    average_elapsed double,
     count           int,
     err_count       int,
     PRIMARY KEY (app_name, sql, input_date)
