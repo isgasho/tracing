@@ -161,6 +161,9 @@ func (c *Collector) startNetwork() error {
 func tcpClient(conn net.Conn) {
 	quitC := make(chan bool, 1)
 	packetC := make(chan *network.TracePack, 100)
+	var appname string
+	var agentid string
+	initName := false
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -174,6 +177,10 @@ func tcpClient(conn net.Conn) {
 			conn.Close()
 		}
 		close(quitC)
+
+		if err := gCollector.storage.UpdateAgentState(appname, agentid, false); err != nil {
+			g.L.Warn("update agent state Store", zap.String("error", err.Error()))
+		}
 	}()
 
 	go tcpRead(conn, packetC, quitC)
@@ -182,6 +189,7 @@ func tcpClient(conn net.Conn) {
 		select {
 		case packet, ok := <-packetC:
 			if !ok {
+				g.L.Info("quit")
 				return
 			}
 			switch packet.Type {
@@ -192,7 +200,7 @@ func tcpClient(conn net.Conn) {
 				}
 				break
 			case constant.TypeOfPinpoint:
-				if err := pinpointPacket(conn, packet); err != nil {
+				if err := pinpointPacket(conn, packet, &appname, &agentid, &initName); err != nil {
 					g.L.Warn("pinpoint packet", zap.String("error", err.Error()))
 					return
 				}
@@ -221,14 +229,13 @@ func tcpRead(conn net.Conn, packetC chan *network.TracePack, quitC chan bool) {
 	}()
 	reader := bufio.NewReaderSize(conn, constant.MaxMessageSize)
 	for {
-
 		select {
 		case <-quitC:
 			break
 		default:
 			packet := network.NewTracePack()
 			if err := packet.Decode(reader); err != nil {
-				g.L.Warn("agentRead:msg.Decode", zap.String("err", err.Error()))
+				g.L.Warn("tcp read error", zap.String("err", err.Error()))
 				return
 			}
 			packetC <- packet

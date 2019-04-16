@@ -81,7 +81,7 @@ func (s *Storage) Close() error {
 }
 
 // AgentStore agent信息存储
-func (s *Storage) AgentStore(agentInfo *network.AgentInfo) error {
+func (s *Storage) AgentStore(agentInfo *network.AgentInfo, islive bool) error {
 	query := s.cql.Query(
 		sql.InsertAgent,
 		agentInfo.AppName,
@@ -91,13 +91,29 @@ func (s *Storage) AgentStore(agentInfo *network.AgentInfo) error {
 		agentInfo.IP4S,
 		agentInfo.StartTimestamp,
 		agentInfo.EndTimestamp,
-		agentInfo.IsLive,
 		agentInfo.IsContainer,
 		agentInfo.OperatingEnv,
 		misc.Conf.Collector.Addr,
+		islive,
 	)
 	if err := query.Exec(); err != nil {
 		g.L.Warn("agent store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		return err
+	}
+
+	return nil
+}
+
+// UpdateAgentState agent在线状态更新
+func (s *Storage) UpdateAgentState(appname string, agentid string, islive bool) error {
+	query := s.cql.Query(
+		sql.UpdateAgentState,
+		islive,
+		appname,
+		agentid,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("update agent state error", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 

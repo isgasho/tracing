@@ -9,7 +9,6 @@ type AgentInfo struct {
 	IP4S           string `db:"ip" json:"ip" msg:"ip"`
 	StartTimestamp int64  `db:"start_time" json:"startTimestamp" msg:"startTimestamp"`
 	EndTimestamp   int64  `db:"end_time" json:"end_time" msg:"end_time"`
-	IsLive         bool   `db:"is_live" json:"is_live" msg:"is_live"`
 	IsContainer    bool   `db:"is_container" json:"is_container" msg:"is_container"`
 	OperatingEnv   int32  `db:"operating_env" json:"operating_env" msg:"operating_env"`
 	AgentInfo      string `db:"agent_info" json:"agent_info" msg:"agent_info"`

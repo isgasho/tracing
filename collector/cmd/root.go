@@ -43,7 +43,7 @@ var rootCmd = &cobra.Command{
 
 		c := service.New()
 		if err := c.Start(); err != nil {
-			g.L.Fatal("start", zap.Error(err))
+			g.L.Fatal("collector start", zap.Error(err))
 		}
 
 		// 等待服务器停止信号

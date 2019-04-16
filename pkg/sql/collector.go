@@ -8,8 +8,11 @@ VALUES (?)`
 
 // agent 信息入库
 var InsertAgent string = `INSERT INTO agents (app_name, agent_id, service_type, 
-	host_name, ip, start_time, end_time, is_live, is_container, operating_env, tracing_addr) 
+	host_name, ip, start_time, end_time, is_container, operating_env, tracing_addr, is_live) 
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
+
+// 更新agent 在线信息
+var UpdateAgentState string = `UPDATE agents  SET is_live=? WHERE app_name =? AND agent_id =?;`
 
 // agent info 信息入库
 var InsertAgentInfo string = `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 

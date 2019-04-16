@@ -11,12 +11,12 @@ import (
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/agent/misc"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/proto"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -243,19 +243,18 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 		}
 	}()
 
-	defer func() {
-		if conn != nil {
-			conn.Close()
-		}
-	}()
-
 	isRecvOffline := false
 	defer func() {
 		if !isRecvOffline {
 			// sdk客户端断线
-			// gAgent.agentInfo.IsLive = false
-			// gAgent.isReportAgentInfo = true
-			// gAgent.agentInfo.EndTimestamp = time.Now().UnixNano() / 1e6
+			gAgent.isLive = false
+			gAgent.isReportInfo = false
+		}
+	}()
+
+	defer func() {
+		if conn != nil {
+			conn.Close()
 		}
 	}()
 
@@ -402,9 +401,8 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 				return err
 			}
 
-			agentInfo.IsLive = true
 			gAgent.isLive = true
-
+			gAgent.isReportInfo = false
 			// 保存App信息
 			gAgent.appName = agentInfo.AppName
 			gAgent.agentID = agentInfo.AgentID
@@ -419,14 +417,11 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 			break
 
 		case proto.CONTROL_CLIENT_CLOSE:
-
 			g.L.Debug("agentInfo", zap.String("type", "CONTROL_CLIENT_CLOSE"))
 			// sdk客户端断线
 			gAgent.isLive = false
-			// gAgent.isReportAgentInfo = true
-			// gAgent.agentInfo.EndTimestamp = time.Now().UnixNano() / 1e6
-			// isRecvOffline = true
-
+			gAgent.isReportInfo = false
+			isRecvOffline = true
 			// controlClientClose := proto.NewControlClientClose()
 			// if err := controlClientClose.Decode(conn, reader); err != nil {
 			// 	g.L.Warn("controlClientClose.Decode", zap.String("error", err.Error()))

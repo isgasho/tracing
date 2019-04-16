@@ -1,11 +1,13 @@
 package service
 
 import (
+	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 
-	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/constant"
+	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/vmihailenco/msgpack"
 
 	"github.com/imdevlab/g"
@@ -79,15 +81,78 @@ func (a *Agent) Close() error {
 	return nil
 }
 
-// getAppname 获取本机App名
-func (a *Agent) getAppname() error {
-	a.appName = "test"
-	a.agentID = "test-1"
+func getApplicationName() error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		g.L.Warn("get host name error", zap.Error(err))
+		return err
+	}
+
+	names := strings.Split(hostname, "-")
+	if len(names) == 1 {
+		gAgent.appName = hostname
+	} else if len(names) == 3 {
+		gAgent.appName = names[1]
+	} else if len(names) == 4 {
+		gAgent.appName = names[1] + names[2]
+	}
 	return nil
 }
 
-// @TODO 上报agent info机制需要优化，在各种断线&collector服务切换的情况都需要考虑
+func getAgentID() error {
+	hostname, err := os.Hostname()
+	if err != nil {
+		g.L.Warn("get host name error", zap.Error(err))
+		return err
+	}
+	names := strings.Split(hostname, "-")
+	if len(names) == 1 {
+		gAgent.agentID = hostname
+	} else if len(names) == 3 {
+		var id string
+		if strings.EqualFold(names[2], "vip") {
+			id = "v"
+		} else if strings.EqualFold(names[2], "yf") {
+			id = "y"
+		} else {
+			id = names[2]
+		}
+		gAgent.agentID = names[1] + id
+	} else if len(names) == 4 {
+		var id string
+		if strings.EqualFold(names[3], "vip") {
+			id = "v"
+		} else if strings.EqualFold(names[3], "yf") {
+			id = "y"
+		} else {
+			id = names[3]
+		}
+		gAgent.agentID = names[1] + names[2] + id
+	}
+	return nil
+}
+
+// getAppname 获取本机App名
+func (a *Agent) getAppname() error {
+
+	getApplicationName()
+	getAgentID()
+
+	g.L.Info("init", zap.String("appName", a.appName))
+	g.L.Info("init", zap.String("agentID", a.agentID))
+
+	return nil
+}
+
+// reportAgentInfo 上报agent 信息
 func reportAgentInfo() {
+	for {
+		time.Sleep(3 * time.Second)
+		if !gAgent.isLive {
+			continue
+		}
+		break
+	}
 	for {
 		time.Sleep(3 * time.Second)
 		if !gAgent.isReportInfo {

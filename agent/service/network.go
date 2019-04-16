@@ -8,8 +8,8 @@ import (
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/agent/misc"
-	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/constant"
+	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )

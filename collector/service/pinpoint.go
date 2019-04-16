@@ -16,7 +16,7 @@ import (
 )
 
 // pinpointPacket 处理agent上报的监控数据
-func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
+func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agentid *string, initName *bool) error {
 	packet := &network.SpansPacket{}
 	if err := msgpack.Unmarshal(tracePack.Payload, packet); err != nil {
 		g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
@@ -33,7 +33,6 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 					g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
-
 				// 检查内存中是否存在app信息，不存在存入数据库中
 				if !gCollector.apps.isAppExist(agentInfo.AppName) {
 					if err := gCollector.storage.AppNameStore(agentInfo.AppName); err != nil {
@@ -42,7 +41,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 					}
 				}
 
-				if err := gCollector.storage.AgentStore(agentInfo); err != nil {
+				if err := gCollector.storage.AgentStore(agentInfo, true); err != nil {
 					g.L.Warn("agent Store", zap.String("error", err.Error()))
 					return err
 				}
@@ -50,6 +49,10 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 				// 内存缓存Agent信息
 				gCollector.apps.storeAgent(agentInfo.AppName, agentInfo.AgentID, agentInfo.StartTimestamp, agentInfo.ServiceType)
 
+				*appname = agentInfo.AppName
+				*agentid = agentInfo.AgentID
+				*initName = true
+				g.L.Info("Online", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
 				// 注册信息原样返回
 				if _, err := conn.Write(tracePack.Encode()); err != nil {
 					g.L.Warn("conn.Write", zap.String("error", err.Error()))
@@ -58,31 +61,23 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 
 				break
 			case constant.TypeOfAgentOffline:
+				agentInfo := network.NewAgentInfo()
+				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
+					g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
+					return err
+				}
 
-				// 			// Agent下线处理
-				// 			agentInfo := util.NewAgentInfo()
-				// 			if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
-				// 				g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
-				// 				return err
-				// 			}
+				if err := gCollector.storage.UpdateAgentState(agentInfo.AppName, agentInfo.AgentID, false); err != nil {
+					g.L.Warn("update agent state Store", zap.String("error", err.Error()))
+					return err
+				}
 
-				// 			g.L.Info("AgentOffline", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
-
-				// 			// 清理内存缓存Agent信息
-				// 			gVgo.appStore.RemoveAgent(agentInfo)
-
-				// 			// 数据库中下线标志
-				// 			if err := gVgo.storage.AgentOffline(packet.AppName, packet.AgentID, agentInfo.StartTimestamp, agentInfo.EndTimestamp, agentInfo.IsLive); err != nil {
-				// 				g.L.Warn("storage.AgentOffline", zap.String("error", err.Error()))
-				// 				return err
-				// 			}
-				// 			// 注册信息原样返回
-				// 			if _, err := conn.Write(inPacket.Encode()); err != nil {
-				// 				g.L.Warn("conn.Write", zap.String("error", err.Error()))
-				// 				return err
-				// 			}
-
-				// 			g.L.Info("agentInfo", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID), zap.Bool("isLive", agentInfo.IsLive))
+				// 信息原样返回
+				if _, err := conn.Write(tracePack.Encode()); err != nil {
+					g.L.Warn("conn.Write", zap.String("error", err.Error()))
+					return err
+				}
+				g.L.Info("Offline", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
 
 				break
 			case constant.TypeOfAgentInfo, constant.TypeOfSQLMetaData, constant.TypeOfAPIMetaData, constant.TypeOfStringMetaData:

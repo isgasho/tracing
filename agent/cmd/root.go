@@ -28,7 +28,9 @@ var rootCmd = &cobra.Command{
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
 		a := service.New()
-		a.Start()
+		if err := a.Start(); err != nil {
+			g.L.Fatal("agent start", zap.Error(err))
+		}
 
 		// 等待服务器停止信号
 		chSig := make(chan os.Signal)

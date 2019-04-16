@@ -337,8 +337,7 @@ func (a *App) tickerTrace() error {
 
 // 各类拓扑图定时计算上报
 func (a *App) reportSrvMap() error {
-	// log.Println("apiCall", a.apiCall)
-	// log.Println("srvMap", a.srvmap)
+
 	// 清空之前节点
 	a.orderlyKey = a.orderlyKey[:0]
 	// 赋值
