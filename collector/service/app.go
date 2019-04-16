@@ -23,6 +23,7 @@ import (
 // App 单个服务信息
 type App struct {
 	sync.RWMutex
+	appType    int32                          // 服务类型
 	taskID     int64                          // 定时任务ID
 	name       string                         // 服务名称
 	agents     map[string]*Agent              // agent集合
@@ -41,8 +42,9 @@ type App struct {
 	apiCall    map[int64]*metric.APICallStats // API被调用
 }
 
-func newApp(name string) *App {
+func newApp(name string, appType int32) *App {
 	app := &App{
+		appType:    appType,
 		name:       name,
 		agents:     make(map[string]*Agent),
 		tickerC:    make(chan bool, 10),
@@ -357,11 +359,11 @@ func (a *App) reportSrvMap() error {
 	}
 
 	for parentName, parentInfo := range a.srvmap[key].SrvMaps {
-		log.Println("应用拓扑图统计信息", a.srvmap[key].AppType, parentName, parentInfo)
+		gCollector.storage.InsertServiceMap(a.name, a.appType, key, parentName, parentInfo)
 	}
 
 	for dbType, dbInfo := range a.srvmap[key].DBMaps {
-		log.Println("数据库拓扑图统计信息", a.srvmap[key].AppType, dbType, dbInfo)
+		gCollector.storage.InsertDBMap(a.name, a.appType, key, int32(dbType), dbInfo)
 	}
 
 	// 上报打点信息并删除该时间点信息

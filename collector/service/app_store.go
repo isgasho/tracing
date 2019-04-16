@@ -27,12 +27,12 @@ func (a *AppStore) isAppExist(name string) bool {
 	return true
 }
 
-func (a *AppStore) storeAgent(name string, id string, startTime int64) {
+func (a *AppStore) storeAgent(name string, id string, startTime int64, appType int32) {
 	a.RLock()
 	app, ok := a.apps[name]
 	a.RUnlock()
 	if !ok {
-		app = newApp(name)
+		app = newApp(name, appType)
 		a.Lock()
 		a.apps[name] = app
 		a.Unlock()
@@ -72,7 +72,7 @@ func (a *AppStore) routerSapn(appName, agentID string, span *trace.TSpan) error 
 	app, ok := a.getApp(appName)
 	if !ok {
 		// 缓存App
-		a.storeAgent(appName, agentID, span.StartTime)
+		a.storeAgent(appName, agentID, span.StartTime, int32(span.GetServiceType()))
 
 		// 新App在重新找一次
 		app, ok = a.getApp(appName)
@@ -95,8 +95,7 @@ func (a *AppStore) routersapnChunk(appName, agentID string, spanChunk *trace.TSp
 	app, ok := a.getApp(appName)
 	if !ok {
 		// 缓存App
-		a.storeAgent(appName, agentID, spanChunk.AgentStartTime)
-
+		a.storeAgent(appName, agentID, spanChunk.AgentStartTime, int32(spanChunk.GetServiceType()))
 		// 新App在重新找一次
 		app, ok = a.getApp(appName)
 		if !ok {

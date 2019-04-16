@@ -6,11 +6,11 @@ import (
 	"net"
 
 	"github.com/imdevlab/g"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
-	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 )
@@ -48,7 +48,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack) error {
 				}
 
 				// 内存缓存Agent信息
-				gCollector.apps.storeAgent(agentInfo.AppName, agentInfo.AgentID, agentInfo.StartTimestamp)
+				gCollector.apps.storeAgent(agentInfo.AppName, agentInfo.AgentID, agentInfo.StartTimestamp, agentInfo.ServiceType)
 
 				// 注册信息原样返回
 				if _, err := conn.Write(tracePack.Encode()); err != nil {

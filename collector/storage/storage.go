@@ -561,6 +561,45 @@ func (s *Storage) InsertExceptionStats(appName string, inputTime int64, methodID
 	return nil
 }
 
+// InsertServiceMap ...
+func (s *Storage) InsertServiceMap(appName string, appType int32, inputTime int64, parentName string, parentInfo *metric.ParentInfo) error {
+	query := s.cql.Query(sql.InsertServiceMap,
+		appName,
+		inputTime,
+		appType,
+		parentName,
+		parentInfo.Type,
+		parentInfo.Count,
+		parentInfo.ErrCount,
+		parentInfo.Totalelapsed,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("insert server map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		return err
+	}
+
+	return nil
+}
+
+// InsertDBMap ...
+func (s *Storage) InsertDBMap(appName string, appType int32, inputTime int64, dbType int32, dbInfo *metric.DBInfo) error {
+	query := s.cql.Query(sql.InserDBMap,
+		appName,
+		inputTime,
+		appType,
+		dbType,
+		dbInfo.Count,
+		dbInfo.ErrCount,
+		dbInfo.Totalelapsed,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("insert db map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		return err
+	}
+
+	return nil
+}
+
 // InsertSQLStats ...
 func (s *Storage) InsertSQLStats(appName string, inputTime int64, sqlID int32, sqlInfo *metric.SQLInfo) error {
 	query := s.cql.Query(sql.InserSQLStats,

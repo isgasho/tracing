@@ -380,7 +380,7 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (input_date)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
-CREATE TABLE IF NOT EXISTS service_db_map (
+CREATE TABLE IF NOT EXISTS db_map (
     app_name            text,               -- 应用名
     input_date          bigint,             -- 插入时间
     service_type        int,                -- 应用类型
@@ -391,6 +391,6 @@ CREATE TABLE IF NOT EXISTS service_db_map (
     PRIMARY KEY (app_name, input_date, db_type)
 ) WITH gc_grace_seconds = 10800;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON service_db_map (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON db_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
