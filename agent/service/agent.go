@@ -45,10 +45,10 @@ func New() *Agent {
 func (a *Agent) Start() error {
 
 	// 获取Appname
-	if err := a.getAppname(); err != nil {
-		g.L.Warn("get app name", zap.String("error", err.Error()))
-		return err
-	}
+	// if err := a.getAppname(); err != nil {
+	// 	g.L.Warn("get app name", zap.String("error", err.Error()))
+	// 	return err
+	// }
 
 	// etcd 初始化
 	if err := a.etcd.Init(); err != nil {

@@ -25,13 +25,13 @@ func (a *ExceptionsStats) Store(methodID int32, info *MethodExceptions) {
 
 // MethodExceptions 异常
 type MethodExceptions struct {
-	Exceptions map[string]*ExceptionInfo
+	Exceptions map[int32]*ExceptionInfo
 }
 
 // NewAPIExceptions ...
 func NewAPIExceptions() *MethodExceptions {
 	return &MethodExceptions{
-		Exceptions: make(map[string]*ExceptionInfo),
+		Exceptions: make(map[int32]*ExceptionInfo),
 	}
 }
 

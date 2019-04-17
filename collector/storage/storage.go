@@ -556,12 +556,12 @@ func (s *Storage) InsertMethodStats(appName string, inputTime int64, apiStr stri
 }
 
 // InsertExceptionStats ...
-func (s *Storage) InsertExceptionStats(appName string, inputTime int64, methodID int32, exceptions map[string]*metric.ExceptionInfo) error {
-	for exStr, exinfo := range exceptions {
+func (s *Storage) InsertExceptionStats(appName string, inputTime int64, methodID int32, exceptions map[int32]*metric.ExceptionInfo) error {
+	for classID, exinfo := range exceptions {
 		query := s.cql.Query(sql.InsertExceptionStats,
 			appName,
 			methodID,
-			exStr,
+			classID,
 			inputTime,
 			exinfo.TotalElapsed,
 			exinfo.MaxElapsed,

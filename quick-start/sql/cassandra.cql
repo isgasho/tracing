@@ -260,14 +260,14 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_stats (input_date)
 CREATE TABLE IF NOT EXISTS  exception_stats (
     app_name            text,
     method_id           int,
-    exception_info      text,
+    class_id            INT,
     input_date          bigint,
     service_type        int,
     total_elapsed       int,
     max_elapsed         int,
     min_elapsed         int,
     count               int,
-    PRIMARY KEY (app_name, method_id, exception_info, input_date)
+    PRIMARY KEY (app_name, method_id, class_id, input_date)
 ) WITH gc_grace_seconds = 10800;  
 
 
@@ -394,3 +394,38 @@ CREATE TABLE IF NOT EXISTS db_map (
 CREATE CUSTOM INDEX IF NOT EXISTS ON db_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+TRUNCATE TABLE alerts_group  ;
+TRUNCATE TABLE alerts_policy ;
+TRUNCATE TABLE account       ;
+TRUNCATE TABLE admin         ;
+
+
+TRUNCATE TABLE agent_stats   ;
+TRUNCATE TABLE agents        ;
+TRUNCATE TABLE login_count  ;
+
+
+TRUNCATE TABLE api_stats          ;
+TRUNCATE TABLE app_alert          ;
+TRUNCATE TABLE app_apis           ;
+TRUNCATE TABLE app_methods        ;
+TRUNCATE TABLE app_operation_index;
+TRUNCATE TABLE app_sqls           ;
+
+TRUNCATE TABLE app_strs         ;
+TRUNCATE TABLE apps             ;
+TRUNCATE TABLE db_map           ;
+TRUNCATE TABLE exception_stats  ;
+TRUNCATE TABLE jvm_cpu_stats    ;
+TRUNCATE TABLE jvm_memory_stats ;
+
+
+TRUNCATE TABLE method_stats ;
+TRUNCATE TABLE service_map  ;
+TRUNCATE TABLE service_type ;
+TRUNCATE TABLE sql_stats    ;
+
+TRUNCATE TABLE traces ;
+TRUNCATE TABLE traces_chunk ;

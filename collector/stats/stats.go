@@ -283,10 +283,10 @@ func (s *Stats) exceptionCount(methodID int32, event *trace.TSpanEvent) {
 		s.ExceptionsStats.Store(methodID, apiEx)
 	}
 
-	ex, ok := apiEx.Exceptions[exInfo.GetStringValue()]
+	ex, ok := apiEx.Exceptions[exInfo.GetIntValue()]
 	if !ok {
 		ex = metric.NewExceptionInfo()
-		apiEx.Exceptions[exInfo.GetStringValue()] = ex
+		apiEx.Exceptions[exInfo.GetIntValue()] = ex
 	}
 
 	ex.TotalElapsed += event.GetEndElapsed()

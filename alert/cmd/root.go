@@ -48,7 +48,9 @@ to quickly create a Cobra application.`,
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
 		a := alert.New()
-		a.Start()
+		if err := a.Start(); err != nil {
+			g.L.Fatal("alert start", zap.Error(err))
+		}
 		// 等待服务器停止信号
 		chSig := make(chan os.Signal)
 		signal.Notify(chSig, syscall.SIGINT, syscall.SIGTERM)

@@ -139,22 +139,23 @@ func (p *Pinpoint) AgentSpan() error {
 func (p *Pinpoint) tcpCollector() {
 
 	spanPack := network.NewSpansPacket()
-	spanPack.Type = constant.TypeOfTCPData
-	spanPack.AppName = gAgent.appName
-	spanPack.AgentID = gAgent.agentID
-
-	tracePack := &network.TracePack{
-		Type:       constant.TypeOfPinpoint,
-		IsSync:     constant.TypeOfSyncNo,
-		IsCompress: constant.TypeOfCompressYes,
-	}
-
 	for {
 		select {
 		case span, ok := <-p.tcpChan:
 			if !ok {
 				break
 			}
+
+			spanPack.Type = constant.TypeOfTCPData
+			spanPack.AppName = gAgent.appName
+			spanPack.AgentID = gAgent.agentID
+
+			tracePack := &network.TracePack{
+				Type:       constant.TypeOfPinpoint,
+				IsSync:     constant.TypeOfSyncNo,
+				IsCompress: constant.TypeOfCompressYes,
+			}
+
 			spanPack.Payload = append(spanPack.Payload, span)
 			payload, err := msgpack.Marshal(spanPack)
 			if err != nil {
@@ -177,25 +178,26 @@ func (p *Pinpoint) tcpCollector() {
 
 // udpCollector ...
 func (p *Pinpoint) udpCollector() {
+
 	// 定时器
 	ticker := time.NewTicker(time.Duration(misc.Conf.Pinpoint.SpanReportInterval) * time.Millisecond)
 	defer ticker.Stop()
-
 	spanPack := network.NewSpansPacket()
-	spanPack.Type = constant.TypeOfUDPData
-	spanPack.AppName = gAgent.appName
-	spanPack.AgentID = gAgent.agentID
-
-	tracePack := &network.TracePack{
-		Type:       constant.TypeOfPinpoint,
-		IsSync:     constant.TypeOfSyncNo,
-		IsCompress: constant.TypeOfCompressYes,
-	}
 
 	for {
 		select {
 		case spanData, ok := <-p.udpChan:
 			if ok {
+				spanPack.Type = constant.TypeOfUDPData
+				spanPack.AppName = gAgent.appName
+				spanPack.AgentID = gAgent.agentID
+
+				tracePack := &network.TracePack{
+					Type:       constant.TypeOfPinpoint,
+					IsSync:     constant.TypeOfSyncNo,
+					IsCompress: constant.TypeOfCompressYes,
+				}
+
 				spanPack.Payload = append(spanPack.Payload, spanData)
 				if len(spanPack.Payload) >= misc.Conf.Pinpoint.SpanQueueLen {
 					payload, err := msgpack.Marshal(spanPack)
@@ -217,6 +219,17 @@ func (p *Pinpoint) udpCollector() {
 			break
 		case <-ticker.C:
 			if len(spanPack.Payload) > 0 {
+
+				spanPack.Type = constant.TypeOfUDPData
+				spanPack.AppName = gAgent.appName
+				spanPack.AgentID = gAgent.agentID
+
+				tracePack := &network.TracePack{
+					Type:       constant.TypeOfPinpoint,
+					IsSync:     constant.TypeOfSyncNo,
+					IsCompress: constant.TypeOfCompressYes,
+				}
+
 				payload, err := msgpack.Marshal(spanPack)
 				if err != nil {
 					g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
@@ -401,11 +414,14 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 				return err
 			}
 
-			gAgent.isLive = true
-			gAgent.isReportInfo = false
+			g.L.Debug("agentInfo", zap.String("name", agentInfo.AppName), zap.String("id", agentInfo.AgentID))
+
 			// 保存App信息
 			gAgent.appName = agentInfo.AppName
 			gAgent.agentID = agentInfo.AgentID
+
+			gAgent.isLive = true
+			gAgent.isReportInfo = false
 
 			isRePacket = true
 			rePacket, err = createResponse(controlHandShake)

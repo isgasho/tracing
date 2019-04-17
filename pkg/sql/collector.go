@@ -86,7 +86,7 @@ var InserSQLStats string = `INSERT INTO sql_stats (app_name, sql,
 VALUES (?,?,?,?,?,?,?,?);`
 
 // InsertExceptionStats ....
-var InsertExceptionStats string = `INSERT INTO exception_stats (app_name, method_id, exception_info, input_date, total_elapsed, max_elapsed, 
+var InsertExceptionStats string = `INSERT INTO exception_stats (app_name, method_id, class_id, input_date, total_elapsed, max_elapsed, 
 	min_elapsed, count, service_type) VALUES (?,?,?,?,?,?,?,?,?);`
 
 var InsertServiceMap string = `INSERT INTO service_map (app_name, input_date, service_type, parent_service_name, parent_service_type, req_recv_count, err_count, total_elapsed)
