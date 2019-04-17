@@ -39,7 +39,7 @@ func (s *Stats) SpanCounter(span *trace.TSpan, srvMap *metric.SrvMapStats, apiCa
 
 	// 计算服务拓扑图
 	{
-		srvMapCounter(srvMap, span)
+		parentMapCounter(srvMap, span)
 	}
 	// 计算method、sql、exceptions
 	{
@@ -111,52 +111,64 @@ func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
 	}
 }
 
-// srvMapCounter 计算服务拓扑图
-func srvMapCounter(srvMap *metric.SrvMapStats, span *trace.TSpan) {
+// parentMapCounter 计算服务拓扑图
+func parentMapCounter(srvMap *metric.SrvMapStats, span *trace.TSpan) {
 	// spanID 为-1的情况该服务就是父节点
 	if span.ParentSpanId == -1 {
+		srvMap.UnknowParent.Count++
+		srvMap.UnknowParent.Totalelapsed += span.Elapsed
+		if span.GetErr() != 0 {
+			srvMap.UnknowParent.ErrCount++
+		}
 		return
 	}
 
 	srvMap.AppType = span.GetServiceType()
-	srv, ok := srvMap.SrvMaps[span.GetParentApplicationName()]
+	parent, ok := srvMap.Parents[span.GetParentApplicationName()]
 	if !ok {
-		srv = metric.NewParentInfo()
-		srv.Type = span.GetParentApplicationType()
-		srvMap.SrvMaps[span.GetParentApplicationName()] = srv
+		parent = metric.NewParentInfo()
+		parent.Type = span.GetParentApplicationType()
+		srvMap.Parents[span.GetParentApplicationName()] = parent
 	}
 
-	srv.Count++
-	srv.Totalelapsed += span.Elapsed
+	parent.Count++
+	parent.Totalelapsed += span.Elapsed
 	if span.GetErr() != 0 {
-		srv.ErrCount++
+		parent.ErrCount++
 	}
 }
 
-// 计算sql拓扑图
-func sqlMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent) {
-	isDB := false
-	if event.ServiceType == constant.MYSQL_EXECUTE_QUERY {
-		isDB = true
-	} else if event.ServiceType == constant.REDIS {
-		isDB = true
-	} else if event.ServiceType == constant.ORACLE_EXECUTE_QUERY {
-		isDB = true
-	} else if event.ServiceType == constant.POSTGRESQL_EXECUTE_QUERY {
-		isDB = true
-	}
-	if isDB {
-		dbInfo, ok := srvMap.DBMaps[event.ServiceType]
-		if !ok {
-			dbInfo = metric.NewDBInfo()
-			srvMap.DBMaps[event.ServiceType] = dbInfo
+// 计算child拓扑图
+func childMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent, isErr bool) {
+	if event.ServiceType == constant.DUBBO_CONSUMER ||
+		event.ServiceType == constant.HTTP_CLIENT_4 ||
+		event.ServiceType == constant.MYSQL_EXECUTE_QUERY ||
+		event.ServiceType == constant.REDIS ||
+		event.ServiceType == constant.ORACLE_EXECUTE_QUERY ||
+		event.ServiceType == constant.MARIADB_EXECUTE_QUERY {
+
+		destinationID := event.GetDestinationId()
+		if len(destinationID) <= 0 {
+			return
 		}
 
-		dbInfo.Count++
-		if event.GetExceptionInfo() != nil {
-			dbInfo.ErrCount++
+		child, ok := srvMap.Childs[event.ServiceType]
+		if !ok {
+			child = metric.NewChild()
+			srvMap.Childs[event.ServiceType] = child
 		}
-		dbInfo.Totalelapsed += event.EndElapsed
+
+		destination, ok := child.Destinations[destinationID]
+		if !ok {
+			destination = metric.NewDestination()
+			child.Destinations[destinationID] = destination
+		}
+
+		destination.Count++
+		if isErr {
+			destination.ErrCount++
+		}
+		destination.Totalelapsed += event.EndElapsed
 	}
 }
 
@@ -204,16 +216,22 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
 		if event.GetExceptionInfo() != nil {
 			isErr = true
 		}
+
+		// app后续服务拓扑图计算
+		childMapCounter(srvMap, event, isErr)
+
 		// 计算method
 		s.methodCount(event.GetApiId(), int(event.GetServiceType()), event.EndElapsed, isErr)
+
 		// 计算sql
 		annotations := event.GetAnnotations()
 		for _, annotation := range annotations {
 			// 20为数据库类型
-			if annotation.GetKey() == 20 {
+			if annotation.GetKey() == constant.SQL_ID {
 				s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
 			}
 		}
+
 		// 异常计算
 		s.exceptionCount(event.GetApiId(), event)
 	}

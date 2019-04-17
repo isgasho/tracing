@@ -2,16 +2,18 @@ package metric
 
 // SrvMapStats 应用拓扑
 type SrvMapStats struct {
-	AppType int16                  // 本服务服务类型
-	SrvMaps map[string]*ParentInfo // 父节点拓扑
-	DBMaps  map[int16]*DBInfo      // 访问DB拓扑
+	AppType      int16                  // 本服务服务类型
+	UnknowParent *UnknowParent          // 未接入监控的请求者
+	Parents      map[string]*ParentInfo // 父节点拓扑
+	Childs       map[int16]*Child       // 子节点拓扑图
 }
 
 // NewSrvMapStats ...
 func NewSrvMapStats() *SrvMapStats {
 	return &SrvMapStats{
-		SrvMaps: make(map[string]*ParentInfo),
-		DBMaps:  make(map[int16]*DBInfo),
+		UnknowParent: NewUnknowParent(),
+		Parents:      make(map[string]*ParentInfo),
+		Childs:       make(map[int16]*Child),
 	}
 }
 
@@ -28,14 +30,38 @@ func NewParentInfo() *ParentInfo {
 	return &ParentInfo{}
 }
 
-// DBInfo 数据库信息
-type DBInfo struct {
+// Child ...
+type Child struct {
+	Destinations map[string]*Destination
+}
+
+// NewChild ....
+func NewChild() *Child {
+	return &Child{
+		Destinations: make(map[string]*Destination),
+	}
+}
+
+// NewDestination ...
+func NewDestination() *Destination {
+	return &Destination{}
+}
+
+// Destination 目标
+type Destination struct {
 	Totalelapsed int32
 	Count        int
 	ErrCount     int
 }
 
-// NewDBInfo ...
-func NewDBInfo() *DBInfo {
-	return &DBInfo{}
+// UnknowParent 未接入监控的服务，只能抓到访问地址
+type UnknowParent struct {
+	Totalelapsed int32
+	Count        int
+	ErrCount     int
+}
+
+// NewUnknowParent ...
+func NewUnknowParent() *UnknowParent {
+	return &UnknowParent{}
 }
