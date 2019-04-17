@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -27,48 +26,27 @@ func New() *Web {
 	return &Web{}
 }
 
-type RetryPolicy struct {
-	NumRetries int //Number of times to retry a query,-1 means always retries
-	Interval   int
-}
-
-// Attempt tells gocql to attempt the query again based on query.Attempts being less
-// than the NumRetries defined in the policy.
-func (s *RetryPolicy) Attempt(q gocql.RetryableQuery) bool {
-	fmt.Println("start retry")
-	time.Sleep(time.Duration(s.Interval) * time.Second)
-	if s.NumRetries == -1 {
-		return true
-	}
-
-	return q.Attempts() <= s.NumRetries
-}
-
-func (s *RetryPolicy) GetRetryType(err error) gocql.RetryType {
-	return gocql.Retry
-}
-
 // Start ...
 func (s *Web) Start() error {
 	// 初始化内部缓存
 	s.cache = &cache{}
 	// 初始化Cql连接
 	// connect to the cluster
-	cluster := gocql.NewCluster(misc.Conf.Storage.Cluster...)
-	cluster.Keyspace = misc.Conf.Storage.Keyspace
-	cluster.Timeout = 5 * time.Second
+	cqlCluster := gocql.NewCluster(misc.Conf.Storage.Cluster...)
+	cqlCluster.Keyspace = misc.Conf.Storage.Keyspace
+	cqlCluster.Timeout = 5 * time.Second
 
 	//设置连接池的数量,默认是2个（针对每一个host,都建立起NumConns个连接）
-	cluster.NumConns = 20
+	cqlCluster.NumConns = 20
 
 	// cluster.RetryPolicy = &RetryPolicy{NumRetries: -1, Interval: 2}
 
-	csession, err := cluster.CreateSession()
+	cql, err := cqlCluster.CreateSession()
 	if err != nil {
 		g.L.Fatal("Init web cql connections error", zap.String("error", err.Error()))
 		return err
 	}
-	misc.Cql = csession
+	misc.Cql = cql
 
 	// 初始化全体用户列表(缓存以提升性能)
 

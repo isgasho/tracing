@@ -1,6 +1,7 @@
 package misc
 
 import (
+	"strings"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -27,4 +28,54 @@ func StartEndDate(c echo.Context) (start time.Time, end time.Time, err error) {
 	}
 	// utils.OnlyAlphaAndNum
 	return
+}
+
+// 切分pinpoint采集的java method，获得class和method name
+// e.g. org.apache.catalina.core.StandardHostValve.invoke(org.apache.catalina.connector.Request request, org.apache.catalina.connector.Response response)
+func SplitMethod(m string) (string, string) {
+	n := strings.Index(m, "(")
+	for i := n; i >= 0; i-- {
+		if m[i] == '.' {
+			return m[:i], m[i+1:]
+		}
+	}
+	return "", m
+}
+
+func Timestamp2TimeString(t int64) string {
+	tm, _ := utils.MSToTime(t)
+	return tm.Format("2006-01-02 15:04:05.999")
+}
+
+func GetMethodByID(appName string, id int) string {
+	q := Cql.Query(`SELECT method_info FROM app_methods WHERE app_name = ? and method_id=?`, appName, id)
+	var method string
+	err := q.Scan(&method)
+	if err != nil {
+		return "method_not_found"
+	}
+
+	return method
+}
+
+func GetSqlByID(appName string, id int) string {
+	q := Cql.Query(`SELECT sql_info FROM app_sqls WHERE app_name=? AND  sql_id=?`, appName, id)
+	var sql string
+	err := q.Scan(&sql)
+	if err != nil {
+		return "sql_not_found"
+	}
+
+	return sql
+}
+
+func GetClassByID(appName string, id int) string {
+	q := Cql.Query(`SELECT str_info FROM app_strs WHERE app_name=? AND  str_id=?`, appName, id)
+	var class string
+	err := q.Scan(&class)
+	if err != nil {
+		return "class_not_found"
+	}
+
+	return class
 }

@@ -79,55 +79,60 @@
 
         <div class="padding-top-5 trace-pane" style="padding-bottom:50px">
           <Row>
-            <Col span="11" class="title split-border">方法(点击具体方法名可查看详情)</Col>
-            <Col span="5"  class="title">参数</Col>
+            <Col span="13" class="title split-border">方法(点击具体方法名可查看详情)</Col>
+            <Col span="4"  class="title">参数</Col>
             <Col span="2" class="title">耗时(ms)</Col>
-            <Col span="3" class="title">API</Col>
-            <Col span="3" class="title">所属应用</Col>
+            <Col span="3" class="title">服务类型</Col>
+            <Col span="2" class="title">所属应用</Col>
           </Row>
           <div  class="body">
-            <Row v-for="r in traceData.value" v-show="isShow(r)" class="hover-cursor" @click.native="spanDetail(r)" :class="classObject(r)" >
-              <Col span="11" class="item split-border" :style="{paddingLeft:r.paddingLeft+'px'}"> 
-                <Icon v-if="r.show=='expand'" type="ios-add" @click.stop="expand(r)" style="padding:3px 3px" />
+            <Row v-for="r in traceData" v-show="isShow(r)" class="hover-cursor" @click.native="nodeDetail(r)" :class="classObject(r)" >
+              <Col span="13" class="item split-border" :style="{paddingLeft:r.depth * 15 +'px'}"> 
+                <Icon v-if="r.show=='expand'" type="md-add" @click.stop="expand(r)" style="padding:3px 3px" />
                 <Icon v-else-if="r.show=='collapse'" type="ios-remove" @click.stop="collapse(r)" style="padding:3px 3px"/>
                 <!-- 这里的padding-left是为了让没有展开/收缩符号的文字跟有符号的文字左对齐 -->
-                <span :style="{paddingLeft:calcTextMarginLeft(r)+'px'}">{{getMethod(r.method)}}</span>
+                <span :style="{paddingLeft:calcTextMarginLeft(r)+'px'}">
+                  <Icon v-show="r.icon=='hand'" type="ios-hand" /> 
+                  <Icon v-show="r.icon=='bug'" type="ios-bug" />
+                   <Icon v-show="r.icon=='info'" type="md-information-circle" />
+                  {{getMethod(r.method)}}
+                </span>
               </Col>
-              <Col span="5"  class="item"> {{r.params}}</Col>
-              <Col span="2" class="item">{{r.self}}</Col>
-              <Col span="3" class="item"> {{r.api}}</Col>
-              <Col span="3" class="item">{{r.agentName}}</Col>
+              <Col span="4"  class="item"> {{r.params}}</Col>
+              <Col span="2" class="item" style="padding-left:25px">{{showDuration(r.duration)}}</Col>
+              <Col span="3" class="item"> {{r.service_type}}</Col>
+              <Col span="2" class="item">{{r.app_name}}</Col>
             </Row>
           </div>
         </div>
     </Modal>
 
-    <Drawer :title="selItem.method" :closable="false" v-model="isItemSel" :styles="{'z-index':2000}" width=40>
+    <Drawer :title="selNode.method" :closable="false" v-model="isNodeSel" :styles="{'z-index':2000}" width=40>
         <Form :label-width="80">
           <FormItem label="发生时间">
-              {{selItem.startTimeStr}}
+              {{selNode.startTimeStr}}
           </FormItem>
           <FormItem label="耗时(ms)">
-              {{selItem.self}}
+              {{selNode.duration}}
           </FormItem>
           <FormItem label="应用名">
-              {{selItem.agentName}}
+              {{selNode.app_name}}
           </FormItem>
           <FormItem label="服务器">
-              {{selItem.agentId}}
+              {{selNode.agent_id}}
           </FormItem>
            <FormItem label="Class">
-              {{selItem.class}}
+              {{selNode.class}}
           </FormItem>
-           <FormItem label="Api">
-              {{selItem.api}}
+           <FormItem label="服务类型">
+              {{selNode.service_type}}
           </FormItem>
           <FormItem label="参数">
-              {{selItem.params}}
+              {{selNode.params}}
           </FormItem>
-          <!-- <FormItem label="层级(Debug)">
-              {{selItem.name}}
-          </FormItem> -->
+          <FormItem label="Method ID">
+              {{selNode.method_id}}
+          </FormItem>
       </Form>
     </Drawer>
   </div>   
@@ -186,8 +191,8 @@ export default {
       selectedTrace: {},
 
        split1: 0.3,
-       selItem: {},
-       isItemSel: false,
+       selNode: {},
+       isNodeSel: false,
        collapseList: []
     }
   },
@@ -197,6 +202,13 @@ export default {
     
   },
   methods: {
+    showDuration(d) {
+      if (d == -1) {
+        return ''
+      }
+
+      return d
+    },
     calcTextMarginLeft(r) {
       if (r.show != 'expand' && r.show != 'collapse') {
         return 21
@@ -206,14 +218,14 @@ export default {
     expand(r) {
       r.show = 'collapse' 
       for (var i=0;i<this.collapseList.length;i++) {
-        if (this.collapseList[i] == r.name) {
+        if (this.collapseList[i] == r.id) {
           this.collapseList.splice(i,1)
         }
       }
     },
     collapse(r) {
        r.show='expand'
-       this.collapseList.push(r.name)
+       this.collapseList.push(r.id)
     },
     queryTraces() {
       this.$Loading.start();
@@ -249,25 +261,28 @@ export default {
       // 对于collapseList中的每个值，判断当前行是否在它的子树中，若在，则不显示，跳出循环
       // 若当前name是以collapseList的值为前缀，说明在子树中
       for (var i=0;i<this.collapseList.length;i++) {
-        if (r.name == this.collapseList[i]) {
+        if (r.id == this.collapseList[i]) {
           continue
         }
-        var j = r.name.indexOf(this.collapseList[i]);
+        var j = r.id.indexOf(this.collapseList[i]);
         if(j == 0){
           return false
         }
       }
       return true
     },
-    spanDetail(r) {
-      this.selItem = r
-      this.isItemSel = true
+    nodeDetail(r) {
+      this.selNode = r
+      this.isNodeSel = true
     },
     classObject: function (r) {
       var o = {}
-      o[r.name] = true
-      if (r.classStyle == 'error') {
+      o[r.id] = true
+      if (r.is_error) {
         o['error'] = true
+      } 
+      if (r.agent_id== this.selectedTrace.agentId && r.span_depth == 0) {
+        o['current-span'] = true
       }
       return o
     },
@@ -307,10 +322,10 @@ export default {
             trace_id : t.traceId
           }
       }).then(res => {
-        this.traceData = JSON.parse(res.data.data)
-        for (var i=0;i<this.traceData.value.length;i++) {
-          if (this.traceData.value[i].hasChildren) {
-            this.traceData.value[i].show = 'collapse'
+        this.traceData = res.data.data
+        for (var i=0;i<this.traceData.length;i++) {
+          if (this.traceData[i].span_depth != -1) {
+            this.traceData[i].show = 'collapse'
           } 
         }
         this.traceVisible = true
@@ -370,6 +385,10 @@ export default {
     }
     .hover-cursor:hover {
       background-color: #ebf7ff !important
+    }
+    .current-span {
+      background: #dff0d8;
+      color: #1469eb; 
     }
   }
 }
