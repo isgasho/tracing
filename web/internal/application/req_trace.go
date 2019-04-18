@@ -137,7 +137,6 @@ func QueryTraces(c echo.Context) error {
 	} else {
 		ct.Suc = true
 		ct.Xaxis = []int64{start.Unix() / 1e6, end.Unix() / 1e6}
-		ct.Title = fmt.Sprintf("success: %d, error: %d", len(traces), 0)
 
 		var sucTraces Traces
 		var errTraces Traces
@@ -149,6 +148,8 @@ func QueryTraces(c echo.Context) error {
 				errTraces = append(errTraces, t)
 			}
 		}
+
+		ct.Title = fmt.Sprintf("success: %d, error: %d", len(sucTraces), len(errTraces))
 		sucData := &TraceSeries{
 			Name:  "success",
 			Color: "rgb(18, 147, 154,.5)",
