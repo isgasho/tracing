@@ -58,6 +58,9 @@ func QueryTraces(c echo.Context) error {
 	min, _ := strconv.Atoi(c.FormValue("min_elapsed"))
 	max, _ := strconv.Atoi(c.FormValue("max_elapsed"))
 	limit, err := strconv.Atoi(c.FormValue("limit"))
+
+	searchError, _ := strconv.ParseBool(c.FormValue("search_error"))
+	searchTraceID := c.FormValue("search_trace_id")
 	if err != nil {
 		limit = 50
 	}
@@ -65,18 +68,39 @@ func QueryTraces(c echo.Context) error {
 	start, end, _ := misc.StartEndDate(c)
 
 	var q *gocql.Query
-	if api == "" {
-		if max == 0 {
-			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date,error FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min)
-		} else {
-			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date,error FROM app_operation_index WHERE app_name=? and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, start.Unix()*1000, end.Unix()*1000, min, max)
-		}
+	if searchTraceID != "" {
+		q = misc.Cql.Query("SELECT trace_id,api,elapsed,agent_id,input_date,error FROM traces WHERE trace_id=?", searchTraceID)
 	} else {
-		if max == 0 {
-			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date,error FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min)
-		} else {
-			q = misc.Cql.Query(`SELECT trace_id,api,elapsed,agent_id,input_date,error FROM app_operation_index WHERE app_name=? and api=?  and input_date > ? and input_date < ? and elapsed >= ? and elapsed <= ? ALLOW FILTERING`, appName, api, start.Unix()*1000, end.Unix()*1000, min, max)
+		// 根据查询条件，拼装查询语句和参数
+		// 默认条件1
+		qs := "SELECT trace_id,api,elapsed,agent_id,input_date,error FROM app_operation_index WHERE app_name=?"
+		args := []interface{}{appName}
+
+		// api条件
+		if api != "" {
+			qs = qs + " and api=?"
+			args = append(args, api)
 		}
+
+		// 默认条件2
+		qs = qs + " and input_date > ? and input_date < ? and elapsed >= ?"
+		args = append(args, start.Unix()*1000, end.Unix()*1000, min)
+
+		// 最大查询时间条件
+		if max > 0 {
+			qs = qs + " and elapsed <= ?"
+			args = append(args, max)
+		}
+
+		// 仅查询错误条件
+		if searchError {
+			// 只搜索错误
+			qs = qs + " and error=1"
+		}
+
+		// 默认条件3
+		qs = qs + " ALLOW FILTERING"
+		q = misc.Cql.Query(qs, args...)
 	}
 
 	iter := q.Iter()
@@ -91,7 +115,8 @@ func QueryTraces(c echo.Context) error {
 	}
 
 	if err := iter.Close(); err != nil {
-		g.L.Warn("close iter error:", zap.Error(err))
+		g.L.Warn("close iter error:", zap.Error(err), zap.String("query", q.String()))
+		return err
 	}
 
 	traces := make(Traces, 0, len(traceMap))
@@ -209,7 +234,7 @@ func (o traceSpans) Less(i, j int) bool {
 
 func (spans *traceSpans) load(tid string) error {
 	q := misc.Cql.Query(`SELECT span_id,parent_id,app_name,agent_id,input_date,elapsed,api,service_type,
-	end_point,remote_addr,err,span_event_list,method_id,annotations,exception_info from traces where trace_id=?`, tid)
+	end_point,remote_addr,error,span_event_list,method_id,annotations,exception_info from traces where trace_id=?`, tid)
 	iter := q.Iter()
 
 	var spanID, pid, inputDate int64
