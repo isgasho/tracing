@@ -174,10 +174,14 @@ func childMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent, isErr 
 
 // apiCounter 计算api信息
 func (s *Stats) apiCounter(span *trace.TSpan) {
-	apiInfo, ok := s.APIStats.Get(span.GetRPC())
+	apiStr := span.GetRPC()
+	if len(apiStr) <= 0 {
+		return
+	}
+	apiInfo, ok := s.APIStats.Get(apiStr)
 	if !ok {
 		apiInfo = metric.NewAPIInfo()
-		s.APIStats.Store(span.GetRPC(), apiInfo)
+		s.APIStats.Store(apiStr, apiInfo)
 	}
 
 	apiInfo.TotalElapsed += span.Elapsed

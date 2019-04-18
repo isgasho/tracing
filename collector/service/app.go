@@ -1,7 +1,6 @@
 package service
 
 import (
-	"log"
 	"sort"
 	"sync"
 	"time"
@@ -337,7 +336,6 @@ func (a *App) tickerTrace() error {
 
 // 各类拓扑图定时计算上报
 func (a *App) reportSrvMap() error {
-
 	// 清空之前节点
 	a.orderlyKey = a.orderlyKey[:0]
 	// 赋值
@@ -357,12 +355,20 @@ func (a *App) reportSrvMap() error {
 		return nil
 	}
 
-	for parentName, parentInfo := range a.srvmap[key].SrvMaps {
-		gCollector.storage.InsertServiceMap(a.name, a.appType, key, parentName, parentInfo)
+	for parentName, parentInfo := range a.srvmap[key].Parents {
+		gCollector.storage.InsertParentMap(a.name, a.appType, key, parentName, parentInfo)
 	}
 
-	for dbType, dbInfo := range a.srvmap[key].DBMaps {
-		gCollector.storage.InsertDBMap(a.name, a.appType, key, int32(dbType), dbInfo)
+	for childType, child := range a.srvmap[key].Childs {
+		for destinationStr, destination := range child.Destinations {
+			gCollector.storage.InsertChildMap(a.name, a.appType, key, int32(childType), destinationStr, destination)
+		}
+	}
+
+	unknowParent := a.srvmap[key].UnknowParent
+	// 只有被调用才可以入库
+	if unknowParent.Count > 0 {
+		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, key, unknowParent)
 	}
 
 	// 上报打点信息并删除该时间点信息
@@ -373,8 +379,6 @@ func (a *App) reportSrvMap() error {
 
 // reportCall api被调用情况
 func (a *App) reportCall() error {
-	// log.Println("apiCall", a.apiCall)
-	// log.Println("apiCall", a.apiCall)
 	// 清空之前节点
 	a.orderlyKey = a.orderlyKey[:0]
 	// 赋值
@@ -394,9 +398,9 @@ func (a *App) reportCall() error {
 		return nil
 	}
 
-	for apiID, callInfo := range a.apiCall[key].APIS {
-		for parentName, parentInfo := range callInfo.Parents {
-			log.Println("服务被调用统计", apiID, parentName, parentInfo)
+	for apiID, apiInfo := range a.apiCall[key].APIS {
+		for parentName, parentInfo := range apiInfo.Parents {
+			gCollector.storage.InsertAPICallStats(a.name, a.appType, key, apiID, parentName, parentInfo)
 		}
 	}
 

@@ -167,7 +167,7 @@ CREATE TABLE IF NOT EXISTS traces (
     end_point           text,
     remote_addr         text,
     annotations         BLOB,
-    err                 int,
+    error               int,
     span_event_list     blob,
     parent_app_name     text,
     parent_app_type     int,
@@ -362,38 +362,79 @@ CREATE TABLE IF NOT EXISTS system (
     PRIMARY KEY (app_name, agent_id, input_date)
 ) WITH gc_grace_seconds = 10800;
  
-
-CREATE TABLE IF NOT EXISTS service_map (
+-- 父节点应用拓扑图，这里的父节点都是接入了监控的
+CREATE TABLE IF NOT EXISTS parent_map (
     app_name            text,               -- 应用名
     input_date          bigint,             -- 插入时间
     service_type        int,                -- 应用类型
-    parent_service_name text,               -- 父应用名
-    parent_service_type int,                -- 父应用类型
+    parent_name         text,               -- 父应用名
+    parent_type         int,                -- 父应用类型
     req_recv_count      int,                -- 被请求次数
     err_count           int,                -- 错误次数
     total_elapsed       int,                -- 总耗时
-    PRIMARY KEY (app_name, input_date, parent_service_name)
+    PRIMARY KEY (app_name, input_date, parent_name)
 ) WITH gc_grace_seconds = 10800;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON parent_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
-CREATE TABLE IF NOT EXISTS db_map (
+-- 子节点应用拓扑图，这里的子节点可能是数据库等信息
+CREATE TABLE IF NOT EXISTS child_map (
     app_name            text,               -- 应用名
     input_date          bigint,             -- 插入时间
     service_type        int,                -- 应用类型
-    db_type             int,                -- 数据库类型
+    child_type          int,                -- 子应用类型
+    destinations        text,               -- 访问目标
     req_send_count      int,                -- 请求次数
     err_count           int,                -- 错误次数
     total_elapsed       int,                -- 总耗时
-    PRIMARY KEY (app_name, input_date, db_type)
+    PRIMARY KEY (app_name, input_date, child_type, destinations)
 ) WITH gc_grace_seconds = 10800;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON db_map (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON child_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+
+
+-- 未知类型或者未接入监控的parent拓扑图
+CREATE TABLE IF NOT EXISTS unknow_parent_map (
+    app_name            text,               -- 应用名
+    input_date          bigint,             -- 插入时间
+    service_type        int,                -- 应用类型
+    req_recv_count      int,                -- 被请求次数
+    err_count           int,                -- 错误次数
+    total_elapsed       int,                -- 总耗时
+    PRIMARY KEY (app_name, input_date)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON unknow_parent_map (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+-- api被应用调用统计表
+CREATE TABLE IF NOT EXISTS api_call_stats (
+    app_name            text,               -- 应用名
+    input_date          bigint,             -- 插入时间
+    service_type        int,                -- 应用类型
+    api_id              int,                -- api id
+    parent_name         text,               -- 访问者/父节点名称
+    req_recv_count      int,                -- 被请求次数
+    err_count           int,                -- 错误次数
+    total_elapsed       int,                -- 总耗时
+    PRIMARY KEY (app_name, input_date, api_id, parent_name)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
+
+
+
 
 
 TRUNCATE TABLE alerts_group  ;

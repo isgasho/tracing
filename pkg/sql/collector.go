@@ -46,7 +46,7 @@ var InsertAgentStatWithTTL string = `
 var InsertSpan string = `
 	INSERT
 	INTO traces(trace_id, span_id, agent_id, app_name, agent_start_time, parent_id,
-		input_date, elapsed, api, service_type, end_point, remote_addr, annotations, err,
+		input_date, elapsed, api, service_type, end_point, remote_addr, annotations, error,
 		span_event_list, parent_app_name, parent_app_type, acceptor_host, app_service_type, exception_info, method_id)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
@@ -89,8 +89,18 @@ VALUES (?,?,?,?,?,?,?,?);`
 var InsertExceptionStats string = `INSERT INTO exception_stats (app_name, method_id, class_id, input_date, total_elapsed, max_elapsed, 
 	min_elapsed, count, service_type) VALUES (?,?,?,?,?,?,?,?,?);`
 
-var InsertServiceMap string = `INSERT INTO service_map (app_name, input_date, service_type, parent_service_name, parent_service_type, req_recv_count, err_count, total_elapsed)
+// 父节点应用拓扑图入库
+var InsertParentMap string = `INSERT INTO parent_map (app_name, input_date, service_type, parent_name, parent_type, req_recv_count, err_count, total_elapsed)
 	VALUES (?,?,?,?,?,?,?,?);`
 
-var InserDBMap string = `INSERT INTO db_map (app_name, input_date, service_type, db_type, req_send_count, err_count, total_elapsed)
-	VALUES (?,?,?,?,?,?,?);`
+// 子节点应用拓扑入库
+var InserChildMap string = `INSERT INTO child_map (app_name, input_date, service_type, child_type, destinations, req_send_count, err_count, total_elapsed)
+	VALUES (?,?,?,?,?,?,?,?);`
+
+// 未知父节点应用拓扑图入库
+var InsertUnknowParentMap string = `INSERT INTO unknow_parent_map (app_name, input_date, service_type, req_recv_count, err_count, total_elapsed)
+	VALUES (?,?,?,?,?,?);`
+
+// Api被调用统计信息
+var InsertAPICallStats string = `INSERT INTO api_call_stats (app_name, input_date, service_type, api_id, parent_name, req_recv_count, err_count, total_elapsed)
+VALUES (?,?,?,?,?,?,?,?);`

@@ -577,9 +577,9 @@ func (s *Storage) InsertExceptionStats(appName string, inputTime int64, methodID
 	return nil
 }
 
-// InsertServiceMap ...
-func (s *Storage) InsertServiceMap(appName string, appType int32, inputTime int64, parentName string, parentInfo *metric.ParentInfo) error {
-	query := s.cql.Query(sql.InsertServiceMap,
+// InsertParentMap ...
+func (s *Storage) InsertParentMap(appName string, appType int32, inputTime int64, parentName string, parentInfo *metric.ParentInfo) error {
+	query := s.cql.Query(sql.InsertParentMap,
 		appName,
 		inputTime,
 		appType,
@@ -590,26 +590,65 @@ func (s *Storage) InsertServiceMap(appName string, appType int32, inputTime int6
 		parentInfo.Totalelapsed,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert server map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		g.L.Warn("insert parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
 	return nil
 }
 
-// InsertDBMap ...
-func (s *Storage) InsertDBMap(appName string, appType int32, inputTime int64, dbType int32, dbInfo *metric.DBInfo) error {
-	query := s.cql.Query(sql.InserDBMap,
+// InsertChildMap ...
+func (s *Storage) InsertChildMap(appName string, appType int32, inputTime int64, childType int32, destinationStr string, destination *metric.Destination) error {
+	query := s.cql.Query(sql.InserChildMap,
 		appName,
 		inputTime,
 		appType,
-		dbType,
-		dbInfo.Count,
-		dbInfo.ErrCount,
-		dbInfo.Totalelapsed,
+		childType,
+		destinationStr,
+		destination.Count,
+		destination.ErrCount,
+		destination.Totalelapsed,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert db map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		g.L.Warn("insert child map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		return err
+	}
+
+	return nil
+}
+
+// InsertUnknowParentMap ...
+func (s *Storage) InsertUnknowParentMap(appName string, appType int32, inputTime int64, unknowParent *metric.UnknowParent) error {
+	query := s.cql.Query(sql.InsertUnknowParentMap,
+		appName,
+		inputTime,
+		appType,
+		unknowParent.Count,
+		unknowParent.ErrCount,
+		unknowParent.Totalelapsed,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("insert unknow parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		return err
+	}
+
+	return nil
+}
+
+// InsertAPICallStats Api被调用统计信息
+func (s *Storage) InsertAPICallStats(appName string, appType int32, inputTime int64, apiID int32, parentname string, parentInfo *metric.ParentInfo) error {
+	query := s.cql.Query(sql.InsertAPICallStats,
+		appName,
+		inputTime,
+		appType,
+		apiID,
+		parentname,
+		parentInfo.Count,
+		parentInfo.ErrCount,
+		parentInfo.Totalelapsed,
+	)
+	if err := query.Exec(); err != nil {
+		g.L.Warn("insert api call stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
