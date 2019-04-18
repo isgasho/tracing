@@ -33,14 +33,14 @@ VALUES (?, ?, ?);`
 // agent stat 信息入库
 var InsertAgentStat string = `
 	INSERT
-	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
-	VALUES (?, ?, ?, ?, ?);`
+	INTO agent_runtime(app_name, agent_id, input_date, metrics, runtime_type)
+	VALUES (?, ?, ?, ?, 1);`
 
 // agent stat 信息入库 + 过期时间
 var InsertAgentStatWithTTL string = `
 	INSERT
-	INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
-	VALUES (?, ?, ?, ?, ?) USING TTL ?;`
+	INTO agent_runtime(app_name, agent_id, input_date, metrics, runtime_type)
+	VALUES (?, ?, ?, ?, 1) USING TTL ?;`
 
 // 插入span
 var InsertSpan string = `

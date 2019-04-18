@@ -37,18 +37,13 @@ func New() *Agent {
 		collector: newCollector(),
 		pinpoint:  newPinpoint(),
 		syncCall:  NewSyncCall(),
+		agentInfo: network.NewAgentInfo(),
 	}
 	return gAgent
 }
 
 // Start 启动
 func (a *Agent) Start() error {
-
-	// 获取Appname
-	// if err := a.getAppname(); err != nil {
-	// 	g.L.Warn("get app name", zap.String("error", err.Error()))
-	// 	return err
-	// }
 
 	// etcd 初始化
 	if err := a.etcd.Init(); err != nil {
@@ -147,7 +142,7 @@ func (a *Agent) getAppname() error {
 // reportAgentInfo 上报agent 信息
 func reportAgentInfo() {
 	for {
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 		if !gAgent.isLive {
 			continue
 		}
@@ -156,34 +151,34 @@ func reportAgentInfo() {
 	for {
 		time.Sleep(3 * time.Second)
 		if !gAgent.isReportInfo {
-			infoPack := network.NewSpansPacket()
-			infoPack.Type = constant.TypeOfTCPData
-			infoPack.AppName = gAgent.appName
-			infoPack.AgentID = gAgent.agentID
-			infoBuf, err := msgpack.Marshal(infoPack)
+			spanPackets := network.NewSpansPacket()
+			spanPackets.Type = constant.TypeOfTCPData
+			spanPackets.AppName = gAgent.appName
+			spanPackets.AgentID = gAgent.agentID
+
+			agentInfo, err := msgpack.Marshal(gAgent.agentInfo)
 			if err != nil {
 				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				continue
 			}
-			spanData := &network.Spans{
-				Spans: infoBuf,
+			spans := &network.Spans{
+				Spans: agentInfo,
 			}
-
 			if gAgent.isLive == false {
-				spanData.Type = constant.TypeOfAgentOffline
+				spans.Type = constant.TypeOfAgentOffline
 			} else {
-				spanData.Type = constant.TypeOfRegister
+				spans.Type = constant.TypeOfRegister
 			}
 
-			infoPack.Payload = append(infoPack.Payload, spanData)
-			payload, err := msgpack.Marshal(infoPack)
+			spanPackets.Payload = append(spanPackets.Payload, spans)
+			payload, err := msgpack.Marshal(spanPackets)
 			if err != nil {
 				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				continue
 			}
 
 			id := gAgent.getSyncID()
-			packet := &network.TracePack{
+			tracePacket := &network.TracePack{
 				Type:       constant.TypeOfPinpoint,
 				IsSync:     constant.TypeOfSyncYes,
 				IsCompress: constant.TypeOfCompressNo,
@@ -191,7 +186,7 @@ func reportAgentInfo() {
 				Payload:    payload,
 			}
 
-			if err := gAgent.collector.write(packet); err != nil {
+			if err := gAgent.collector.write(tracePacket); err != nil {
 				g.L.Warn("write info", zap.String("error", err.Error()))
 				continue
 			}

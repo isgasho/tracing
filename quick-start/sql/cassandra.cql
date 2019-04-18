@@ -219,18 +219,18 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (input_date)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
-
-CREATE TABLE IF NOT EXISTS agent_stats (
+-- agent runtime 信息表
+CREATE TABLE IF NOT EXISTS agent_runtime (
     app_name            text,
     agent_id            text,
-    start_time          bigint,
-    timestamp           bigint,
-    stat_info           blob,
-    PRIMARY KEY (app_name, agent_id, timestamp)
+    runtime_type        int,
+    input_date          bigint,
+    metrics             blob,
+    PRIMARY KEY (app_name, agent_id, runtime_type, input_date)
 ) WITH gc_grace_seconds = 10800; 
 
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON agent_stats (timestamp) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON agent_runtime (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
@@ -457,14 +457,16 @@ TRUNCATE TABLE app_sqls           ;
 
 TRUNCATE TABLE app_strs         ;
 TRUNCATE TABLE apps             ;
-TRUNCATE TABLE db_map           ;
+TRUNCATE TABLE api_call_stats           ;
 TRUNCATE TABLE exception_stats  ;
 TRUNCATE TABLE jvm_cpu_stats    ;
 TRUNCATE TABLE jvm_memory_stats ;
+TRUNCATE TABLE unknow_parent_map;
 
+TRUNCATE TABLE api_call_stats ;
 
 TRUNCATE TABLE method_stats ;
-TRUNCATE TABLE service_map  ;
+TRUNCATE TABLE parent_map  ;
 TRUNCATE TABLE service_type ;
 TRUNCATE TABLE sql_stats    ;
 

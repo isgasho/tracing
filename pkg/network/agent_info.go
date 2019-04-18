@@ -12,9 +12,6 @@ type AgentInfo struct {
 	IsContainer    bool   `db:"is_container" json:"is_container" msg:"is_container"`
 	OperatingEnv   int32  `db:"operating_env" json:"operating_env" msg:"operating_env"`
 	AgentInfo      string `db:"agent_info" json:"agent_info" msg:"agent_info"`
-	// SocketID    int32  `db:"socket_id" json:"socketId" msg:"socketId"`
-	// Pid            int32  `db:"pid" json:"pid" msg:"pid"`
-	// Version        string `db:"version" json:"version" msg:"version"`
 }
 
 // NewAgentInfo ...

@@ -419,6 +419,16 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 			// 保存App信息
 			gAgent.appName = agentInfo.AppName
 			gAgent.agentID = agentInfo.AgentID
+			gAgent.agentInfo.AppName = agentInfo.AppName
+			gAgent.agentInfo.AgentID = agentInfo.AgentID
+			gAgent.agentInfo.ServiceType = agentInfo.ServiceType
+			gAgent.agentInfo.HostName = agentInfo.HostName
+			gAgent.agentInfo.IP4S = agentInfo.IP4S
+			gAgent.agentInfo.StartTimestamp = agentInfo.StartTimestamp
+			gAgent.agentInfo.EndTimestamp = agentInfo.EndTimestamp
+			gAgent.agentInfo.IsContainer = agentInfo.IsContainer
+			gAgent.agentInfo.OperatingEnv = agentInfo.OperatingEnv
+			gAgent.agentInfo.AgentInfo = agentInfo.AgentInfo
 
 			gAgent.isLive = true
 			gAgent.isReportInfo = false

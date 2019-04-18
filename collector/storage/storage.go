@@ -409,31 +409,21 @@ func (s *Storage) WriteAgentStatBatch(appName, agentID string, agentStatBatch *p
 	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
 	var insertAgentStatBatch string
 	if misc.Conf.Storage.AgentStatUseTTL {
-		insertAgentStatBatch = `
-		INSERT
-		INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
-		VALUES (?, ?, ?, ?, ?) USING TTL ?;`
 		for _, stat := range agentStatBatch.AgentStats {
 			batchInsert.Query(
-				insertAgentStatBatch,
+				sql.InsertAgentStatWithTTL,
 				appName,
 				agentID,
-				stat.GetStartTimestamp(),
 				stat.GetTimestamp(),
 				infoB,
 				misc.Conf.Storage.AgentStatTTL)
 		}
 	} else {
-		insertAgentStatBatch = `
-		INSERT
-		INTO agent_stats(app_name, agent_id, start_time, timestamp, stat_info)
-		VALUES (?, ?, ?, ?, ?) ;`
 		for _, stat := range agentStatBatch.AgentStats {
 			batchInsert.Query(
-				insertAgentStatBatch,
+				sql.InsertAgentStat,
 				appName,
 				agentID,
-				stat.GetStartTimestamp(),
 				stat.GetTimestamp(),
 				infoB)
 		}

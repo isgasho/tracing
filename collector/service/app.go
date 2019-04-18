@@ -312,21 +312,21 @@ func (a *App) tickerTrace() error {
 	if time.Now().Unix() < key+misc.Conf.Stats.DeferTime {
 		return nil
 	}
-
+	inputDate := key + misc.Conf.Stats.DeferTime
 	for apiStr, apiInfo := range a.points[key].APIStats.APIs {
-		gCollector.storage.InsertAPIStats(a.name, key, apiStr, apiInfo)
+		gCollector.storage.InsertAPIStats(a.name, inputDate, apiStr, apiInfo)
 	}
 
 	for methodID, methodInfo := range a.points[key].MethodStats.Methods {
-		gCollector.storage.InsertMethodStats(a.name, key, a.points[key].MethodStats.APIStr, methodID, methodInfo)
+		gCollector.storage.InsertMethodStats(a.name, inputDate, a.points[key].MethodStats.APIStr, methodID, methodInfo)
 	}
 
 	for sqlID, sqlInfo := range a.points[key].SQLStats.SQLs {
-		gCollector.storage.InsertSQLStats(a.name, key, sqlID, sqlInfo)
+		gCollector.storage.InsertSQLStats(a.name, inputDate, sqlID, sqlInfo)
 	}
 
 	for methodID, exceptions := range a.points[key].ExceptionsStats.MethodEx {
-		gCollector.storage.InsertExceptionStats(a.name, key, methodID, exceptions.Exceptions)
+		gCollector.storage.InsertExceptionStats(a.name, inputDate, methodID, exceptions.Exceptions)
 	}
 
 	// 上报打点信息并删除该时间点信息
@@ -355,20 +355,22 @@ func (a *App) reportSrvMap() error {
 		return nil
 	}
 
+	inputDate := key + misc.Conf.Stats.MapRange
+
 	for parentName, parentInfo := range a.srvmap[key].Parents {
-		gCollector.storage.InsertParentMap(a.name, a.appType, key, parentName, parentInfo)
+		gCollector.storage.InsertParentMap(a.name, a.appType, inputDate, parentName, parentInfo)
 	}
 
 	for childType, child := range a.srvmap[key].Childs {
 		for destinationStr, destination := range child.Destinations {
-			gCollector.storage.InsertChildMap(a.name, a.appType, key, int32(childType), destinationStr, destination)
+			gCollector.storage.InsertChildMap(a.name, a.appType, inputDate, int32(childType), destinationStr, destination)
 		}
 	}
 
 	unknowParent := a.srvmap[key].UnknowParent
 	// 只有被调用才可以入库
 	if unknowParent.Count > 0 {
-		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, key, unknowParent)
+		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, inputDate, unknowParent)
 	}
 
 	// 上报打点信息并删除该时间点信息
@@ -397,10 +399,10 @@ func (a *App) reportCall() error {
 	if time.Now().Unix() < key+misc.Conf.Stats.APICallRang {
 		return nil
 	}
-
+	inputDate := key + misc.Conf.Stats.APICallRang
 	for apiID, apiInfo := range a.apiCall[key].APIS {
 		for parentName, parentInfo := range apiInfo.Parents {
-			gCollector.storage.InsertAPICallStats(a.name, a.appType, key, apiID, parentName, parentInfo)
+			gCollector.storage.InsertAPICallStats(a.name, a.appType, inputDate, apiID, parentName, parentInfo)
 		}
 	}
 
