@@ -20,8 +20,8 @@ func List(c echo.Context) error {
 	now := time.Now()
 	// 查询缓存数据是否存在和过期
 	// if web.cache.appList == nil || now.Sub(web.cache.appListUpdate).Seconds() > CacheUpdateIntv {
-	// 取过去6分钟的数据
-	start := now.Unix() - 450
+	// 取过去30分钟的数据
+	start := now.Unix() - 30*60
 	q := `SELECT app_name,total_elapsed,count,err_count,satisfaction,tolerate FROM api_stats WHERE input_date > ? and input_date < ? `
 	iter := misc.Cql.Query(q, start, now.Unix()).Iter()
 

@@ -35,6 +35,7 @@ func (s *Web) Start() error {
 	cqlCluster := gocql.NewCluster(misc.Conf.Storage.Cluster...)
 	cqlCluster.Keyspace = misc.Conf.Storage.Keyspace
 	cqlCluster.Timeout = 5 * time.Second
+	cqlCluster.ReconnectInterval = 500 * time.Millisecond
 
 	//设置连接池的数量,默认是2个（针对每一个host,都建立起NumConns个连接）
 	cqlCluster.NumConns = 20

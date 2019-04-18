@@ -6,6 +6,7 @@ import (
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/g/utils"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/web/internal/misc"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
@@ -93,7 +94,7 @@ func ApiStats(c echo.Context) error {
 type ApiMethod struct {
 	ID             int     `json:"-"`
 	API            string  `json:"api"`
-	ServiceType    int     `json:"service_type"`
+	ServiceType    string  `json:"service_type"`
 	RatioElapsed   int     `json:"ratio_elapsed"`
 	Elapsed        int     `json:"elapsed"`
 	MaxElapsed     int     `json:"max_elapsed"`
@@ -102,8 +103,8 @@ type ApiMethod struct {
 	AverageElapsed float64 `json:"average_elapsed"`
 	ErrorCount     int     `json:"error_count"`
 
-	Line   int    `json:"line"`
 	Method string `json:"method"`
+	Class  string `json:"class"`
 }
 
 func ApiDetail(c echo.Context) error {
@@ -137,7 +138,7 @@ func ApiDetail(c echo.Context) error {
 		am, ok := ad[apiID]
 		if !ok {
 			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
-			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, ave, errCount, 0, ""}
+			ad[apiID] = &ApiMethod{apiID, api, constant.ServiceType[serType], 0, elapsed, maxE, minE, count, ave, errCount, "", ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -167,17 +168,11 @@ func ApiDetail(c echo.Context) error {
 		// 计算耗时占比
 		am.RatioElapsed = am.Elapsed * 100 / totalElapsed
 		// 通过apiID 获取api name
-		q := misc.Cql.Query(`SELECT method_info,line FROM app_methods WHERE app_name = ? and method_id =?`, appName, am.ID)
-		var apiInfo string
-		var line int
-		err := q.Scan(&apiInfo, &line)
-		if err != nil {
-			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
-			continue
-		}
 
-		am.Line = line
-		am.Method = apiInfo
+		methodInfo := misc.GetMethodByID(appName, am.ID)
+		class, method := misc.SplitMethod(methodInfo)
+		am.Method = method
+		am.Class = class
 
 		ads = append(ads, am)
 	}
