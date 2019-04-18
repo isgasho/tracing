@@ -3,6 +3,11 @@
     <Row>
       <Col span="22" offset="1" class="no-border">
         <Table stripe  :columns="sqlLabels" :data="sqlList.slice((this.currentPage-1)*10,this.currentPage*10)" class="margin-top-40" @on-sort-change="sortSql">
+            <template slot-scope="{ row }" slot="sql">
+              <Tooltip :content="row.sql" max-width="400">
+                  {{row.sql}}
+              </Tooltip>     
+            </template>
         </Table>
 
         <Page :current="currentPage" :total="sqlList.length" size="small" class="margin-top-15" simple  @on-change="setApiPage"/>
@@ -21,36 +26,36 @@ export default {
       sqlLabels: [
             {
                 title: 'SQL',
-                key: 'sql',
+                slot: 'sql',
                 ellipsis : true
             },
             {
                 title: '均耗时(ms)',
                 key: 'average_elapsed',
-                width:170,
+                width:130,
                 sortable: 'custom'
             },
             {
                 title: '请求数',
                 key: 'count',
-                width: 170,
+                width: 120,
                 sortable: 'custom'
             },
             {
                 title: '错误数',
                 key: 'error_count',
-                width: 170,
+                width: 120,
                 sortable: 'custom'
             },
              {
                 title: '最大耗时(ms)',
                 key: 'max_elapsed',
-                width: 250
+                width: 120
             },
             {
                 title: '最小耗时(ms)',
                 key: 'min_elapsed',
-                width: 170
+                width: 120
             },
         ],
       currentPage : 1,

@@ -74,6 +74,7 @@
                 服务器ID:
               </span>
               {{selectedTrace.agentId}}
+              
             </div>
         </div>
 
@@ -108,9 +109,12 @@
     </Modal>
 
     <Drawer :title="selNode.method" :closable="false" v-model="isNodeSel" :styles="{'z-index':2000}" width=40>
-        <Form :label-width="80">
-          <FormItem label="发生时间">
-              {{selNode.startTimeStr}}
+        <Form :label-width="100" label-position="left">
+          <FormItem label="方法名">
+              {{selNode.method}}
+          </FormItem>
+           <FormItem label="Class">
+              {{selNode.class}}
           </FormItem>
           <FormItem label="耗时(ms)">
               {{selNode.duration}}
@@ -121,17 +125,26 @@
           <FormItem label="服务器">
               {{selNode.agent_id}}
           </FormItem>
-           <FormItem label="Class">
-              {{selNode.class}}
-          </FormItem>
            <FormItem label="服务类型">
               {{selNode.service_type}}
           </FormItem>
           <FormItem label="参数">
               {{selNode.params}}
           </FormItem>
-          <FormItem label="Method ID">
+            
+          <Divider orientation="center">Debug Part</Divider>
+
+          <FormItem label="method id">
               {{selNode.method_id}}
+          </FormItem>
+           <FormItem label="sequence">
+              {{selNode.seq}}
+          </FormItem>
+          <FormItem label="span depth">
+              {{selNode.span_depth}}
+          </FormItem>
+           <FormItem label="node type">
+              {{selNode.type}}
           </FormItem>
       </Form>
     </Drawer>
@@ -415,6 +428,16 @@ export default {
         // white-space: nowrap;
       }
     }
+  .ivu-drawer {
+    .ivu-drawer-header {
+      display: none;
+    }
+
+    .ivu-drawer-body {
+      padding-left: 30px;
+      padding-top:30px;
+    }
+  }
 </style>
 
 

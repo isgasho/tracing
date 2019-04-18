@@ -313,22 +313,24 @@ func (spans *traceSpans) sort() {
 // 为了形成全链路，我们需要把trace的span和event组成一个tree结构,span和event对应的是tree node
 // Tags、Exceptions都将转换为node进行展示
 type TraceTreeNode struct {
-	ID          string      `json:"id"` // seg的id,p-0/p-0-1类的形式，通过这种形式形成层级tree
-	Sequence    int         `json:"seq"`
-	Depth       int         `json:"depth"`      //node在完整的链路树上所处的层级，绝对层级 Tree Depth
-	SpanDepth   int         `json:"span_depth"` //node对应的event在对应span中的层级,相对层级 span depth
-	AppName     string      `json:"app_name"`
-	MethodID    int         `json:"method_id"`
-	Method      string      `json:"method"`
-	Duration    int         `json:"duration"` // 耗时，-1 代表不显示耗时信息
-	Params      string      `json:"params"`
-	ServiceType string      `json:"service_type"`
-	AgentID     string      `json:"agent_id"`
-	Class       string      `json:"class"`
-	StartTime   string      `json:"start_time"`
-	Tags        []*TraceTag `json:"tags"`     // Seg标签
-	Icon        string      `json:"icon"`     // 有些节点会显示特殊的icon，作为样式
-	IsError     bool        `json:"is_error"` // 是否是错误/异常，
+	ID          string `json:"id"` // seg的id,p-0/p-0-1类的形式，通过这种形式形成层级tree
+	Sequence    int    `json:"seq"`
+	Type        string `json:"type"`       // 1: span 2. event 3. tag
+	Depth       int    `json:"depth"`      //node在完整的链路树上所处的层级，绝对层级 Tree Depth
+	SpanDepth   int    `json:"span_depth"` //node对应的event在对应span中的层级,相对层级 span depth
+	AppName     string `json:"app_name"`
+	MethodID    int    `json:"method_id"`
+	Method      string `json:"method"`
+	Duration    int    `json:"duration"` // 耗时，-1 代表不显示耗时信息
+	Params      string `json:"params"`
+	ServiceType string `json:"service_type"`
+	AgentID     string `json:"agent_id"`
+	Class       string `json:"class"`
+	StartTime   string `json:"start_time"`
+	Icon        string `json:"icon"`     // 有些节点会显示特殊的icon，作为样式
+	IsError     bool   `json:"is_error"` // 是否是错误/异常，
+
+	tags []*TraceTag // Seg标签
 }
 
 // 初始化node
@@ -372,28 +374,35 @@ func (node *TraceTreeNode) setTags(tags []*TempTag) {
 			methodID := int(tag.Value.IntValue)
 			method := misc.GetMethodByID(node.AppName, methodID)
 			stag := &TraceTag{constant.AnnotationKeys[tag.Key], method}
-			node.Tags = append(node.Tags, stag)
+			node.tags = append(node.tags, stag)
 		} else if tag.Key == constant.SQL_ID {
 			// {"key":20,"value":{"intStringStringValue":{"intValue":1,"stringValue1":"0","stringValue2":"testC, testC, 2019-04-15 08:43:03.713, null, null, testCNickName, testC_64b3def7-1a76-4ed7-bf21-67f5afc440fc, E10ADC3949BA59ABBE56E057F20F883E, null, 0"}}}
 			sqlID := int(tag.Value.IntStringStringValue.IntValue)
-			sqlS := misc.GetSqlByID(node.AppName, sqlID)
-			sql, _ := g.B64.DecodeString(sqlS)
 			// 添加sqlID: sql的tag
-			stag1 := &TraceTag{constant.AnnotationKeys[tag.Key], string(sql)}
+			stag1 := &TraceTag{constant.AnnotationKeys[tag.Key], misc.GetSqlByID(node.AppName, sqlID)}
 			// 添加sql bind value的tag
 			stag2 := &TraceTag{constant.AnnotationKeys[constant.SQL_BINDVALUE], tag.Value.IntStringStringValue.StringValue2}
-			node.Tags = append(node.Tags, stag1, stag2)
+			node.tags = append(node.tags, stag1, stag2)
 		} else {
 			var stag *TraceTag
 			switch tag.Key {
 			case constant.HTTP_STATUS_CODE:
 				stag = &TraceTag{constant.AnnotationKeys[tag.Key], strconv.Itoa(int(tag.Value.IntValue))}
+			case constant.REDIS_IO, constant.HTTP_IO:
+				v := fmt.Sprintf("write=%d,read=%d", tag.Value.IntBooleanIntBooleanValue.IntValue1, tag.Value.IntBooleanIntBooleanValue.IntValue2)
+				stag = &TraceTag{constant.AnnotationKeys[tag.Key], v}
+			case constant.RETURN_DATA:
+				v := strconv.FormatBool(tag.Value.BoolValue)
+				stag = &TraceTag{constant.AnnotationKeys[tag.Key], v}
 			default:
-				fmt.Println("tag key", tag.Key, constant.AnnotationKeys[tag.Key])
-				stag = &TraceTag{constant.AnnotationKeys[tag.Key], tag.Value.StringValue}
+				v := tag.Value.StringValue
+				if v == "" {
+					g.L.Info("invalid tag parse", zap.String("tag", constant.AnnotationKeys[tag.Key]))
+				}
+				stag = &TraceTag{constant.AnnotationKeys[tag.Key], v}
 			}
 
-			node.Tags = append(node.Tags, stag)
+			node.tags = append(node.tags, stag)
 		}
 	}
 }
@@ -407,8 +416,9 @@ func (tree *TraceTree) addSpan(span *traceSpan) {
 	n.Duration = span.duration
 	// span本身一定是http/dubbo/rpc服务的入口，因此要做特殊标示
 	n.Icon = "hand"
+	n.Type = "span"
 	//remote addr -> tag
-	n.Tags = append(n.Tags, &TraceTag{"remote_addr", span.remoteAddr})
+	n.tags = append(n.tags, &TraceTag{"remote_addr", span.remoteAddr})
 
 	//@test
 	n.Sequence = 0
@@ -434,8 +444,10 @@ func (tree *TraceTree) addSpan(span *traceSpan) {
 	*tree = append(*tree, n)
 
 	// tags -> node
-	for _, tag := range n.Tags {
-		en := &TraceTreeNode{}
+	for _, tag := range n.tags {
+		en := &TraceTreeNode{
+			Type: "tag",
+		}
 		en.setDepth(-1, n.Depth+1)
 		en.setChildID(n.ID)
 
@@ -454,6 +466,7 @@ func (tree *TraceTree) addEvent(event *SpanEvent, span *traceSpan) {
 	n.init(span.appName, span.agentID, event.DestinationID, event.ServiceType, event.MethodID)
 	n.setTags(event.Annotations)
 	n.Duration = event.EndElapsed
+	n.Type = "event"
 
 	//@test
 	n.Sequence = event.Sequence
@@ -463,7 +476,14 @@ func (tree *TraceTree) addEvent(event *SpanEvent, span *traceSpan) {
 	// 若当前event的span depth不为-1
 	//     我们要找到depth-1的节点，然后该节点是当前event的父节点
 	if event.Depth == -1 {
-		lastn := (*tree)[len(*tree)-1]
+		var lastn *TraceTreeNode
+		// 找到第一个类型不为tag的node
+		for i := len(*tree) - 1; i >= 0; i-- {
+			if (*tree)[i].Type != "tag" {
+				lastn = (*tree)[i]
+				break
+			}
+		}
 		if lastn.SpanDepth == -1 {
 			// 上一个节点也是叶子节点
 			// 因此该event是上一个节点的邻节点
@@ -509,17 +529,17 @@ func (tree *TraceTree) addEvent(event *SpanEvent, span *traceSpan) {
 		en.IsError = true
 		en.Duration = -1
 		en.Icon = "bug"
-
+		en.Type = "tag"
 		fmt.Println("enid:", event.Sequence, en.ID)
 		*tree = append(*tree, en)
 	}
 
 	// tags -> node
-	for _, tag := range n.Tags {
+	for _, tag := range n.tags {
 		en := &TraceTreeNode{}
 		en.setDepth(-1, n.Depth+1)
 		en.setChildID(n.ID)
-
+		en.Type = "tag"
 		en.Params = tag.Value
 		// 获取exception id
 		en.Method = tag.Key

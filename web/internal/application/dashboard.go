@@ -94,7 +94,8 @@ func Dashboard(c echo.Context) error {
 
 	// 对每个桶里的数据进行计算
 	for _, app := range timeBucks {
-		app.ErrorPercent, _ = utils.DecimalPrecision(app.errCount / float64(app.Count))
+		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
+		app.ErrorPercent = 100 * ep
 		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
 		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
 		app.Count = app.Count / step

@@ -50,7 +50,7 @@ export default {
         trLabels: [
             {
                 title: '节点名',
-                key: 'host_name'
+                key: 'agent_id'
             },
             {
                 title: '是否容器',

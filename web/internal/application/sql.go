@@ -41,16 +41,16 @@ func SqlStats(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT sql,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM sql_stats WHERE app_name = ? and input_date > ? and input_date < ? `
+	q := `SELECT sql,max_elapsed,min_elapsed,elapsed,count,err_count FROM sql_stats WHERE app_name = ? and input_date > ? and input_date < ? `
 	iter := misc.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
 
-	var sqlID, maxE, minE, count, errCount int
-	var averageE float64
+	var sqlID, maxE, minE, count, errCount, elapsed int
 	ad := make(map[int]*SqlStat)
-	for iter.Scan(&sqlID, &maxE, &minE, &averageE, &count, &errCount) {
+	for iter.Scan(&sqlID, &maxE, &minE, &elapsed, &count, &errCount) {
 		am, ok := ad[sqlID]
 		if !ok {
-			ad[sqlID] = &SqlStat{sqlID, "", maxE, minE, count, averageE, errCount}
+			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
+			ad[sqlID] = &SqlStat{sqlID, "", maxE, minE, count, ave, errCount}
 		} else {
 			// 取最大值
 			if maxE > am.MaxElapsed {
@@ -64,7 +64,7 @@ func SqlStats(c echo.Context) error {
 			am.Count += count
 			am.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + averageE*float64(count)) / float64((am.Count + count)))
+			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
 		}
 	}
 
@@ -74,17 +74,7 @@ func SqlStats(c echo.Context) error {
 
 	ads := make([]*SqlStat, 0, len(ad))
 	for _, am := range ad {
-		// 通过apiID 获取api name
-		q := misc.Cql.Query(`SELECT sql_info FROM app_sqls WHERE app_name = ? and sql_id=?`, appName, am.ID)
-		var sql string
-		err := q.Scan(&sql)
-		if err != nil {
-			g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
-			continue
-		}
-
-		s, _ := g.B64.DecodeString(sql)
-		am.SQL = utils.Bytes2String(s)
+		am.SQL = misc.GetSqlByID(appName, am.ID)
 
 		ads = append(ads, am)
 	}

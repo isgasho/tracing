@@ -2,7 +2,6 @@ package app
 
 /* 接口统计 */
 import (
-	"log"
 	"net/http"
 
 	"github.com/imdevlab/g"
@@ -46,18 +45,18 @@ func ApiStats(c echo.Context) error {
 	}
 
 	// 读取相应数据，按照时间填到对应的桶中
-	q := `SELECT api,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `
+	q := `SELECT api,max_elapsed,min_elapsed,total_elapsed,count,err_count FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `
 	iter := misc.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
 
 	// apps := make(map[string]*AppStat)
-	var maxElapsed, minElapsed, count, errCount int
-	var aElapsed float64
+	var maxElapsed, minElapsed, count, errCount, elapsed int
 	var api string
 	ass := make(map[string]*ApiStat)
-	for iter.Scan(&api, &maxElapsed, &minElapsed, &aElapsed, &count, &errCount) {
+	for iter.Scan(&api, &maxElapsed, &minElapsed, &elapsed, &count, &errCount) {
 		as, ok := ass[api]
 		if !ok {
-			ass[api] = &ApiStat{api, maxElapsed, minElapsed, count, aElapsed, errCount}
+			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
+			ass[api] = &ApiStat{api, maxElapsed, minElapsed, count, ave, errCount}
 		} else {
 			// 取最大值
 			if maxElapsed > as.MaxElapsed {
@@ -71,12 +70,12 @@ func ApiStats(c echo.Context) error {
 			as.Count += count
 			as.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			as.AverageElapsed, _ = utils.DecimalPrecision((as.AverageElapsed*float64(as.Count) + aElapsed*float64(count)) / float64((as.Count + count)))
+			as.AverageElapsed, _ = utils.DecimalPrecision((as.AverageElapsed*float64(as.Count) + float64(elapsed)) / float64((as.Count + count)))
 		}
 	}
 
 	if err := iter.Close(); err != nil {
-		log.Println("close iter error:", err, misc.Cql.Closed())
+		g.L.Warn("close iter error:", zap.Error(err))
 	}
 
 	// 对每个桶里的数据进行计算
@@ -128,17 +127,17 @@ func ApiDetail(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT method_id,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and api = ? and input_date > ? and input_date < ? `
+	q := `SELECT method_id,service_type,elapsed,max_elapsed,min_elapsed,count,err_count FROM method_stats WHERE app_name = ? and api = ? and input_date > ? and input_date < ? `
 	iter := misc.Cql.Query(q, appName, api, start.Unix(), end.Unix()).Iter()
 
 	var apiID, serType, elapsed, maxE, minE, count, errCount int
-	var averageE float64
 	var totalElapsed int
 	ad := make(map[int]*ApiMethod)
-	for iter.Scan(&apiID, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
+	for iter.Scan(&apiID, &serType, &elapsed, &maxE, &minE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, averageE, errCount, 0, ""}
+			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
+			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, ave, errCount, 0, ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -153,7 +152,7 @@ func ApiDetail(c echo.Context) error {
 			am.Count += count
 			am.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + averageE*float64(count)) / float64((am.Count + count)))
+			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
 		}
 
 		totalElapsed += elapsed

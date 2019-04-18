@@ -31,19 +31,18 @@ func Methods(c echo.Context) error {
 		})
 	}
 
-	q := misc.Cql.Query(`SELECT method_id,api,service_type,elapsed,max_elapsed,min_elapsed,average_elapsed,count,err_count FROM api_details_stats WHERE app_name = ? and input_date > ? and input_date < ? `, appName, start.Unix(), end.Unix())
+	q := misc.Cql.Query(`SELECT method_id,api,service_type,elapsed,max_elapsed,min_elapsed,count,err_count FROM method_stats WHERE app_name = ? and input_date > ? and input_date < ? `, appName, start.Unix(), end.Unix())
 	iter := q.Iter()
 
 	var apiID, serType, elapsed, maxE, minE, count, errCount int
-	var averageE float64
 	var totalElapsed int
 	var api string
 	ad := make(map[int]*ApiMethod)
-	for iter.Scan(&apiID, &api, &serType, &elapsed, &maxE, &minE, &averageE, &count, &errCount) {
+	for iter.Scan(&apiID, &api, &serType, &elapsed, &maxE, &minE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			av, _ := utils.DecimalPrecision(averageE)
-			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, av, errCount, 0, ""}
+			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
+			ad[apiID] = &ApiMethod{apiID, api, serType, 0, elapsed, maxE, minE, count, ave, errCount, 0, ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -58,7 +57,7 @@ func Methods(c echo.Context) error {
 			am.Count += count
 			am.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + averageE*float64(count)) / float64((am.Count + count)))
+			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
 		}
 
 		totalElapsed += elapsed

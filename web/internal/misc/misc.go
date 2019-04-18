@@ -4,6 +4,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/imdevlab/g"
+
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g/utils"
 	"github.com/labstack/echo"
@@ -66,7 +68,9 @@ func GetSqlByID(appName string, id int) string {
 		return "sql_not_found"
 	}
 
-	return sql
+	b, _ := g.B64.DecodeString(sql)
+	b = utils.TrimBytesExtraLineAndSpace(b)
+	return utils.Bytes2String(b)
 }
 
 func GetClassByID(appName string, id int) string {

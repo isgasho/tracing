@@ -54,6 +54,11 @@ const (
 	ASYNC                                         = -100
 	PROXY_HTTP_HEADER                             = 300
 	REDIS_IO                                      = 310
+
+	// Dubbo
+	DUBBO_ARGS   = 90
+	DUBBO_RESULT = 91
+	DUBBO_RPC    = 92
 )
 
 func initAnnotationKeys() {
@@ -112,4 +117,8 @@ func initAnnotationKeys() {
 	AnnotationKeys[300] = "PROXY_HTTP_HEADER"
 	AnnotationKeys[310] = "redis.io"
 
+	//Dubbo
+	AnnotationKeys[90] = "dubbo.args"
+	AnnotationKeys[91] = "dubbo.result"
+	AnnotationKeys[92] = "dubbo.rpc"
 }
