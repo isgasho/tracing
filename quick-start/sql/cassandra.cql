@@ -76,10 +76,10 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_policy (owner)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
 -- 应用告警表
-CREATE TABLE IF NOT EXISTS app_alert (
+CREATE TABLE IF NOT EXISTS alerts_app (
     name             text,              -- 应用名
     owner            text,              -- 该应用告警的所有者ID
-    policy           text,              -- 应用关联的告警策略模版
+    policy_id        text,           -- 应用关联的告警策略模版
     group            text,              -- 应用关联的用户组
     channel          text,              -- 不使用用户组时，单独设置告警通道
     users            list<text>,        -- 不使用用户组时,单独设置通知的用户
@@ -88,17 +88,17 @@ CREATE TABLE IF NOT EXISTS app_alert (
     PRIMARY KEY (name,owner)
 ) WITH gc_grace_seconds = 10800;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (update_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_app (update_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (owner) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_app (owner) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (policy) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_app (policy_id) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON app_alert (group) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON alerts_app (group) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
 
 
@@ -449,7 +449,7 @@ TRUNCATE TABLE login_count  ;
 
 
 TRUNCATE TABLE api_stats          ;
-TRUNCATE TABLE app_alert          ;
+TRUNCATE TABLE alerts_app          ;
 TRUNCATE TABLE app_apis           ;
 TRUNCATE TABLE app_methods        ;
 TRUNCATE TABLE app_operation_index;

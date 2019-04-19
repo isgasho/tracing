@@ -18,7 +18,6 @@ export default new Router({
         { path: '/apm/ui/list', meta: '应用监控',bg: '#39c',component: () => import('@/views/apm/list')},
         { path: '/apm/ui/admin', meta:'管理面板', bg: '#39c',component: () => import('@/views/admin')},
         { path: '/apm/ui/person', meta:'个人设置', bg: '#39c',component: () => import('@/views/personSetting')},
-        { path: '/apm/ui/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')},
         { 
           path: '/apm/ui/index', 
           component: ApmNav,
@@ -34,7 +33,8 @@ export default new Router({
             { path: '/apm/ui/database',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/database')},
             { path: '/apm/ui/api', meta: '应用监控',bg: '#39c',  component: () => import('@/views/apm/api')},
             { path: '/apm/ui/exception',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/exception')},
-            { path: '/apm/ui/method',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/method')}
+            { path: '/apm/ui/method',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/method')},
+            { path: '/apm/ui/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')}
           ]
         },
         { 

@@ -20,7 +20,7 @@
       </Row>
       <Row style="padding:0 10px">
           <Col span="17" class="split-border-right no-border" style="padding:8px 10px;">
-             <Table stripe :columns="appLabels" :data="appList" class="margin-top-15" @on-row-click="gotoApp"></Table>
+             <Table  :columns="appLabels" :data="appList" class="margin-top-15" :row-class-name="rowClassName"  @on-row-click="gotoApp"></Table>
              <Page :current="1" :total="totalApps" size="small" class="margin-top-15" simple />
           </Col>
            <Col span="6"  style="padding:8px 10px;padding-left:20px">
@@ -65,7 +65,7 @@ export default {
                 key: 'average_elapsed'
             },
             {
-                title: '错误率',
+                title: '错误率(%)',
                 key: 'error_percent'
             },
             {
@@ -85,6 +85,13 @@ export default {
 
   },
   methods: {
+      rowClassName (row, index) {
+                if (row.error_percent >= 10 || row.apdex < 0.8) {
+                    return 'error-trace';
+                } else  {
+                    return 'success-trace';
+                }
+            },
       gotoApp(app) {
           this.$store.dispatch('setAPPID', app.id)
           this.$store.dispatch('setAPPName', app.name)
@@ -111,6 +118,10 @@ export default {
 </script>
 
 <style lang="less">
+.ivu-table .error-trace td{
+        background-color: rgba(223, 83, 83, .5);
+        color: #333;
+    }
 </style>
 
 <style lang="less" scoped> 
@@ -127,3 +138,4 @@ export default {
     }
 }
 </style>
+
