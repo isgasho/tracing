@@ -46,3 +46,9 @@ stats:
   satisfactiontime: 3000
   # APDEX 可容忍时间指标，单位毫秒
   toleratetime: 6000
+
+mq:
+  topic: "tracing_alert"
+  addrs:
+      - "nats://10.7.14.26:4222"
+      - "nats://10.7.14.236:4222"

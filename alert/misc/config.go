@@ -13,6 +13,15 @@ type Config struct {
 		LogLevel   string
 		AdminToken string
 	}
+	MQ struct {
+		Addrs []string // mq地址
+		Topic string   // 主题
+	}
+	Storage struct {
+		Cluster  []string
+		Keyspace string
+		NumConns int
+	}
 }
 
 var Conf *Config

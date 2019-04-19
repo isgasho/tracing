@@ -21,8 +21,9 @@ import (
 	"syscall"
 
 	"github.com/imdevlab/g"
-	"github.com/imdevlab/tracing/alert/alert"
+
 	"github.com/imdevlab/tracing/alert/misc"
+	"github.com/imdevlab/tracing/alert/service"
 	"go.uber.org/zap"
 
 	"github.com/spf13/cobra"
@@ -47,7 +48,7 @@ to quickly create a Cobra application.`,
 		g.InitLogger(misc.Conf.Common.LogLevel)
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
-		a := alert.New()
+		a := service.New()
 		if err := a.Start(); err != nil {
 			g.L.Fatal("alert start", zap.Error(err))
 		}

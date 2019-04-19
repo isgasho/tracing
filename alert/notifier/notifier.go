@@ -1,3 +1,5 @@
 package notifier
 
-// 通知告警
+// Notifier 通知告警
+type Notifier struct {
+}
