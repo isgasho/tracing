@@ -2,7 +2,11 @@
   <div>
     <Row>
       <Col span="22" offset="1" class="no-border">
-        <Table stripe  :columns="apiLabels" :data="apiStats.slice((this.currentApiPage-1)*10,this.currentApiPage*10)" class="margin-top-40" @on-row-click="apiDetail" @on-sort-change="sortApi">
+        <Table stripe  :columns="apiLabels" :data="apiStats.slice((this.currentApiPage-1)*10,this.currentApiPage*10)" class="margin-top-40"  @on-sort-change="sortApi">
+          <template slot-scope="{ row }" slot="operation">
+              <Button size="small" type="text" @click="apiDetail(row)">查看方法</Button>
+              <Button size="small" type="primary" ghost @click="apiDashboard(row)">详细图表</Button>
+            </template>
         </Table>
 
         <Page :current="currentApiPage" :total="apiStats.length" size="small" class="margin-top-15" simple  @on-change="setApiPage"/>
@@ -40,13 +44,25 @@
 
         </div>
     </Modal>
+
+    <Modal v-model="dashVisible" :footer-hide="true">
+             <rpm width="430px" height="200px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
+             <error width="430px" height="200px" id="apm-error" :dateList="dateList" :valueList="errorList" class="margin-top-20"></error>
+            <respTime width="430px" height="200px" id="apm-resp" :dateList="dateList" :valueList="elapsedList" class="margin-top-20"></respTime>
+    </Modal>
   </div>   
 </template>
 
 <script>
 import request from '@/utils/request' 
+import echarts from 'echarts'
+import error from './charts/error'
+import respTime from './charts/respTime'
+import rpm from './charts/rpm'
+
 export default {
   name: 'interface',
+  components: {error,respTime,rpm},
    watch: {
     "$store.state.apm.selDate"() {
             this.initStats()
@@ -59,6 +75,32 @@ export default {
 
   },
   methods: {
+    // 加载api的详细图表
+    apiDashboard(r) {
+      this.$Loading.start();
+      // 加载当前APP的dashbord数据
+      request({
+          url: '/apm/web/apiDash',
+          method: 'GET',
+          params: {
+              app_name: this.$store.state.apm.appName,
+              start: JSON.parse(this.$store.state.apm.selDate)[0],
+              end: JSON.parse(this.$store.state.apm.selDate)[1],
+              api: r.api
+          }
+      }).then(res => {   
+          this.dateList = res.data.data.timeline
+          this.countList = res.data.data.count_list
+          this.elapsedList = res.data.data.elapsed_list
+          this.errorList = res.data.data.error_list
+
+          this.dashVisible = true
+          console.log(res.data.data)
+          this.$Loading.finish();
+      }).catch(error => {
+        this.$Loading.error();
+      })
+    },
     sortApi(val) {
       switch (val.key) {
         case "average_elapsed": // 平均耗时排序
@@ -198,10 +240,16 @@ export default {
   },
   mounted() {
     this.initStats()
+    echarts.connect('group-dashboard');
   },
   data () {
     return {
       apiStats: [],
+      dateList: [],
+      countList: [],
+      elapsedList: [],
+      errorList: [],
+      dashVisible: false,
       apiLabels: [
             {
                 title: 'API',
@@ -231,9 +279,10 @@ export default {
                 width: 250
             },
             {
-                title: '最小耗时(ms)',
-                key: 'min_elapsed',
-                width: 170
+                title: '操作',
+                slot: 'operation',
+                width: 170,
+                align: 'center'
             },
         ],
       methodLabels: [

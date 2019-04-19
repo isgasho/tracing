@@ -1,7 +1,5 @@
 package app
 
-/* SQL统计 */
-
 import (
 	"log"
 	"math"
@@ -10,22 +8,27 @@ import (
 
 	"github.com/imdevlab/g"
 	"github.com/imdevlab/g/utils"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/web/internal/misc"
 	"github.com/labstack/echo"
 	"go.uber.org/zap"
 )
 
-type SqlStat struct {
+type Exception struct {
 	ID             int     `json:"id"`
-	SQL            string  `json:"sql"`
+	Exception      string  `json:"exception"`
+	ServiceType    string  `json:"service_type"`
+	Elapsed        int     `json:"elapsed"`
 	MaxElapsed     int     `json:"max_elapsed"`
 	MinElapsed     int     `json:"min_elapsed"`
 	Count          int     `json:"count"`
 	AverageElapsed float64 `json:"average_elapsed"`
-	ErrorCount     int     `json:"error_count"`
+
+	Method string `json:"method"`
+	Class  string `json:"class"`
 }
 
-func SqlStats(c echo.Context) error {
+func ExceptionStats(c echo.Context) error {
 	start, end, err := misc.StartEndDate(c)
 	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
@@ -36,6 +39,7 @@ func SqlStats(c echo.Context) error {
 	}
 
 	appName := c.FormValue("app_name")
+
 	if appName == "" {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
@@ -44,17 +48,18 @@ func SqlStats(c echo.Context) error {
 		})
 	}
 
-	q := `SELECT sql,max_elapsed,min_elapsed,elapsed,count,err_count FROM sql_stats WHERE app_name = ? and input_date > ? and input_date < ? `
-	iter := misc.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
+	q := misc.Cql.Query(`SELECT method_id,class_id,service_type,total_elapsed,max_elapsed,min_elapsed,count  FROM exception_stats WHERE app_name = ? and input_date > ? and input_date < ? `, appName, start.Unix(), end.Unix())
+	iter := q.Iter()
 
-	var sqlID, maxE, minE, count, errCount, elapsed int
-	ad := make(map[int]*SqlStat)
-	for iter.Scan(&sqlID, &maxE, &minE, &elapsed, &count, &errCount) {
-		am, ok := ad[sqlID]
+	var methodID, exceptionID, serType, elapsed, maxE, minE, count int
+	ad := make(map[int]*Exception)
+	for iter.Scan(&methodID, &exceptionID, &serType, &elapsed, &maxE, &minE, &count) {
+		am, ok := ad[methodID]
 		if !ok {
 			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
-			ad[sqlID] = &SqlStat{sqlID, "", maxE, minE, count, ave, errCount}
+			ad[methodID] = &Exception{exceptionID, "", constant.ServiceType[serType], elapsed, maxE, minE, count, ave, "", ""}
 		} else {
+			am.Elapsed += elapsed
 			// 取最大值
 			if maxE > am.MaxElapsed {
 				am.MaxElapsed = maxE
@@ -65,21 +70,28 @@ func SqlStats(c echo.Context) error {
 			}
 
 			am.Count += count
-			am.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
 			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
 		}
 	}
 
-	if err := iter.Close(); err != nil {
-		g.L.Warn("close iter error:", zap.Error(err))
+	ads := make([]*Exception, 0, len(ad))
+	for _, am := range ad {
+		// 获取method信息
+		methodInfo := misc.GetMethodByID(appName, am.ID)
+		class, method := misc.SplitMethod(methodInfo)
+
+		am.Method = method
+		am.Class = class
+
+		// 获取exception信息
+		am.Exception = misc.GetClassByID(appName, am.ID)
+		ads = append(ads, am)
 	}
 
-	ads := make([]*SqlStat, 0, len(ad))
-	for _, am := range ad {
-		am.SQL = misc.GetSqlByID(appName, am.ID)
-
-		ads = append(ads, am)
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+		return err
 	}
 
 	return c.JSON(http.StatusOK, g.Result{
@@ -88,9 +100,9 @@ func SqlStats(c echo.Context) error {
 	})
 }
 
-func SqlDashboard(c echo.Context) error {
+func ExceptionDashboard(c echo.Context) error {
 	appName := c.FormValue("app_name")
-	sqlID := c.FormValue("sql_id")
+	eid := c.FormValue("exception_id")
 	start, end, err := misc.StartEndDate(c)
 	if err != nil {
 		g.L.Info("日期参数不合法", zap.String("start", c.FormValue("start")), zap.String("end", c.FormValue("end")), zap.Error(err))
@@ -133,14 +145,14 @@ func SqlDashboard(c echo.Context) error {
 	}
 
 	// 读取相应数据，按照时间填到对应的桶中
-	q := `SELECT elapsed,count,err_count,input_date FROM sql_stats WHERE app_name = ?  and sql = ? and input_date > ? and input_date < ? `
-	iter := misc.Cql.Query(q, appName, sqlID, start.Unix(), end.Unix()).Iter()
+	q := misc.Cql.Query(`SELECT total_elapsed,count,input_date FROM exception_stats WHERE app_name = ? and class_id = ?  and input_date > ? and input_date < ?  ALLOW FILTERING `, appName, eid, start.Unix(), end.Unix())
+	iter := q.Iter()
 
 	// apps := make(map[string]*AppStat)
 	var count int
-	var tElapsed, errCount int
+	var tElapsed int
 	var inputDate int64
-	for iter.Scan(&tElapsed, &count, &errCount, &inputDate) {
+	for iter.Scan(&tElapsed, &count, &inputDate) {
 		t := time.Unix(inputDate, 0)
 		// 计算该时间落在哪个时间桶里
 		i := int(t.Sub(start).Minutes()) / step
@@ -150,7 +162,6 @@ func SqlDashboard(c echo.Context) error {
 		app := timeBucks[ts]
 		app.Count += count
 		app.totalElapsed += float64(tElapsed)
-		app.errCount += float64(errCount)
 	}
 
 	if err := iter.Close(); err != nil {
@@ -170,24 +181,15 @@ func SqlDashboard(c echo.Context) error {
 	countList := make([]int, 0)
 	//耗时列表
 	elapsedList := make([]float64, 0)
-	//错误率列表
-	errorList := make([]float64, 0)
 
 	for _, ts := range timeline {
 		app := timeBucks[ts]
 		if math.IsNaN(app.AverageElapsed) {
 			app.AverageElapsed = 0
 		}
-		if math.IsNaN(app.Apdex) {
-			app.Apdex = 1
-		}
-		if math.IsNaN(app.ErrorPercent) {
-			app.ErrorPercent = 0
-		}
+
 		countList = append(countList, app.Count)
 		elapsedList = append(elapsedList, app.AverageElapsed)
-		errorList = append(errorList, app.ErrorPercent)
-
 	}
 
 	return c.JSON(http.StatusOK, g.Result{
@@ -196,7 +198,6 @@ func SqlDashboard(c echo.Context) error {
 			Timeline:    timeline,
 			CountList:   countList,
 			ElapsedList: elapsedList,
-			ErrorList:   errorList,
 		},
 	})
 }

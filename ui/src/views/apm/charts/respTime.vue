@@ -59,7 +59,7 @@ export default {
       var option = {
         backgroundColor: '#fff',
         title: {
-            text: '应用响应时间',
+            text: '响应时间',
             textStyle: {
                 fontWeight: 'normal',
                 fontSize: 16

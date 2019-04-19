@@ -1,41 +1,58 @@
 <template>
   <div>
     <Row class="padding-20">
-       <Col span="8" style="background:rgb(245, 245, 245)"  class="padding-20 padding-bottom-40">
-          <div  class="font-size-18">链路过滤</div>
-          <!-- <div class="margin-top-10">
-            <div class="font-size-16">请求API</div>
-            <Select v-model="currentApi" style="width:400px" size="large" class="api-filter"  placeholder="默认选择全部API" filterable clearable>
+       <Col span="7" style="background:rgb(248, 248, 248)"  class="padding-20 padding-bottom-10">
+       
+          <div  class="font-size-18">链路过滤  <Button ghost type="primary" style="float:right;margin-top:3px;padding-left:15px;padding-right:15px;" size="small" @click="queryTraces">查询</Button></div>
+          <div class="margin-top-10 no-border">
+            <div class="font-size-12">请求API</div>
+            <Select v-model="currentApi" style="width:100%" size="large" class="api-filter"  placeholder="默认选择全部API" filterable clearable>
               <Option v-for="api in apis" :value="api" :key="api">
                 {{ api }}
               </Option>
             </Select>
-          </div> -->
-          
-          <div class="margin-top-10">
-            <div class="font-size-16">最低响应时间(ms)</div>
-            <Input  v-model="minElapsed" placeholder="e.g.  100，留空代表不限制" style="width: 100%" size="large" />
           </div>
-          <div class="margin-top-40">
-            <div class="font-size-16">最大响应时间(ms)</div>
-            <Input   v-model="maxElapsed" placeholder="e.g. 3000，留空代表并不限制" style="width: 100%" size="large" />
-          </div>
-          <div class="margin-top-40">
-            <div class="font-size-16">限定搜索数目</div>
-            <InputNumber :max="100" :min="1"  :step="5" v-model="resultLimit" style="width: 100%" size="large"></InputNumber>
+          <Row class="margin-top-15 no-border" style="border-bottom: 1px solid #ddd;padding-bottom:25px">
+            <Col span="11">
+               <div class="font-size-12">最小耗时(ms)</div>
+              <Input class="margin-top-5" v-model="minElapsed" placeholder="e.g.  100" style="width: 100%;border:none;" size="large" />
+            </Col>
+            <Col span="11" offset="2">
+              <div class="font-size-12">最大耗时(ms)</div>
+              <Input  class="margin-top-5" v-model="maxElapsed" placeholder="留空代表不限制" style="width: 100%" size="large" />
+            </Col>
+          </Row>
+          <Row class="margin-top-15 no-border" style="border-bottom: 1px solid #ddd;padding-bottom:25px">
+            <Col span="11">
+              <div class="font-size-12">限定搜索数目</div>
+              <InputNumber class="margin-top-5" :max="1000" :min="1"  :step="5" v-model="resultLimit" style="width: 100px;" size="medium"></InputNumber>
+            </Col>
+            <Col span="10" offset="2">
+              <div class="font-size-12">只搜索错误</div>
+              <i-switch v-model="searchError" class="margin-top-10 margin-left-5"/>
+            </Col>
+          </Row>
+
+          <div class="margin-top-15 no-border">
+            <div class="font-size-12">指定链路ID查询</div>
+            <Input  class="margin-top-5" v-model="searchTraceID" placeholder="不为空时，优先于其他条件查询" style="width: 100%" size="large" />
           </div>
 
+
           <div class="margin-top-20">
-            <Button type="primary"  class="primary2-button" @click="queryTraces">查询链路</Button>
+           
           </div>
        </Col>
-       <Col span="14" offset="1">
-        <trace :graphData="tracesData" v-if="tracesData.is_suc==true" style='height: 49vh' @selTraces="selectTraces"></trace>
+       <Col span="15" offset="1">
+        <trace :graphData="tracesData" v-if="tracesData.is_suc==true" style='height: 440px' @selTraces="selectTraces"></trace>
        </Col>
     </Row>
 
      <div v-show="selectedTraces.length > 0" class="margin-top-10" style="padding-left:20px;padding-right:20px;">
-          <span><Tag style="background: rgb(18, 147, 154,.5)" size="large">{{selSucCount}} 成功</Tag> <Tag style="background:rgba(223, 83, 83, .5)" size="large">{{selErrCount}} 错误</Tag></span>
+          <span>
+            <Tag style="background: rgb(18, 147, 154,.5)" size="large" @click="setTableFilter('suc')">{{selSucCount}} 成功</Tag> 
+            <Tag style="background:rgba(223, 83, 83, .5)" size="large" @click="setTableFilter('error')">{{selErrCount}} 错误</Tag>
+          </span>
           <!-- <span style="float:right" class="no-border">
             <Select style="width:200px"  value="1">
                 <Option value="1">时间最近</Option>
@@ -46,7 +63,7 @@
           </span> -->
 
         <div style="padding-left:10px;padding-right:10px" class="margin-top-20 margin-bottom-40">
-          <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="selectedTraces" class="margin-top-15" @on-row-click="showTrace"></Table>
+          <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="showTraceTable()" class="margin-top-15" @on-row-click="showTrace"></Table>
         </div>
       </div>
 
@@ -165,7 +182,8 @@ export default {
        minElapsed: null,
        maxElapsed: null,
       selectedTraces: [],
-
+      searchError: false,
+      searchTraceID : '',
       apis : [],
       currentApi: '',
 
@@ -206,15 +224,44 @@ export default {
        split1: 0.3,
        selNode: {},
        isNodeSel: false,
-       collapseList: []
+       collapseList: [],
+       
+       // 0: 同时显示成功、错误的点
+       // 1: 只显示成功的点
+       // 2: 只显示错误的点
+       tableFilter: 0
     }
   },
   watch: {
+    "$store.state.apm.appName"() {
+            this.apiList()
+    }
   },
   computed: {
     
   },
   methods: {
+    showTraceTable() {
+      if (this.tableFilter==0) {
+          return this.selectedTraces
+      } else if (this.tableFilter == 1) {
+        var traces = []
+        for (var i=0;i<this.selectedTraces.length;i++) {
+          if (this.selectedTraces[i].errCode==0) {
+            traces.push(this.selectedTraces[i])
+          }
+        }
+        return traces
+      } 
+
+      var traces = []
+      for (var i=0;i<this.selectedTraces.length;i++) {
+        if (this.selectedTraces[i].errCode==1) {
+          traces.push(this.selectedTraces[i])
+        }
+      }
+      return traces
+    },
     showDuration(d) {
       if (d == -1) {
         return ''
@@ -249,8 +296,10 @@ export default {
             app_name: this.$store.state.apm.appName,
             api : this.currentApi,
             min_elapsed: this.minElapsed,
-            max_eapsed: this.maxElapsed,
+            max_elapsed: this.maxElapsed,
             limit: this.resultLimit,
+            search_error: this.searchError,
+            search_trace_id: this.searchTraceID,
 
             start: JSON.parse(this.$store.state.apm.selDate)[0],
             end: JSON.parse(this.$store.state.apm.selDate)[1],
@@ -349,18 +398,21 @@ export default {
       }).catch(error => {
         this.$Loading.error();
       })
+    },
+    apiList() {
+       request({
+          url: '/apm/web/appApis',
+          method: 'GET',
+          params: {
+              app_name: this.$store.state.apm.appName,
+          }
+      }).then(res => {
+        this.apis = res.data.data
+      })
     }
   },
   mounted() {
-    request({
-        url: '/apm/web/appApis',
-        method: 'GET',
-        params: {
-           app_name: this.$store.state.apm.appName,
-        }
-    }).then(res => {
-      this.apis = res.data.data
-    })
+    this.apiList()
   }
 }
 </script>

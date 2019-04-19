@@ -3,6 +3,15 @@
     <Row>
       <Col span="22" offset="1" class="no-border">
         <Table stripe :columns="methodLabels" :data="methods.slice((this.currentMethodPage-1)*10,this.currentMethodPage*10)" class="margin-top-40"  @on-sort-change="sortMethod">
+             <template slot-scope="{ row }" slot="method">
+              <Tooltip  max-width="400" placement="top-start" :delay="400">
+                  <div>{{row.method}}</div>
+                  <div slot="content">                                  
+                    <!-- <div><Tag style="background: #F28F20;border:none;" size="medium" class="margin-right-10">Method</Tag>{{row.method}}</div> -->
+                    <div><Tag style="background: #F28F20;border:none;" size="medium"  class="margin-right-10">Class</Tag> {{row.class}}</div>
+                  </div>
+              </Tooltip>     
+            </template>
         </Table>
         <Page :current="currentMethodPage" :total="methods.length" size="small" class="margin-top-15" simple  @on-change="setMethodPage"/>
       </Col>
@@ -17,37 +26,37 @@ export default {
   data () {
     return {
         methodLabels: [
-            {
+             {
                 title: 'Method',
-                key: 'method'
+                slot: 'method'
             },
             {
                 title: '均耗时(ms)',
                 key: 'average_elapsed',
-                width:140,
+                width:130,
                 sortable: 'custom'
             },
-                        {
+            {
                 title: '请求数',
                 key: 'count',
-                width: 120,
+                width: 100,
                 sortable: 'custom'
             },
             {
                 title: '错误数',
                 key: 'error_count',
-                width: 120,
+                width: 100,
                 sortable: 'custom'
             },
             {
                 title: '最大耗时(ms)',
                 key: 'max_elapsed',
-                width: 200
+                width: 160
             },
                         {
                 title: '服务类型',
                 key: 'service_type',
-                width: 120
+                width: 140
             },
         ],
 

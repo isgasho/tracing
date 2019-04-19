@@ -84,12 +84,20 @@ func (s *Web) Start() error {
 		e.GET("/apm/web/apiStats", app.ApiStats)
 		//获取指定接口的详细方法统计
 		e.GET("/apm/web/apiDetail", app.ApiDetail)
+		//获取接口的图表数据
+		e.GET("/apm/web/apiDash", app.ApiDashboard)
 
 		// 应用Method统计
 		e.GET("/apm/web/appMethods", app.Methods)
 
 		// 数据库统计
 		e.GET("/apm/web/sqlStats", app.SqlStats)
+		e.GET("/apm/web/sqlDash", app.SqlDashboard)
+
+		// 异常统计
+		e.GET("/apm/web/appException", app.ExceptionStats)
+		//获取异常的图表数据
+		e.GET("/apm/web/exceptionDash", app.ExceptionDashboard)
 
 		//查询所有服务器名
 		e.GET("/apm/web/agentList", app.QueryAgents, s.checkLogin)

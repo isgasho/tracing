@@ -9,7 +9,7 @@
        <Row style="padding:0 10px;" class="split-border-bottom no-border">
           <Col span="17" class="split-border-right">
             <span class="padding-bottom-5 font-size-18">应用列表</span>
-            <Tag style="margin-top: -3px">最近5分钟</Tag>
+            <Tag style="margin-top: -3px">最近30分钟</Tag>
              <Select v-model="selApps" filterable multiple style="width:300px;border:none;float:right;margin-right:20px" placeholder="过滤应用">
                 <Option v-for="item in appNames" :value="item.value" :key="item.value">{{ item.label }}</Option>
             </Select>
@@ -57,12 +57,8 @@ export default {
                 key: 'name'
             },
             {
-                title: '请求总数',
+                title: '请求数',
                 key: 'count',
-            },
-            {
-                title: 'Apdex',
-                key: 'apdex'
             },
             {
                 title: '响应时间(ms)',
@@ -72,6 +68,10 @@ export default {
                 title: '错误率',
                 key: 'error_percent'
             },
+            {
+                title: 'Apdex',
+                key: 'apdex'
+            }
         ],
         appList: [
         ],

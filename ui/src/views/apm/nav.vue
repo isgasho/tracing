@@ -139,13 +139,13 @@ export default {
     initItem() {
        this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
-        this.items = ['monitoring','dashboard','tracing','serviceMap','system','runtime','profiling','thread','memory','stats','database','interface','method','exception']
-        this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2,system:2, profiling:1,thread:2,memory:2,stats:1,database:2,interface:2,exception:2,method:2}
+        this.items = ['monitoring','dashboard','tracing','serviceMap','system','runtime','stats','api','database','method','exception','profiling','thread','memory']
+        this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2,system:2, profiling:1,thread:2,memory:2,stats:1,database:2,api:2,exception:2,method:2}
         this.names = {monitoring: '监控','dashboard': "应用总览",
             tracing: '链路跟踪',serviceMap:'应用拓扑',  
             runtime: '应用运行时', system:'系统指标',profiling: '在线诊断', thread:'线程剖析', memory: '内存剖析',
             stats: '数据统计', 
-            database:'数据库', interface:'访问接口', exception:'错误异常',method:'关键事务'}
+            database:'数据库', api:'请求接口', exception:'错误异常',method:'关键事务'}
         this.selItem = this.path.split('/')[3]
         // 加载app名列表
          request({
