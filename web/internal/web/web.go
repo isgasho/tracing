@@ -49,6 +49,9 @@ func (s *Web) Start() error {
 	}
 	misc.Cql = cql
 
+	// 初始化超级管理员
+	s.initSuperAdmin()
+
 	// 初始化全体用户列表(缓存以提升性能)
 
 	go s.loopLoadUsers()

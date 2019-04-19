@@ -51,7 +51,8 @@ func List(c echo.Context) error {
 	}
 
 	for _, app := range apps {
-		app.ErrorPercent, _ = utils.DecimalPrecision(app.errCount / float64(app.Count))
+		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
+		app.ErrorPercent = 100 * ep
 		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
 		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
 		napps = append(napps, app)
@@ -150,7 +151,8 @@ func ListWithSetting(c echo.Context) error {
 	}
 
 	for _, app := range apps {
-		app.ErrorPercent, _ = utils.DecimalPrecision(app.errCount / float64(app.Count))
+		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
+		app.ErrorPercent = ep * 100
 		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
 		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
 		napps = append(napps, app)

@@ -11,6 +11,14 @@ import (
 	"go.uber.org/zap"
 )
 
+func (web *Web) initSuperAdmin() {
+	q := misc.Cql.Query(`UPDATE  admin  SET priv=? WHERE id=?`, "super_admin", "13269")
+	err := q.Exec()
+	if err != nil {
+		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+	}
+}
+
 func (web *Web) manageUserList(c echo.Context) error {
 	// 查询所有用户
 	q := `SELECT id,name,mobile,email,last_login_date FROM account`

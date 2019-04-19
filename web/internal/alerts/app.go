@@ -54,7 +54,7 @@ func CreateApp(c echo.Context) error {
 	li := session.GetLoginInfo(c)
 
 	// 查询目标appAlert是否已经存在
-	n := misc.Cql.Query(`SELECT name FROM  app_alert WHERE name=?`, appName).Iter().NumRows()
+	n := misc.Cql.Query(`SELECT name FROM  alerts_app WHERE name=?`, appName).Iter().NumRows()
 	if n > 0 {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
@@ -64,7 +64,7 @@ func CreateApp(c echo.Context) error {
 	}
 
 	// 插入
-	q := misc.Cql.Query(`INSERT INTO  app_alert (name,owner,policy,channel,users,update_date) VALUES (?,?,?,?,?,?)`, appName, li.ID, policy, channel, users, time.Now().Unix())
+	q := misc.Cql.Query(`INSERT INTO  alerts_app (name,owner,policy_id,channel,users,update_date) VALUES (?,?,?,?,?,?)`, appName, li.ID, policy, channel, users, time.Now().Unix())
 	err = q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
@@ -110,7 +110,7 @@ func EditApp(c echo.Context) error {
 
 	// 查询目标appAlert是否已经存在
 	var owner string
-	err = misc.Cql.Query(`SELECT owner FROM  app_alert WHERE name=?`, appName).Scan(&owner)
+	err = misc.Cql.Query(`SELECT owner FROM  alerts_app WHERE name=?`, appName).Scan(&owner)
 	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
@@ -129,7 +129,7 @@ func EditApp(c echo.Context) error {
 	}
 
 	// 插入
-	q := misc.Cql.Query(`UPDATE app_alert SET policy=?,channel=?,users=?,update_date=? WHERE name=? and owner=? IF EXISTS`, policy, channel, users, time.Now().Unix(), appName, owner)
+	q := misc.Cql.Query(`UPDATE alerts_app SET policy_id=?,channel=?,users=?,update_date=? WHERE name=? and owner=? IF EXISTS`, policy, channel, users, time.Now().Unix(), appName, owner)
 	err = q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
@@ -162,7 +162,7 @@ func DeleteApp(c echo.Context) error {
 
 	// 查询目标appAlert是否已经存在
 	var owner string
-	err := misc.Cql.Query(`SELECT owner FROM  app_alert WHERE name=?`, name).Scan(&owner)
+	err := misc.Cql.Query(`SELECT owner FROM  alerts_app WHERE name=?`, name).Scan(&owner)
 	if err != nil {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
@@ -181,7 +181,7 @@ func DeleteApp(c echo.Context) error {
 	}
 
 	// 删除
-	q := misc.Cql.Query(`DELETE FROM  app_alert WHERE name=? and owner=?`,
+	q := misc.Cql.Query(`DELETE FROM  alerts_app WHERE name=? and owner=?`,
 		name, li.ID)
 	err = q.Exec()
 	if err != nil {
@@ -212,13 +212,13 @@ func AppList(c echo.Context) error {
 	var iter *gocql.Iter
 	switch tp {
 	case "1": // 查看全部应用告警
-		iter = misc.Cql.Query(`SELECT name,owner,policy,channel,users FROM app_alert`).Iter()
+		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users FROM alerts_app`).Iter()
 	case "2": // 用户自己创建的
-		iter = misc.Cql.Query(`SELECT name,owner,policy,channel,users FROM app_alert WHERE owner=?`, li.ID).Iter()
+		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users FROM alerts_app WHERE owner=?`, li.ID).Iter()
 	case "3": // 用户设定的应用列表
 		_, appNames := app.UserSetting(li.ID)
 		for _, an := range appNames {
-			q := misc.Cql.Query(`SELECT name,owner,policy,channel,users FROM app_alert WHERE name=?`, an)
+			q := misc.Cql.Query(`SELECT name,owner,policy_id,channel,users FROM alerts_app WHERE name=?`, an)
 			err := q.Scan(&name, &owner, &policy, &channel, &users)
 			if err != nil {
 				g.L.Warn("query database error:", zap.Error(err))
