@@ -43,15 +43,21 @@ type Config struct {
 
 	Stats struct {
 		DeferTime        int64 // 延迟计算时间，单位秒
-		MapRange         int64 // 应用拓扑图计算时间范围，单位秒
-		APICallRang      int64 // API应用调用计算时间范围，单位秒
+		MapDefer         int64 // 应用拓扑图计算时间范围，单位秒
+		APICallDefer     int64 // API应用调用计算时间范围，单位秒
 		SatisfactionTime int32 // APDEX 满意时间指标，单位毫秒
 		TolerateTime     int32 // APDEX 可容忍时间指标，单位毫秒
+		RuntimeDefer     int64 // Runtime延迟计算时间
 	}
 
 	MQ struct {
 		Addrs []string // mq地址
 		Topic string   // 主题
+	}
+
+	Ticker struct {
+		Num      int // 定时器个数
+		Interval int // 任务时间间隔
 	}
 }
 

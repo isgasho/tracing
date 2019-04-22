@@ -81,7 +81,7 @@ var InsertMethodStats string = ` INSERT INTO method_stats (app_name, api, input_
 	 min_elapsed, count, err_count) VALUES (?,?,?,?,?,?,?,?,?,?);`
 
 //  InserSQLStats ...
-var InserSQLStats string = `INSERT INTO sql_stats (app_name, sql, 
+var InsertSQLStats string = `INSERT INTO sql_stats (app_name, sql, 
 	input_date, elapsed, max_elapsed, min_elapsed, count, err_count) 
 VALUES (?,?,?,?,?,?,?,?);`
 
@@ -94,7 +94,7 @@ var InsertParentMap string = `INSERT INTO parent_map (app_name, input_date, serv
 	VALUES (?,?,?,?,?,?,?,?);`
 
 // 子节点应用拓扑入库
-var InserChildMap string = `INSERT INTO child_map (app_name, input_date, service_type, child_type, destinations, req_send_count, err_count, total_elapsed)
+var InsertChildMap string = `INSERT INTO child_map (app_name, input_date, service_type, child_type, destinations, req_send_count, err_count, total_elapsed)
 	VALUES (?,?,?,?,?,?,?,?);`
 
 // 未知父节点应用拓扑图入库
@@ -103,4 +103,9 @@ var InsertUnknowParentMap string = `INSERT INTO unknow_parent_map (app_name, inp
 
 // Api被调用统计信息
 var InsertAPICallStats string = `INSERT INTO api_call_stats (app_name, input_date, service_type, api_id, parent_name, req_recv_count, err_count, total_elapsed)
+VALUES (?,?,?,?,?,?,?,?);`
+
+//  InsertRuntimeStats ...
+var InsertRuntimeStats string = `INSERT INTO runtime_stats (app_name, agent_id, 
+	input_date, jvm_cpu_load, system_cpu_load, heap_used, non_heap, count) 
 VALUES (?,?,?,?,?,?,?,?);`

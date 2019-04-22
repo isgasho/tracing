@@ -22,14 +22,16 @@ type Storage struct {
 	cql           *gocql.Session
 	spanChan      chan *trace.TSpan
 	spanChunkChan chan *trace.TSpanChunk
+	logger        *zap.Logger
 	// metricsChan   chan *util.MetricData
 }
 
 // NewStorage 新建存储
-func NewStorage() *Storage {
+func NewStorage(logger *zap.Logger) *Storage {
 	return &Storage{
 		spanChan:      make(chan *trace.TSpan, misc.Conf.Storage.SpanCacheLen+500),
 		spanChunkChan: make(chan *trace.TSpanChunk, misc.Conf.Storage.SpanChunkCacheLen+500),
+		logger:        logger,
 		// metricsChan:   make(chan *util.MetricData, misc.Conf.Storage.MetricCacheLen+500),
 	}
 }
@@ -45,7 +47,7 @@ func (s *Storage) init() error {
 
 	session, err := cluster.CreateSession()
 	if err != nil {
-		g.L.Warn("create session", zap.String("error", err.Error()))
+		s.logger.Warn("create session", zap.String("error", err.Error()))
 		return err
 	}
 	s.cql = session
@@ -55,7 +57,7 @@ func (s *Storage) init() error {
 // Start ...
 func (s *Storage) Start() error {
 	if err := s.init(); err != nil {
-		g.L.Warn("storage init", zap.String("error", err.Error()))
+		s.logger.Warn("storage init", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -97,7 +99,7 @@ func (s *Storage) AgentStore(agentInfo *network.AgentInfo, islive bool) error {
 		islive,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("agent store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("agent store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -113,7 +115,7 @@ func (s *Storage) UpdateAgentState(appname string, agentid string, islive bool) 
 		agentid,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("update agent state error", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("update agent state error", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -127,7 +129,7 @@ func (s *Storage) AppNameStore(name string) error {
 		name,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert app name error", zap.String("SQL", query.String()), zap.String("error", err.Error()), zap.String("appName", name))
+		s.logger.Warn("insert app name error", zap.String("SQL", query.String()), zap.String("error", err.Error()), zap.String("appName", name))
 		return err
 	}
 	return nil
@@ -143,7 +145,7 @@ func (s *Storage) AgentInfoStore(appName, agentID string, startTime int64, agent
 		string(agentInfo),
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("agent info store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("agent info store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 	return nil
@@ -159,7 +161,7 @@ func (s *Storage) AgentOffline(appName, agentID string, startTime, endTime int64
 	// 	isLive,
 	// )
 	// if err := query.Exec(); err != nil {
-	// 	g.L.Warn("AgentOffline error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+	// 	s.logger.Warn("AgentOffline error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 	// 	return err
 	// }
 	return nil
@@ -176,7 +178,7 @@ func (s *Storage) AppMethodStore(appName string, apiInfo *trace.TApiMetaData) er
 		apiInfo.GetType(),
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("api store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("api store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 	return nil
@@ -192,7 +194,7 @@ func (s *Storage) AppSQLStore(appName string, sqlInfo *trace.TSqlMetaData) error
 		newSQL,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("sql store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("sql store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -208,7 +210,7 @@ func (s *Storage) AppStringStore(appName string, strInfo *trace.TStringMetaData)
 		strInfo.StringValue,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("string store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("string store", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 	return nil
@@ -227,7 +229,7 @@ func (s *Storage) spanStore() {
 					// 插入
 					for _, qSpan := range spansQueue {
 						if err := s.WriteSpan(qSpan); err != nil {
-							g.L.Warn("write span", zap.String("error", err.Error()))
+							s.logger.Warn("write span", zap.String("error", err.Error()))
 							continue
 						}
 					}
@@ -241,7 +243,7 @@ func (s *Storage) spanStore() {
 				// 插入
 				for _, span := range spansQueue {
 					if err := s.WriteSpan(span); err != nil {
-						g.L.Warn("write span", zap.String("error", err.Error()))
+						s.logger.Warn("write span", zap.String("error", err.Error()))
 						continue
 					}
 				}
@@ -266,7 +268,7 @@ func (s *Storage) spanChunkStore() {
 					// 插入
 					for _, qSapnChunk := range spansChunkQueue {
 						if err := s.writeSpanChunk(qSapnChunk); err != nil {
-							g.L.Warn("write spanChunk", zap.String("error", err.Error()))
+							s.logger.Warn("write spanChunk", zap.String("error", err.Error()))
 							continue
 						}
 					}
@@ -280,7 +282,7 @@ func (s *Storage) spanChunkStore() {
 				// 插入
 				for _, sapnChunk := range spansChunkQueue {
 					if err := s.writeSpanChunk(sapnChunk); err != nil {
-						g.L.Warn("write spanChunk", zap.String("error", err.Error()))
+						s.logger.Warn("write spanChunk", zap.String("error", err.Error()))
 						continue
 					}
 				}
@@ -295,12 +297,12 @@ func (s *Storage) spanChunkStore() {
 // WriteSpan ...
 func (s *Storage) WriteSpan(span *trace.TSpan) error {
 	if err := s.writeSpan(span); err != nil {
-		g.L.Warn("write span", zap.String("error", err.Error()))
+		s.logger.Warn("write span", zap.String("error", err.Error()))
 		return err
 	}
 
 	if err := s.writeIndexes(span); err != nil {
-		g.L.Warn("write span index", zap.String("error", err.Error()))
+		s.logger.Warn("write span index", zap.String("error", err.Error()))
 		return err
 	}
 	return nil
@@ -339,7 +341,7 @@ func (s *Storage) writeSpan(span *trace.TSpan) error {
 		span.GetApiId(),
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("write span", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("write span", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -364,7 +366,7 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 		spanChunk.Version,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("write spanChunk", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+		s.logger.Warn("write spanChunk", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
@@ -374,7 +376,7 @@ func (s *Storage) writeSpanChunk(spanChunk *trace.TSpanChunk) error {
 // writeIndexes ...
 func (s *Storage) writeIndexes(span *trace.TSpan) error {
 	if err := s.appOperationIndex(span); err != nil {
-		g.L.Warn("appOperationIndex error", zap.String("error", err.Error()))
+		s.logger.Warn("appOperationIndex error", zap.String("error", err.Error()))
 		return err
 	}
 	return nil
@@ -397,7 +399,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 	)
 
 	if err := query.Exec(); err != nil {
-		g.L.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+		s.logger.Warn("inster app_operation_index error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 
@@ -430,7 +432,7 @@ func (s *Storage) WriteAgentStatBatch(appName, agentID string, agentStatBatch *p
 	}
 
 	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-		g.L.Warn("agent stat batch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
+		s.logger.Warn("agent stat batch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
 		return err
 	}
 
@@ -450,7 +452,7 @@ func (s *Storage) WriteAgentStat(appName, agentID string, agentStat *pinpoint.TA
 			misc.Conf.Storage.AgentStatTTL,
 		)
 		if err := query.Exec(); err != nil {
-			g.L.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+			s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 			return err
 		}
 	} else {
@@ -463,7 +465,7 @@ func (s *Storage) WriteAgentStat(appName, agentID string, agentStat *pinpoint.TA
 			infoB,
 		)
 		if err := query.Exec(); err != nil {
-			g.L.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+			s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 			return err
 		}
 	}
@@ -479,7 +481,7 @@ func (s *Storage) StoreAPI(span *trace.TSpan) error {
 	)
 
 	if err := query.Exec(); err != nil {
-		g.L.Warn("store api", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		s.logger.Warn("store api", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -496,7 +498,7 @@ func (s *Storage) StoreSrvType() error {
 			info)
 	}
 	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-		g.L.Warn("insert server type", zap.String("SQL", sql.InsertSrvType), zap.String("error", err.Error()))
+		s.logger.Warn("insert server type", zap.String("SQL", sql.InsertSrvType), zap.String("error", err.Error()))
 		return err
 	}
 	return nil
@@ -517,7 +519,7 @@ func (s *Storage) InsertAPIStats(appName string, inputTime int64, apiStr string,
 		apiInfo.TolerateCount,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("inster api stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		s.logger.Warn("inster api stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
@@ -539,7 +541,7 @@ func (s *Storage) InsertMethodStats(appName string, inputTime int64, apiStr stri
 		methodInfo.ErrCount,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert method error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+		s.logger.Warn("insert method error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 	return nil
@@ -560,7 +562,7 @@ func (s *Storage) InsertExceptionStats(appName string, inputTime int64, methodID
 			exinfo.Type,
 		)
 		if err := query.Exec(); err != nil {
-			g.L.Warn("insert exception error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+			s.logger.Warn("insert exception error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 			return err
 		}
 	}
@@ -580,7 +582,7 @@ func (s *Storage) InsertParentMap(appName string, appType int32, inputTime int64
 		parentInfo.Totalelapsed,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		s.logger.Warn("insert parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
@@ -589,7 +591,7 @@ func (s *Storage) InsertParentMap(appName string, appType int32, inputTime int64
 
 // InsertChildMap ...
 func (s *Storage) InsertChildMap(appName string, appType int32, inputTime int64, childType int32, destinationStr string, destination *metric.Destination) error {
-	query := s.cql.Query(sql.InserChildMap,
+	query := s.cql.Query(sql.InsertChildMap,
 		appName,
 		inputTime,
 		appType,
@@ -600,7 +602,7 @@ func (s *Storage) InsertChildMap(appName string, appType int32, inputTime int64,
 		destination.Totalelapsed,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert child map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		s.logger.Warn("insert child map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
@@ -618,7 +620,7 @@ func (s *Storage) InsertUnknowParentMap(appName string, appType int32, inputTime
 		unknowParent.Totalelapsed,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert unknow parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		s.logger.Warn("insert unknow parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
@@ -638,7 +640,7 @@ func (s *Storage) InsertAPICallStats(appName string, appType int32, inputTime in
 		parentInfo.Totalelapsed,
 	)
 	if err := query.Exec(); err != nil {
-		g.L.Warn("insert api call stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		s.logger.Warn("insert api call stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
@@ -647,7 +649,7 @@ func (s *Storage) InsertAPICallStats(appName string, appType int32, inputTime in
 
 // InsertSQLStats ...
 func (s *Storage) InsertSQLStats(appName string, inputTime int64, sqlID int32, sqlInfo *metric.SQLInfo) error {
-	query := s.cql.Query(sql.InserSQLStats,
+	query := s.cql.Query(sql.InsertSQLStats,
 		appName,
 		sqlID,
 		inputTime,
@@ -659,7 +661,27 @@ func (s *Storage) InsertSQLStats(appName string, inputTime int64, sqlID int32, s
 	)
 
 	if err := query.Exec(); err != nil {
-		g.L.Warn("sql stats insert error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+		s.logger.Warn("sql stats insert error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
+		return err
+	}
+	return nil
+}
+
+// InsertRuntimeStats ...
+func (s *Storage) InsertRuntimeStats(appName string, inputTime int64, agentID string, info *metric.JVMInfo) error {
+	query := s.cql.Query(sql.InsertRuntimeStats,
+		appName,
+		agentID,
+		inputTime,
+		info.CPU.Jvm,
+		info.CPU.System,
+		info.Memory.HeapUsed,
+		info.Memory.NonHeap,
+		info.CPU.Count,
+	)
+
+	if err := query.Exec(); err != nil {
+		s.logger.Warn("runtime stats insert error", zap.String("error", err.Error()), zap.String("SQL", query.String()))
 		return err
 	}
 	return nil
@@ -677,7 +699,7 @@ func (s *Storage) systemStore() {
 	// 			if len(metricQueue) >= misc.Conf.Storage.MetricCacheLen {
 	// 				// 插入
 	// 				if err := s.WriteMetric(metricQueue); err != nil {
-	// 					g.L.Warn("writeMetric error", zap.String("error", err.Error()))
+	// 					s.logger.Warn("writeMetric error", zap.String("error", err.Error()))
 	// 				}
 	// 				// 清空缓存
 	// 				metricQueue = metricQueue[:0]
@@ -688,7 +710,7 @@ func (s *Storage) systemStore() {
 	// 		if len(metricQueue) > 0 {
 	// 			// 插入
 	// 			if err := s.WriteMetric(metricQueue); err != nil {
-	// 				g.L.Warn("writeMetric error", zap.String("error", err.Error()))
+	// 				s.logger.Warn("writeMetric error", zap.String("error", err.Error()))
 	// 			}
 	// 			// 清空缓存
 	// 			metricQueue = metricQueue[:0]
@@ -705,7 +727,7 @@ func (s *Storage) systemStore() {
 // for _, metric := range metrics {
 // 	b, err := json.Marshal(&metric.Payload)
 // 	if err != nil {
-// 		g.L.Warn("json", zap.String("error", err.Error()), zap.Any("data", metric.Payload))
+// 		s.logger.Warn("json", zap.String("error", err.Error()), zap.Any("data", metric.Payload))
 // 		continue
 // 	}
 // 	batchInsert.Query(misc.InsertSystems,
@@ -717,7 +739,7 @@ func (s *Storage) systemStore() {
 // }
 
 // if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-// 	g.L.Warn("insert metric", zap.String("error", err.Error()), zap.String("SQL", misc.InsertSystems))
+// 	s.logger.Warn("insert metric", zap.String("error", err.Error()), zap.String("SQL", misc.InsertSystems))
 // 	return err
 // }
 // 	return nil

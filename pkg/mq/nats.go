@@ -16,15 +16,16 @@ type Nats struct {
 }
 
 // NewNats return new nats
-func NewNats() *Nats {
-	return &Nats{}
+func NewNats(logger *zap.Logger) *Nats {
+	return &Nats{
+		logger: logger,
+	}
 }
 
 // Start init && start nats
-func (n *Nats) Start(addrs []string, topic string, logger *zap.Logger) error {
+func (n *Nats) Start(addrs []string, topic string) error {
 	n.addrs = addrs
 	n.topic = topic
-	n.logger = logger
 	if err := n.start(); err != nil {
 		n.logger.Warn("nats start", zap.String("error", err.Error()))
 		return err

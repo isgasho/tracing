@@ -25,7 +25,7 @@ import (
 type Collector struct {
 	etcd    *Etcd            // 服务上报
 	apps    *AppStore        // app集合
-	tickers *ticker.Tickers  // 定时器
+	ticker  *ticker.Tickers  // 定时器
 	storage *storage.Storage // 存储
 	mq      *mq.Nats         // 消息队列
 }
@@ -37,9 +37,9 @@ func New() *Collector {
 	gCollector = &Collector{
 		etcd:    newEtcd(),
 		apps:    newAppStore(),
-		tickers: ticker.NewTickers(10),
-		storage: storage.NewStorage(),
-		mq:      mq.NewNats(),
+		ticker:  ticker.NewTickers(misc.Conf.Ticker.Num, misc.Conf.Ticker.Interval, g.L),
+		storage: storage.NewStorage(g.L),
+		mq:      mq.NewNats(g.L),
 	}
 	return gCollector
 }
@@ -48,7 +48,7 @@ func New() *Collector {
 func (c *Collector) Start() error {
 
 	// 启动存储服务
-	if err := c.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic, g.L); err != nil {
+	if err := c.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic); err != nil {
 		g.L.Warn("mq start", zap.String("error", err.Error()))
 		return err
 	}
@@ -91,14 +91,14 @@ func (c *Collector) Start() error {
 	}
 
 	// publish test
-	go func() {
-		for {
-			time.Sleep(1 * time.Second)
-			if err := c.mq.Publish(misc.Conf.MQ.Topic, []byte("hello")); err != nil {
-				g.L.Warn("publish", zap.Error(err))
-			}
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		time.Sleep(1 * time.Second)
+	// 		if err := c.mq.Publish(misc.Conf.MQ.Topic, []byte("hello")); err != nil {
+	// 			g.L.Warn("publish", zap.Error(err))
+	// 		}
+	// 	}
+	// }()
 
 	g.L.Info("Collector start ok")
 	return nil

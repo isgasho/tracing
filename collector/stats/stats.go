@@ -13,6 +13,7 @@ type Stats struct {
 	MethodStats     *metric.MethodStats     // 接口计算统计
 	SQLStats        *metric.SQLStats        // sql语句计算统计
 	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
+	// JVMStats        *metric.JVMStats        // jvm计算统计
 }
 
 // NewStats ....
@@ -22,6 +23,7 @@ func NewStats() *Stats {
 		MethodStats:     metric.NewMethodStats(),
 		SQLStats:        metric.NewSQLStats(),
 		ExceptionsStats: metric.NewExceptionsStats(),
+		// JVMStats:        metric.NewJVMStats(),
 	}
 }
 

@@ -8,6 +8,10 @@ collector:
   # addr: "10.50.16.242:8082"
   timeout: 30
 
+ticker:
+  num: 10
+  interval: 60 # 定时器间隔时间
+
 etcd:
   addrs:
       - "127.0.0.1:2379"
@@ -37,15 +41,17 @@ stats:
   # 延迟计算时间，单位秒
   defertime: 60
   # 应用拓扑图计算时间范围，单位秒
-  # maprange: 900
-  maprange: 60
+  # mapdefer: 900
+  mapdefer: 60
   # API应用调用计算时间范围，单位秒
-  # apicallrang: 900
-  apicallrang: 60
+  # apicalldefer: 900
+  apicalldefer: 60
   # APDEX 满意时间指标，单位毫秒
   satisfactiontime: 3000
   # APDEX 可容忍时间指标，单位毫秒
   toleratetime: 6000
+  # runtime 计算延迟，单位秒
+  runtimedefer: 15
 
 mq:
   topic: "tracing_alert"

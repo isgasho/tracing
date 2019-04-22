@@ -320,32 +320,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON sql_stats (input_date)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
-CREATE TABLE IF NOT EXISTS jvm_cpu_stats (
-    app_name        text,
-    agent_id        text,
-    input_date      bigint,
-    jvm             double,
-    System          double,
-    PRIMARY KEY (app_name, agent_id, input_date)
-) WITH gc_grace_seconds = 10800;  
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_cpu_stats (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
-
-CREATE TABLE IF NOT EXISTS jvm_memory_stats (
-    app_name        text,
-    agent_id        text,
-    input_date      bigint,
-    heap_used       bigint,
-    non_heap        bigint,
-    PRIMARY KEY (app_name, agent_id, input_date)
-) WITH gc_grace_seconds = 10800;  
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON jvm_memory_stats (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
-
 
 CREATE TABLE IF NOT EXISTS service_type (
     service_type        int,
@@ -435,6 +409,21 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date)
 
 
 
+CREATE TABLE IF NOT EXISTS runtime_stats (
+    app_name                    text,
+    agent_id                    text,
+    input_date                  bigint,
+    jvm_cpu_load                double,
+    system_cpu_load             double,
+    heap_used                   BIGINT,
+    non_heap                    BIGINT,
+    count                       int,
+    PRIMARY KEY (app_name, agent_id, input_date)
+) WITH gc_grace_seconds = 10800;  
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON runtime_stats (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
 
 
 TRUNCATE TABLE alerts_group  ;
@@ -459,8 +448,7 @@ TRUNCATE TABLE app_strs         ;
 TRUNCATE TABLE apps             ;
 TRUNCATE TABLE api_call_stats           ;
 TRUNCATE TABLE exception_stats  ;
-TRUNCATE TABLE jvm_cpu_stats    ;
-TRUNCATE TABLE jvm_memory_stats ;
+TRUNCATE TABLE runtime_stats    ;
 TRUNCATE TABLE unknow_parent_map;
 
 TRUNCATE TABLE api_call_stats ;

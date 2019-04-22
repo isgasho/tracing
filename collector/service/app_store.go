@@ -7,6 +7,7 @@ import (
 	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
+	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
 )
 
@@ -65,6 +66,44 @@ func (a *AppStore) getApp(appName string) (*App, bool) {
 	app, ok := a.apps[appName]
 	a.RUnlock()
 	return app, ok
+}
+
+// routerSapn 路由span
+func (a *AppStore) routerStatBatch(appName, agentID string, stats *pinpoint.TAgentStatBatch) error {
+	app, ok := a.getApp(appName)
+	if !ok {
+		err := fmt.Errorf("unfind app, app name is %s", appName)
+		g.L.Warn("routerStatBatch err", zap.String("error", err.Error()))
+		return err
+	}
+
+	// 接收 stat
+	for _, stat := range stats.AgentStats {
+		if err := app.recvAgentStat(appName, agentID, stat); err != nil {
+			g.L.Warn("recv agent stat", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+			return err
+		}
+	}
+
+	return nil
+}
+
+// routerSapn 路由span
+func (a *AppStore) routerStat(appName, agentID string, stat *pinpoint.TAgentStat) error {
+	app, ok := a.getApp(appName)
+	if !ok {
+		err := fmt.Errorf("unfind app, app name is %s", appName)
+		g.L.Warn("routerStat err", zap.String("error", err.Error()))
+		return err
+	}
+
+	// 接收 stat
+	if err := app.recvAgentStat(appName, agentID, stat); err != nil {
+		g.L.Warn("recv agent stat", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+		return err
+	}
+
+	return nil
 }
 
 // routerSapn 路由span

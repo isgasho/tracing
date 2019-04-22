@@ -16,7 +16,7 @@ type Alert struct {
 // New new alert
 func New() *Alert {
 	return &Alert{
-		mq: mq.NewNats(),
+		mq: mq.NewNats(g.L),
 	}
 }
 
@@ -25,7 +25,7 @@ func (a *Alert) Start() error {
 	// 初始化sql
 	// 加载各种策略
 	// 启动消息队列服务
-	if err := a.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic, g.L); err != nil {
+	if err := a.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic); err != nil {
 		g.L.Warn("mq start error", zap.String("error", err.Error()))
 		return err
 	}

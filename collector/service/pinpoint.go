@@ -113,16 +113,19 @@ func udpRequest(appName, agentID string, data []byte) {
 		break
 	case *trace.TSpanChunk:
 		gCollector.storage.SpanChunkStore(m)
+		gCollector.apps.routersapnChunk(appName, agentID, m)
 		break
 	case *pinpoint.TAgentStat:
-		if err := gCollector.storage.WriteAgentStat(appName, agentID, m, data); err != nil {
-			g.L.Warn("agent stat", zap.String("error", err.Error()))
-		}
+		// if err := gCollector.storage.WriteAgentStat(appName, agentID, m, data); err != nil {
+		// 	g.L.Warn("agent stat", zap.String("error", err.Error()))
+		// }
+		gCollector.apps.routerStat(appName, agentID, m)
 		break
 	case *pinpoint.TAgentStatBatch:
-		if err := gCollector.storage.WriteAgentStatBatch(appName, agentID, m, data); err != nil {
-			g.L.Warn("stat batch", zap.String("error", err.Error()))
-		}
+		// if err := gCollector.storage.WriteAgentStatBatch(appName, agentID, m, data); err != nil {
+		// 	g.L.Warn("stat batch", zap.String("error", err.Error()))
+		// }
+		gCollector.apps.routerStatBatch(appName, agentID, m)
 		break
 	default:
 		g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
