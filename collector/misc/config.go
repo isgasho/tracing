@@ -48,6 +48,11 @@ type Config struct {
 		SatisfactionTime int32 // APDEX 满意时间指标，单位毫秒
 		TolerateTime     int32 // APDEX 可容忍时间指标，单位毫秒
 	}
+
+	MQ struct {
+		Addrs []string // mq地址
+		Topic string   // 主题
+	}
 }
 
 // Conf ...

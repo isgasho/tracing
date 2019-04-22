@@ -1,3 +1,5 @@
 package analyze
 
-// 实时计算
+// Analyze 数据分析&实时计算
+type Analyze struct {
+}

@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/imdevlab/tracing/pkg/mq"
+
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/g"
@@ -25,6 +27,7 @@ type Collector struct {
 	apps    *AppStore        // app集合
 	tickers *ticker.Tickers  // 定时器
 	storage *storage.Storage // 存储
+	mq      *mq.Nats         // 消息队列
 }
 
 var gCollector *Collector
@@ -36,12 +39,19 @@ func New() *Collector {
 		apps:    newAppStore(),
 		tickers: ticker.NewTickers(10),
 		storage: storage.NewStorage(),
+		mq:      mq.NewNats(),
 	}
 	return gCollector
 }
 
 // Start 启动collector
 func (c *Collector) Start() error {
+
+	// 启动存储服务
+	if err := c.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic, g.L); err != nil {
+		g.L.Warn("mq start", zap.String("error", err.Error()))
+		return err
+	}
 
 	// 启动存储服务
 	if err := c.storage.Start(); err != nil {
@@ -79,6 +89,16 @@ func (c *Collector) Start() error {
 		g.L.Warn("start network", zap.String("error", err.Error()))
 		return err
 	}
+
+	// publish test
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			if err := c.mq.Publish(misc.Conf.MQ.Topic, []byte("hello")); err != nil {
+				g.L.Warn("publish", zap.Error(err))
+			}
+		}
+	}()
 
 	g.L.Info("Collector start ok")
 	return nil
