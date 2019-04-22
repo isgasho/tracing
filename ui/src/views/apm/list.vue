@@ -15,7 +15,7 @@
             </Select>
           </Col>
            <Col span="6">
-            <span class="padding-bottom-5 font-size-18 margin-left-10" >应用动态</span>
+            <span class="padding-bottom-5 font-size-18 margin-left-10" >总体动态</span>
           </Col>
       </Row>
       <Row style="padding:0 10px">

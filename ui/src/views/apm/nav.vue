@@ -11,7 +11,23 @@
           </Col>
           <Col span="21" class="padding-left-20" style="border-bottom:3px solid #e0ebd1;height:52px">
             <div class="color-primary font-size-16 padding-top-10 hover-cursor">
-              <DatePicker :split-panels=true  size="small" confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 320px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
+              <DatePicker :split-panels=true  size="small" confirm type="datetimerange" :options="options1" :value="getDate()"  placeholder="启止时间设定" style="width: 310px;margin-left: 10px;margin-top:5px" @on-change="changeDate"  @on-ok="confirmDate" @on-clear="clearDate" :clearable=false :editable=false></DatePicker>
+              <Tooltip placement="right" max-width="400">
+                    <Icon type="ios-help-circle-outline" style="margin-top:-2px;font-size:16px" class="margin-left-5"  />
+                    <div slot="content" style="padding: 15px 15px">
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">选择日期/时间</div>
+                        <div>页面刷新后依然会保留当前选择, <span class="color-orange">选择后需点击确定Button</span></div>
+                        <div>若你从未选择过时间，则默认显示最近的30分钟，<span class="color-orange">参加清空按钮</span></div>
+                        <div class="font-size-18 font-weight-500  " style="line-height:20px">快捷选择栏</div>
+                        <div>左边有快捷选择，30m代表选择[now-30m,now]的时间范围,now是当前时间</div>
+                        <div>注意！这里的时间是不继承的。<span class="color-orange">例如在9:30，你选择了30m，此时时间范围是[9:00,9:30]，在9:50你刷新页面后，选择的时间依然是[9:00,9:30]</span></div>
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">自定义时间</div>
+                        <div>点击日历盘，自行选择，需要选择开始日期/时间和截止日期/时间</div>
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">清空按钮</div>
+                        <div>清空时间意味着:<span class="color-orange">每次刷新页面都会选择最近的30分钟，9:50刷新页面则选择[9:20,9:50]的时间范围，这个跟快捷里的30m是不同的!</span></div>
+                        <div>因此，如果你总是希望看到最新数据，清空时间即可</div>
+                    </div>
+                </Tooltip>
             </div>
           </Col>
       </Row>
@@ -121,6 +137,7 @@ export default {
     },
     clearDate() {
        this.$store.dispatch('setSelDate', '')
+       window.location.reload()
     },
     selAppName(appName) {
       this.$store.dispatch('setAPPName', appName)
@@ -196,6 +213,29 @@ function defaultDate() {
   }
   input {
       border:none;
+  }
+
+  .ivu-date-picker-header {
+    // background: #ebebeb !important;
+    color: #555;
+    // font-weight: bold;
+    height:35px;
+    padding-top: 3px;
+  }
+
+  .ivu-date-picker-cells-header {
+    font-weight: bold;
+  }
+
+  .ivu-date-picker-cells-cell{
+    font-size:14px;
+
+  }
+
+  .ivu-date-picker-rel {
+    input {
+      font-size:13px;
+    }
   }
 }
 

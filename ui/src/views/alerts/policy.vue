@@ -5,11 +5,11 @@
             <div class="header font-size-18">
                 <span class="hover-cursor alerts-hover-primary" style="font-size:15px" @click="createPolicy"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建策略模版</span>
                  <Tooltip placement="right" max-width="400">
-                    <Icon type="ios-help" style="margin-bottom:5px;font-size:16px"  />
+                    <Icon type="ios-help-circle-outline" style="margin-bottom:3px;font-size:16px"  class="alerts-color-primary" />
                   <div slot="content" style="padding: 15px 15px">
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">什么是策略模版</div>
+                     <div class="font-size-18 font-weight-500" style="line-height:20px">什么是策略模版</div>
                      <div>策略模版把多个告警条件组合成一个模版对象，用户可以在后续将该模版关联到具体的应用上，避免了大量重复操作</div>
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">允许设置哪些告警条件</div>
+                     <div class="font-size-18 font-weight-500" style="line-height:20px">允许设置哪些告警条件</div>
                      <div>针对三种类型监控：系统监控、应用监控和业务监控，都可以自定义设置</div>
                   </div>
                 </Tooltip>
@@ -63,6 +63,12 @@
                                           </OptionGroup> -->
                                           
                                         </Select>
+                                        <Tooltip placement="left" max-width="400" v-show="tempAlert.help != undefined">
+                                          <Icon type="ios-help-circle-outline" style="margin-top:-2px;font-size:16px" class="margin-left-5"  />
+                                          <div slot="content" style="padding: 15px 15px">
+                                              <div>{{tempAlert.help}}</div>
+                                          </div>
+                                      </Tooltip>
                                       </div>
 
                                       <div class="alert-setting" style="margin-top:15px">
@@ -73,6 +79,12 @@
                                           <span v-else> &lt; </span>
                                         </span>
                                        
+                                      </div>
+
+                                      <div class="alert-setting">
+                                        <span class="label">错误的HTTP CODE</span>
+                                        <Input style="width:100px;margin-bottom:12px" class="right-body" v-model="tempAlert.value" placeholder=""></Input>
+                                        <span class="label">{{tempAlert.unit}}</span>
                                       </div>
 
                                       <div class="alert-setting">
@@ -203,15 +215,8 @@ export default {
       },
       selAlert(alert) {
         // 设置tempAlert
-        this.tempAlert = {
-            name: alert.name,
-            type: this.policyType,
-            duration: 1,
-            compare: alert.compare,
-            value: alert.default,
-            unit: alert.unit,
-            label: alert.label
-          }
+        this.tempAlert = alert 
+        this.tempAlert.type = this.policyType
       },
       selPolicyType(tp) {
         this.policyType = tp
@@ -287,15 +292,9 @@ export default {
         this.handleType = 'create'
         this.tempPolicy.name = ''
         this.tempPolicy.alerts =  []
-        this.tempAlert = {
-          name: 'apm.apdex_count',
-          type: 'apm',
-          duration: 1,
-          compare: 3,
-          value: 0.8,
-          unit: '',
-          label: '综合健康指数Apdex'
-        }
+        // 设置默认显示的监控项
+        this.tempAlert = this.alertItems.apm[0]
+        this.tempAlert.type = 'apm'
       },
       loadPolicys() {
         this.$Loading.start();
@@ -347,212 +346,196 @@ export default {
           duration: 0,
           compare: 1,
           value: 0,
-          unit: ''
+          unit: '',
+          keys: []
         },
         handleType: 'create',
         policyType: 'apm',
         alertItems: {
           apm: [
             {
-              name: 'apm.api_error_ratio',
-              label: '接口错误率',
-               key: true,
-              compare: 1,
-              unit: '%',
-              duration: 1,
-              default: 20
-            },
-            {
-              name: 'apm.sql_error_ratio',
-              label: 'sql错误率',
-               key: true,
-              compare: 1,
-              unit: '%',
-              duration: 1,
-              default: 20
-            },
-            {
-              name: 'apm.apdex_count',
+              name: 'apm.apdex.count',
               label: '综合健康指数Apdex',
-               key: true,
               compare: 3,
               unit: '',
               duration: 1,
-              default: 0.8
+              keys : [],
+              value: 0.8
             },
             {
-              name: 'apm.api_elapsed',
+              name: 'apm.http_code.ratio',
+              label: '错误HTTP CODE比率',
+              compare: 1,
+              unit: '%',
+              duration: 1,
+              keys : [],
+              value: 10,
+              help: '指定的http code占所有请求的比例'
+            },
+            {
+              name: 'apm.http_code.count',
+              label: '错误HTTP CODE次数',
+              compare: 1,
+              unit: '次',
+              duration: 1,
+              keys : [],
+              value: 10,
+              help: '制定的http code发生次数'
+            },
+            {
+              name: 'apm.api_error_.atio',
+              label: '接口错误率',
+              compare: 1,
+              unit: '%',
+              duration: 1,
+              keys : [],
+              value: 10
+            },
+            {
+              name: 'apm.sql_error.ratio',
+              label: 'sql错误率',
+              compare: 1,
+              unit: '%',
+              duration: 1,
+              keys : [],
+              value: 10
+            },
+            {
+              name: 'apm.api.duration',
               label: '接口平均耗时',
-              key: false,
               compare: 1,
               unit: 'ms',
               duration: 1,
-              default: 10000
+              keys : [],
+              value: 10000
             },
              {
-              name: 'apm.sql_elapsed',
+              name: 'apm.sql.duration',
               label: 'sql平均耗时',
-               key: false,
               compare: 1,
               unit: 'ms',
               duration: 1,
-              default: 10000
+              keys : [],
+              value: 10000
             },
             {
-              name: 'apm.jvm_fullgc_count',
+              name: 'apm.jvm_fullgc.count',
               label: 'JVMFullGC报警',
-               key: false,
               compare: 1,
               unit: '次',
               duration: 1,
-              default: 2
+              keys : [],
+              value: 2
             },
-            // {
-            //   name: 'apm.jvm_heap_used',
-            //   label: 'JVM堆使用量',
-            //    key: false,
-            //   compare: 1,
-            //   unit: 'MB',
-            //   duration: 1,
-            //   default: 10000
-            // },
-            // {
-            //   name: 'apm.jvm_oldgen_ratio',
-            //   label: 'JVM老年代使用率',
-            //    key: false,
-            //   compare: 1,
-            //   unit: '%',
-            //   duration: 1,
-            //   default: 10000
-            // },
-            // {
-            //   name: 'apm.sql_count',
-            //   label: 'sql访问次数',
-            //    key: false,
-            //   compare: 1,
-            //   unit: '次',
-            //   duration: 1,
-            //   default: 10000
-            // },
             {
-              name: 'apm.api_count',
+              name: 'apm.api.count',
               label: '接口访问次数',
-               key: false,
               compare: 1,
               unit: '次',
               duration: 1,
-              default: 3000
+              keys : [],
+              value: 3000
             }
           ],
           system: [
             {
-              name: 'system.cpu_used_ratio',
+              name: 'system.cpu_used.ratio',
               label: 'cpu使用率',
-               key: true,
               compare: 1,
               unit: '%',
               duration: 1,
-              default: 80
+              keys : [],
+              value: 80
             },
             {
-              name: 'system.load_count',
+              name: 'system.load.count',
               label: '系统Load',
-               key: true,
               compare: 1,
               unit: '',
               duration: 1,
-              default: 4
+              keys : [],
+              value: 4
             },
             {
-              name: 'system.mem_used_ratio',
+              name: 'system.mem_used.ratio',
               label: '内存使用率',
-               key: true,
-              compare: 1,
-              unit: '%',
-               duration: 1,
-              default: 90
-            },
-            {
-              name: 'system.disk_used_ratio',
-              label: '硬盘使用率',
-               key: true,
               compare: 1,
               unit: '%',
               duration: 1,
-              default: 80
+              keys : [],
+              value: 90
             },
             {
-              name: 'system.syn_recv_count',
+              name: 'system.disk_used.ratio',
+              label: '硬盘使用率',
+              compare: 1,
+              unit: '%',
+              duration: 1,
+              keys : [],
+              value: 80
+            },
+            {
+              name: 'system.syn_recv.count',
               label: 'sync_recv数',
-              key: false,
               compare: 1,
               unit: '个',
               duration: 1,
-              default: 10000
+              keys : [],
+              value: 10000
             },
              {
-              name: 'system.time_wait_count',
+              name: 'system.time_wait.count',
               label: 'time_wait数',
-               key: false,
               compare: 1,
               unit: '个',
               duration: 1,
-              default: 10000
+              keys : [],
+              value: 10000
             },
             {
-              name: 'system.ioutil_ratio',
+              name: 'system.ioutil.ratio',
               label: 'diskio利用率',
-               key: false,
               compare: 1,
               unit: '%',
               duration: 1,
-              default: 90
+              keys : [],
+              value: 90
             },
-
-            // {
-            //   name: 'system.svctm_elapsed',
-            //   label: 'diskio均耗时',
-            //    key: false,
-            //   compare: 1,
-            //   unit: 'ms',
-            //   duration: 1,
-            //   default: 3000
-            // },
             {
-              name: 'system.ifstat_out_used',
+              name: 'system.ifstat_out.speed',
               label: '网络out速度',
-               key: false,
               compare: 1,
               unit: 'MB/S',
               duration: 1,
-              default: 100
+              keys : [],
+              value: 100
             },
             {
-              name: 'system.close_wait_count',
+              name: 'system.close_wait.count',
               label: 'close_wait数',
-               key: false,
               compare: 1,
               unit: '个',
               duration: 1,
-              default: 5000
+              keys : [],
+              value: 5000
             },
             {
-              name: 'system.ifstat_in_used',
+              name: 'system.ifstat_in.speed',
               label: '网络in速度',
-               key: false,
               compare: 1,
               unit: 'MB/S',
               duration: 1,
-              default: 100
+              keys : [],
+              value: 100
             },
             {
-              name: 'system.estab_count',
+              name: 'system.estab.count',
               label: '建立长链接数',
-               key: false,
               compare: 1,
               unit: '个',
               duration: 1,
-              default: 5000
+              keys : [],
+              value: 5000
             }
           ]
         }

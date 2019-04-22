@@ -5,17 +5,17 @@
             <div class="header font-size-18 no-border">
                 <span class="hover-cursor alerts-hover-primary" style="font-size:15px" @click="createAppAlert"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建应用告警</span>
                  <Tooltip placement="right" max-width="400">
-                    <Icon type="ios-help" style="margin-bottom:5px;font-size:16px"  />
-                  <div slot="content" style="padding: 15px 15px">
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">什么是应用告警</div>
-                     <div>为指定的应用设定告警策略、告警通道等，一个应用只能设置一次告警</div>
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">我该怎么做</div>
-                     <div>你应该先创建策略模版,然后再回来创建应用告警</div>
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">找不到应用？</div>
-                     <div>联系APM管理员部署监控</div>
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">要设置的应用已经被设置？</div>
-                     <div>联系之前设置的Owner，将该应用转交给你，或者联系APM管理员</div>
-                  </div>
+                    <Icon type="ios-help-circle-outline" style="margin-bottom:3px;font-size:16px" class="alerts-color-primary" />
+                    <div slot="content" style="padding: 15px 15px">
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">什么是应用告警</div>
+                        <div>为指定的应用设定告警策略、告警通道等，一个应用只能设置一次告警</div>
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">我该怎么做</div>
+                        <div>你应该先创建策略模版,然后再回来创建应用告警</div>
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">找不到应用？</div>
+                        <div>联系APM管理员部署监控</div>
+                        <div class="font-size-18 font-weight-500" style="line-height:20px">要设置的应用已经被设置？</div>
+                        <div>联系之前设置的Owner，将该应用转交给你，或者联系APM管理员</div>
+                    </div>
                 </Tooltip>
                 <span style="float:right">
                     <Select v-model="appSetting" style="width:220px" placeholder="" @on-change="setAppSetting">

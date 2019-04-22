@@ -5,9 +5,9 @@
             <div class="header font-size-18">
                 <span class="hover-cursor alerts-hover-primary" style="font-size:15px"  @click="createGroup"><Icon type="ios-add-circle-outline font-size-20" style="margin-bottom:3px;margin-right:3px"/>新建用户组</span>
                 <Tooltip placement="right" max-width="400">
-                    <Icon type="ios-help" style="margin-bottom:5px;font-size:16px"  />
+                    <Icon type="ios-help-circle-outline" style="margin-bottom:3px;font-size:16px" class="alerts-color-primary" />
                   <div slot="content" style="padding: 15px 15px">
-                     <div class="font-size-18 font-weight-500" style="line-height:25px">什么是用户组</div>
+                     <div class="font-size-18 font-weight-500" style="line-height:20px">什么是用户组</div>
                      <div>用户组可以关联到应用，当应用发生告警时，会通过用户组设置的告警通道通知组内成员(包括Owner)</div>
                   </div>
                 </Tooltip>
