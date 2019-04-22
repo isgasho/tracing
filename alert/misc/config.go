@@ -17,7 +17,7 @@ type Config struct {
 		Addrs []string // mq地址
 		Topic string   // 主题
 	}
-	Storage struct {
+	DB struct {
 		Cluster  []string
 		Keyspace string
 		NumConns int
