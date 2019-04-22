@@ -103,22 +103,9 @@ func QueryAgents(c echo.Context) error {
 }
 
 func QueryAll(c echo.Context) error {
-	q := `SELECT app_name FROM apps `
-	iter := misc.Cql.Query(q).Iter()
-
-	appNames := make([]string, 0)
-	var appName string
-	for iter.Scan(&appName) {
-		appNames = append(appNames, appName)
-	}
-
-	if err := iter.Close(); err != nil {
-		g.L.Warn("close iter error:", zap.Error(err))
-	}
-
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
-		Data:   appNames,
+		Data:   appList(),
 	})
 }
 
@@ -128,17 +115,7 @@ func QueryAllWithSetting(c echo.Context) error {
 
 	ans := make([]string, 0)
 	if appShow == 1 { // 显示全部应用
-		q := `SELECT app_name FROM apps `
-		iter := misc.Cql.Query(q).Iter()
-
-		var appName string
-		for iter.Scan(&appName) {
-			ans = append(ans, appName)
-		}
-		if err := iter.Close(); err != nil {
-			g.L.Warn("close iter error:", zap.Error(err))
-		}
-
+		ans = appList()
 	} else {
 		ans = appNames
 	}

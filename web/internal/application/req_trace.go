@@ -263,7 +263,6 @@ func (spans *traceSpans) load(tid string) error {
 			annotations: tags,
 			methodID:    methodID,
 		}
-		fmt.Println("span error:", isErr, exception)
 
 		// 解析span的events，并根据sequence进行排序(从小到大)
 		var spanEvents SpanEvents
@@ -551,12 +550,10 @@ func (tree *TraceTree) addEvent(event *SpanEvent, span *traceSpan) {
 		en.Params = event.ExceptionInfo.StringValue
 		// 获取exception id
 		en.Method = misc.GetClassByID(n.AppName, int(event.ExceptionInfo.IntValue))
-		fmt.Println(event.ExceptionInfo, n.AppName, en.Method)
 		en.IsError = true
 		en.Duration = -1
 		en.Icon = "bug"
 		en.Type = "tag"
-		fmt.Println("enid:", event.Sequence, en.ID)
 		*tree = append(*tree, en)
 	}
 

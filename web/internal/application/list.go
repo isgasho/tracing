@@ -12,6 +12,7 @@ import (
 	"github.com/imdevlab/tracing/web/internal/misc"
 	"github.com/imdevlab/tracing/web/internal/session"
 	"github.com/labstack/echo"
+	"go.uber.org/zap"
 )
 
 func List(c echo.Context) error {
@@ -81,15 +82,13 @@ func ListWithSetting(c echo.Context) error {
 	li := session.GetLoginInfo(c)
 	appShow, appNames := UserSetting(li.ID)
 
-	napps := make([]*Stat, 0)
+	stats := make([]*Stat, 0)
 
 	now := time.Now()
-	// 查询缓存数据是否存在和过期
-	// if web.cache.appList == nil || now.Sub(web.cache.appListUpdate).Seconds() > CacheUpdateIntv {
 	// 取过去6分钟的数据
-	start := now.Unix() - 450
+	start := now.Unix() - 30*60
 
-	apps := make(map[string]*Stat)
+	statsMap := make(map[string]*Stat)
 	var q *gocql.Query
 	var appName string
 	var count int
@@ -100,9 +99,9 @@ func ListWithSetting(c echo.Context) error {
 		iter := q.Iter()
 
 		for iter.Scan(&appName, &tElapsed, &count, &errCount, &satisfaction, &tolerate) {
-			app, ok := apps[appName]
+			app, ok := statsMap[appName]
 			if !ok {
-				apps[appName] = &Stat{
+				statsMap[appName] = &Stat{
 					Name:         appName,
 					Count:        count,
 					totalElapsed: float64(tElapsed),
@@ -129,9 +128,9 @@ func ListWithSetting(c echo.Context) error {
 				log.Println("select app stats error:", err)
 			}
 
-			app, ok := apps[appName]
+			app, ok := statsMap[appName]
 			if !ok {
-				apps[appName] = &Stat{
+				statsMap[appName] = &Stat{
 					Name:         appName,
 					Count:        count,
 					totalElapsed: float64(tElapsed),
@@ -150,26 +149,45 @@ func ListWithSetting(c echo.Context) error {
 
 	}
 
-	for _, app := range apps {
-		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
-		app.ErrorPercent = ep * 100
-		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
-		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
-		napps = append(napps, app)
+	for _, stat := range statsMap {
+		ep, _ := utils.DecimalPrecision(stat.errCount / float64(stat.Count))
+		stat.ErrorPercent = ep * 100
+		stat.AverageElapsed, _ = utils.DecimalPrecision(stat.totalElapsed / float64(stat.Count))
+		stat.Apdex, _ = utils.DecimalPrecision((stat.satisfaction + stat.tolerate/2) / float64(stat.Count))
+		stats = append(stats, stat)
 	}
 
-	// 	// 更新缓存
-	// 	if len(napps) > 0 {
-	// 		web.cache.appList = napps
-	// 		web.cache.appListUpdate = now
-	// 	}
-	// } else {
-	// 	napps = web.cache.appList
-	// 	fmt.Println("query from cache:", napps)
-	// }
-
+	// 获取所有应用，不在之前列表的应用，所有数据置为0
+	allApps := appList()
+	for _, name := range allApps {
+		_, ok := statsMap[name]
+		if !ok {
+			stat := &Stat{
+				Name:  name,
+				Apdex: 1,
+			}
+			stats = append(stats, stat)
+		}
+	}
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
-		Data:   napps,
+		Data:   stats,
 	})
+}
+
+func appList() []string {
+	q := `SELECT app_name FROM apps `
+	iter := misc.Cql.Query(q).Iter()
+
+	appNames := make([]string, 0)
+	var appName string
+	for iter.Scan(&appName) {
+		appNames = append(appNames, appName)
+	}
+
+	if err := iter.Close(); err != nil {
+		g.L.Warn("close iter error:", zap.Error(err))
+	}
+
+	return appNames
 }
