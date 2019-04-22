@@ -18,7 +18,6 @@ import (
 // 后台服务
 // Stats 离线计算
 type Web struct {
-	cache *cache
 }
 
 // New ...
@@ -28,8 +27,6 @@ func New() *Web {
 
 // Start ...
 func (s *Web) Start() error {
-	// 初始化内部缓存
-	s.cache = &cache{}
 	// 初始化Cql连接
 	// connect to the cluster
 	cqlCluster := gocql.NewCluster(misc.Conf.Storage.Cluster...)
