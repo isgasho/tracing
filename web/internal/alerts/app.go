@@ -7,6 +7,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
+	"github.com/imdevlab/g/utils"
 	app "github.com/imdevlab/tracing/web/internal/application"
 	ecode "github.com/imdevlab/tracing/web/internal/error_code"
 	"github.com/imdevlab/tracing/web/internal/misc"
@@ -24,6 +25,7 @@ type AppAlert struct {
 	Channel    string   `json:"channel"`
 	Users      []string `json:"users"`
 	UserNames  []string `json:"user_names"`
+	UpdateDate string   `json:"update_date"`
 }
 
 func CreateApp(c echo.Context) error {
@@ -206,20 +208,21 @@ func AppList(c echo.Context) error {
 	apps := make([]*AppAlert, 0)
 	polies := make(map[string]string)
 	var userNames []string
+	var updateDate int64
 	var name, owner, channel, policy string
 	var users []string
 
 	var iter *gocql.Iter
 	switch tp {
 	case "1": // 查看全部应用告警
-		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users FROM alerts_app`).Iter()
+		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date FROM alerts_app`).Iter()
 	case "2": // 用户自己创建的
-		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users FROM alerts_app WHERE owner=?`, li.ID).Iter()
+		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date FROM alerts_app WHERE owner=?`, li.ID).Iter()
 	case "3": // 用户设定的应用列表
 		_, appNames := app.UserSetting(li.ID)
 		for _, an := range appNames {
-			q := misc.Cql.Query(`SELECT name,owner,policy_id,channel,users FROM alerts_app WHERE name=?`, an)
-			err := q.Scan(&name, &owner, &policy, &channel, &users)
+			q := misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date FROM alerts_app WHERE name=?`, an)
+			err := q.Scan(&name, &owner, &policy, &channel, &users, &updateDate)
 			if err != nil {
 				g.L.Warn("query database error:", zap.Error(err))
 				continue
@@ -237,13 +240,14 @@ func AppList(c echo.Context) error {
 				}
 				userNames = append(userNames, un)
 			}
-			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames})
+			t := utils.Time2StringSecond(time.Unix(updateDate, 0))
+			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames, t})
 			polies[policy] = ""
 		}
 	}
 
 	if tp == "1" || tp == "2" {
-		for iter.Scan(&name, &owner, &policy, &channel, &users) {
+		for iter.Scan(&name, &owner, &policy, &channel, &users, &updateDate) {
 			var on string
 			ownerNameR, ok := session.UsersMap.Load(owner)
 			if ok {
@@ -257,7 +261,8 @@ func AppList(c echo.Context) error {
 				}
 				userNames = append(userNames, un)
 			}
-			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames})
+			t := utils.Time2StringSecond(time.Unix(updateDate, 0))
+			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames, t})
 			polies[policy] = ""
 		}
 

@@ -120,6 +120,10 @@ export default {
             {
               title: '告警用户',
                 slot: 'users',  
+            },
+            {
+              title: '更新时间',
+                key: 'update_date',  
             }
         ],
         appList: [],

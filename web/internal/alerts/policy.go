@@ -2,8 +2,12 @@ package alerts
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
+
+	"github.com/imdevlab/g/utils"
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
@@ -16,11 +20,12 @@ import (
 )
 
 type Policy struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	OwnerID   string        `json:"owner_id"`
-	OwnerName string        `json:"owner_name"`
-	Alerts    []*util.Alert `json:"alerts"`
+	ID         string        `json:"id"`
+	Name       string        `json:"name"`
+	OwnerID    string        `json:"owner_id"`
+	OwnerName  string        `json:"owner_name"`
+	Alerts     []*util.Alert `json:"alerts"`
+	UpdateDate string        `json:"update_date"`
 }
 
 func CreatePolicy(c echo.Context) error {
@@ -102,10 +107,37 @@ func EditPolicy(c echo.Context) error {
 	}
 
 	// 插入
-	q := misc.Cql.Query(`UPDATE  alerts_policy SET name=?,alerts=?,update_date=? WHERE id=? and owner=? IF EXISTS`, policy.Name, policy.Alerts, time.Now().Unix(), policy.ID, owner)
+	now := time.Now().Unix()
+	q := misc.Cql.Query(`UPDATE  alerts_policy SET name=?,alerts=?,update_date=? WHERE id=? and owner=? IF EXISTS`, policy.Name, policy.Alerts, now, policy.ID, owner)
 	err = q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
+
+	// 将关联到该策略的所有app的update时间进行更新
+	iter := misc.Cql.Query(`SELECT name,owner FROM alerts_app WHERE policy_id=?`, policy.ID).Iter()
+	var appName, appOwner string
+	for iter.Scan(&appName, &appOwner) {
+		fmt.Println(appName)
+		q1 := misc.Cql.Query(`UPDATE alerts_app SET update_date=? WHERE name=? and owner=?`, now, appName, appOwner)
+		err = q1.Exec()
+		if err != nil {
+			g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+			return c.JSON(http.StatusOK, g.Result{
+				Status:  http.StatusInternalServerError,
+				ErrCode: g.DatabaseC,
+				Message: g.DatabaseE,
+			})
+		}
+	}
+
+	if err := iter.Close(); err != nil {
+		log.Println("close iter error:", err, misc.Cql.Closed())
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -125,18 +157,29 @@ func QueryPolicies(c echo.Context) error {
 	// 若该用户是管理员，可以获取所有组
 	var iter *gocql.Iter
 	if li.Priv == g.PRIV_NORMAL {
-		iter = misc.Cql.Query(`SELECT id,name,owner,alerts FROM alerts_policy WHERE owner=?`, li.ID).Iter()
+		iter = misc.Cql.Query(`SELECT id,name,owner,alerts,update_date FROM alerts_policy WHERE owner=?`, li.ID).Iter()
 	} else {
-		iter = misc.Cql.Query(`SELECT id,name,owner,alerts FROM alerts_policy`).Iter()
+		iter = misc.Cql.Query(`SELECT id,name,owner,alerts,update_date FROM alerts_policy`).Iter()
 	}
 
 	var id, name, owner string
+	var updateDate int64
 	var alerts []*util.Alert
 
 	policies := make([]*Policy, 0)
-	for iter.Scan(&id, &name, &owner, &alerts) {
+	for iter.Scan(&id, &name, &owner, &alerts, &updateDate) {
 		ownerNameR, _ := session.UsersMap.Load(owner)
-		policies = append(policies, &Policy{id, name, owner, ownerNameR.(*session.User).Name, alerts})
+		t := utils.Time2StringSecond(time.Unix(updateDate, 0))
+		policies = append(policies, &Policy{id, name, owner, ownerNameR.(*session.User).Name, alerts, t})
+	}
+
+	if err := iter.Close(); err != nil {
+		log.Println("close iter error:", err, misc.Cql.Closed())
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
 	}
 
 	return c.JSON(http.StatusOK, g.Result{
@@ -149,10 +192,11 @@ func QueryPolicy(c echo.Context) error {
 	pid := c.FormValue("id")
 
 	var id, name, owner string
+	var updateDate int64
 	var alerts []*util.Alert
 
-	q := misc.Cql.Query(`SELECT id,name,owner,alerts FROM alerts_policy WHERE id=?`, pid)
-	err := q.Scan(&id, &name, &owner, &alerts)
+	q := misc.Cql.Query(`SELECT id,name,owner,alerts,update FROM alerts_policy WHERE id=?`, pid)
+	err := q.Scan(&id, &name, &owner, &alerts, &updateDate)
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
@@ -163,7 +207,9 @@ func QueryPolicy(c echo.Context) error {
 	}
 
 	ownerNameR, _ := session.UsersMap.Load(owner)
-	policy := &Policy{id, name, owner, ownerNameR.(*session.User).Name, alerts}
+	t := utils.Time2StringSecond(time.Unix(updateDate, 0))
+
+	policy := &Policy{id, name, owner, ownerNameR.(*session.User).Name, alerts, t}
 
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,
@@ -173,7 +219,6 @@ func QueryPolicy(c echo.Context) error {
 
 func DeletePolicy(c echo.Context) error {
 	id := c.FormValue("id")
-
 	if id == "" {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
@@ -191,6 +236,32 @@ func DeletePolicy(c echo.Context) error {
 	err := q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
+
+	// 将相关联的应用的策略更新
+	// 将关联到该策略的所有app的update时间进行更新
+	iter := misc.Cql.Query(`SELECT name,owner FROM alerts_app WHERE policy_id=?`, id).Iter()
+	var appName, owner string
+	for iter.Scan(&appName, &owner) {
+		q1 := misc.Cql.Query(`UPDATE alerts_app SET policy_id=?,update_date=? WHERE name=? and owner=?`, "", time.Now().Unix(), appName, owner)
+		err = q1.Exec()
+		if err != nil {
+			g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+			return c.JSON(http.StatusOK, g.Result{
+				Status:  http.StatusInternalServerError,
+				ErrCode: g.DatabaseC,
+				Message: g.DatabaseE,
+			})
+		}
+	}
+
+	if err := iter.Close(); err != nil {
+		log.Println("close iter error:", err, misc.Cql.Closed())
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,

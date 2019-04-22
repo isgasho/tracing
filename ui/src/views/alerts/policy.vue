@@ -81,15 +81,14 @@
                                        
                                       </div>
 
-                                      <div class="alert-setting">
-                                        <span class="label">错误的HTTP CODE</span>
-                                        <Input style="width:100px;margin-bottom:12px" class="right-body" v-model="tempAlert.value" placeholder=""></Input>
-                                        <span class="label">{{tempAlert.unit}}</span>
+                                      <div class="alert-setting" v-show="tempAlert.name == 'apm.http_code.ratio' || tempAlert.name== 'apm.http_code.count'">
+                                        <span class="label">CODE</span>
+                                        <Input style="width:270px;margin-bottom:12px" class="right-body" v-model="tempAlert.keys" placeholder="http code用逗号分割 e.g. 401,5xx,302"></Input>
                                       </div>
 
                                       <div class="alert-setting">
-                                        <span class="label">设定阈值</span>
-                                        <Input style="width:100px;margin-bottom:12px" class="right-body" v-model="tempAlert.value" placeholder=""></Input>
+                                        <span class="label">阈值</span>
+                                        <Input style="width:100px;margin-bottom:12px;margin-left:8px;" class="right-body" v-model="tempAlert.value" placeholder=""></Input>
                                         <span class="label">{{tempAlert.unit}}</span>
                                       </div>
 
@@ -331,6 +330,10 @@ export default {
                 title: '监控项',
                 key: 'alerts',
                 slot: 'alerts'
+            },
+            {
+                title: '更新时间',
+                key: 'update_date'
             }
         ],
         policyList: [],
@@ -347,7 +350,7 @@ export default {
           compare: 1,
           value: 0,
           unit: '',
-          keys: []
+          keys: ''
         },
         handleType: 'create',
         policyType: 'apm',
@@ -359,7 +362,7 @@ export default {
               compare: 3,
               unit: '',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 0.8
             },
             {
@@ -368,7 +371,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10,
               help: '指定的http code占所有请求的比例'
             },
@@ -378,7 +381,7 @@ export default {
               compare: 1,
               unit: '次',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10,
               help: '制定的http code发生次数'
             },
@@ -388,7 +391,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10
             },
             {
@@ -397,7 +400,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10
             },
             {
@@ -406,7 +409,7 @@ export default {
               compare: 1,
               unit: 'ms',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10000
             },
              {
@@ -415,7 +418,7 @@ export default {
               compare: 1,
               unit: 'ms',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10000
             },
             {
@@ -424,7 +427,7 @@ export default {
               compare: 1,
               unit: '次',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 2
             },
             {
@@ -433,7 +436,7 @@ export default {
               compare: 1,
               unit: '次',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 3000
             }
           ],
@@ -444,7 +447,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 80
             },
             {
@@ -453,7 +456,7 @@ export default {
               compare: 1,
               unit: '',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 4
             },
             {
@@ -462,7 +465,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 90
             },
             {
@@ -471,7 +474,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 80
             },
             {
@@ -480,7 +483,7 @@ export default {
               compare: 1,
               unit: '个',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10000
             },
              {
@@ -489,7 +492,7 @@ export default {
               compare: 1,
               unit: '个',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 10000
             },
             {
@@ -498,7 +501,7 @@ export default {
               compare: 1,
               unit: '%',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 90
             },
             {
@@ -507,7 +510,7 @@ export default {
               compare: 1,
               unit: 'MB/S',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 100
             },
             {
@@ -516,7 +519,7 @@ export default {
               compare: 1,
               unit: '个',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 5000
             },
             {
@@ -525,7 +528,7 @@ export default {
               compare: 1,
               unit: 'MB/S',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 100
             },
             {
@@ -534,7 +537,7 @@ export default {
               compare: 1,
               unit: '个',
               duration: 1,
-              keys : [],
+              keys: '',
               value: 5000
             }
           ]
