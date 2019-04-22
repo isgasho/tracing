@@ -55,7 +55,7 @@ CREATE TYPE alert (
     compare tinyint, -- 比较类型 1: > 2:<  3:=
     unit text, -- 单位：%、个 
     duration tinyint, -- 持续时间, 1 代表1分钟
-    keys list<text>, -- 为一些特殊指标使用，例如http code告警，此处就是code list
+    keys text, -- 为一些特殊指标使用，例如http code告警，此处就是code list
     value double,
 );
 
