@@ -4,6 +4,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/imdevlab/tracing/pkg/alert"
+
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/tracing/alert/misc"
 	"github.com/imdevlab/tracing/alert/policy/ticker"
@@ -57,6 +59,7 @@ func (p *Policys) LoadPolicys(cql *gocql.Session) error {
 				continue
 			}
 			p.Lock()
+			oldPolicy.close()
 			delete(p.Policys, name)
 			p.Unlock()
 		}
@@ -102,6 +105,7 @@ func (p *Policys) LoadPolicys(cql *gocql.Session) error {
 		// 保存策略
 		p.Lock()
 		p.Policys[name] = newPolicy
+		newPolicy.start()
 		p.Unlock()
 	}
 
@@ -128,6 +132,23 @@ type Policy struct {
 	UpdateDate int64              // 更新时间
 	Alerts     map[int]*AlertInfo // 策略模版
 	checkTime  int64              // 上次检查时间
+	apiC       chan *alert.API    //
+}
+
+func (p *Policy) analyze() {
+	// for {
+
+	// }
+}
+
+func (p *Policy) start() {
+	logger.Info("policy start", zap.String("appName", p.AppName))
+	// 启动计算线程
+	go p.analyze()
+}
+
+func (p *Policy) close() {
+	logger.Info("policy close", zap.String("appName", p.AppName))
 }
 
 func newPolicy() *Policy {

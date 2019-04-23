@@ -227,7 +227,7 @@ CREATE TABLE IF NOT EXISTS agent_runtime (
     runtime_type        int,
     input_date          bigint,
     metrics             blob,
-    PRIMARY KEY (app_name, agent_id, runtime_type, input_date)
+    PRIMARY KEY (app_name, agent_id, input_date)
 ) WITH gc_grace_seconds = 10800; 
 
 

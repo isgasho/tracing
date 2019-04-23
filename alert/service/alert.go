@@ -26,7 +26,8 @@ var gAlert *Alert
 func New(l *zap.Logger) *Alert {
 	logger = l
 	gAlert = &Alert{
-		mq: mq.NewNats(logger),
+		mq:      mq.NewNats(logger),
+		policys: policy.NewPolicys(logger),
 	}
 	return gAlert
 }

@@ -44,7 +44,7 @@ to quickly create a Cobra application.`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	Run: func(cmd *cobra.Command, args []string) {
-		misc.InitConfig("alert.conf")
+		misc.InitConfig("alert.yaml")
 		g.InitLogger(misc.Conf.Common.LogLevel)
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 

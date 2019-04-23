@@ -32,14 +32,14 @@ func NewJVMInfo() *JVMInfo {
 type JvmMemory struct {
 	HeapUsed int64 `json:"heapused"`
 	NonHeap  int64 `json:"nonheap"`
-	Count    int   `json:"count"`
+	Count    int   `json:"-"`
 }
 
 // JVMCPULoad ...
 type JVMCPULoad struct {
 	Jvm    float64 `json:"jvm"`
 	System float64 `json:"system"`
-	Count  int     `json:"count"`
+	Count  int     `json:"-"`
 }
 
 // JVMGC @TODO
