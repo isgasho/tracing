@@ -410,21 +410,21 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date)
 
 
 
-CREATE TABLE IF NOT EXISTS runtime_stats (
-    app_name                    text,
-    agent_id                    text,
-    input_date                  bigint,
-    jvm_cpu_load                double,
-    system_cpu_load             double,
-    heap_used                   BIGINT,
-    non_heap                    BIGINT,
-    count                       int,
-    PRIMARY KEY (app_name, agent_id, input_date)
-) WITH gc_grace_seconds = 10800;  
+-- CREATE TABLE IF NOT EXISTS runtime_stats (
+--     app_name                    text,
+--     agent_id                    text,
+--     input_date                  bigint,
+--     jvm_cpu_load                double,
+--     system_cpu_load             double,
+--     heap_used                   BIGINT,
+--     non_heap                    BIGINT,
+--     count                       int,
+--     PRIMARY KEY (app_name, agent_id, input_date)
+-- ) WITH gc_grace_seconds = 10800;  
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON runtime_stats (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
+-- CREATE CUSTOM INDEX IF NOT EXISTS ON runtime_stats (input_date) 
+--     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+--     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
 TRUNCATE TABLE alerts_group  ;

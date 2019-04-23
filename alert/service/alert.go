@@ -1,8 +1,11 @@
 package service
 
 import (
+	"time"
+
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/tracing/alert/misc"
+	"github.com/imdevlab/tracing/alert/policy"
 	"github.com/imdevlab/tracing/pkg/mq"
 	"github.com/nats-io/nats"
 	"go.uber.org/zap"
@@ -14,7 +17,7 @@ var logger *zap.Logger
 type Alert struct {
 	mq      *mq.Nats
 	cql     *gocql.Session
-	policys *Policys
+	policys *policy.Policys
 }
 
 var gAlert *Alert
@@ -23,8 +26,7 @@ var gAlert *Alert
 func New(l *zap.Logger) *Alert {
 	logger = l
 	gAlert = &Alert{
-		mq:      mq.NewNats(logger),
-		policys: newPolicys(),
+		mq: mq.NewNats(logger),
 	}
 	return gAlert
 }
@@ -36,9 +38,9 @@ func (a *Alert) Start() error {
 		logger.Warn("init db error", zap.String("error", err.Error()))
 		return err
 	}
-	// 加载各种策略
-	if err := a.policys.Start(); err != nil {
-		logger.Warn("policy start error", zap.String("error", err.Error()))
+	// 加载策略服务
+	if err := a.loadPolicys(); err != nil {
+		logger.Warn("load policys error", zap.String("error", err.Error()))
 		return err
 	}
 	// 启动消息队列服务
@@ -81,5 +83,18 @@ func (a *Alert) initDB() error {
 		return err
 	}
 	a.cql = session
+	return nil
+}
+
+// loadPolicys 启动策略服务
+func (a *Alert) loadPolicys() error {
+	// 启动立刻加载一次，后面30秒自动去加载一次
+	a.policys.LoadPolicys(a.cql)
+	go func() {
+		for {
+			time.Sleep(time.Duration(misc.Conf.Analyze.LoadInterval) * time.Second)
+			a.policys.LoadPolicys(a.cql)
+		}
+	}()
 	return nil
 }

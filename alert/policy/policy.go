@@ -1,31 +1,41 @@
-package service
+package policy
 
 import (
-	"log"
 	"sync"
 	"time"
 
+	"github.com/gocql/gocql"
+	"github.com/imdevlab/tracing/alert/misc"
+	"github.com/imdevlab/tracing/alert/policy/ticker"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/util"
 
 	"github.com/imdevlab/tracing/pkg/sql"
 	"go.uber.org/zap"
 )
 
+var logger *zap.Logger
+
 // Policys 策略s
 type Policys struct {
 	sync.RWMutex
+	tickers *ticker.Tickers
+	cql     *gocql.Session
 	Policys map[string]*Policy
 }
 
-// Start 启动策略服务
-func (p *Policys) Start() error {
-	p.loadPolicys()
-	return nil
+// NewPolicys new policys
+func NewPolicys(l *zap.Logger) *Policys {
+	logger = l
+	return &Policys{
+		Policys: make(map[string]*Policy),
+		tickers: ticker.NewTickers(10, misc.Conf.Analyze.Interval, logger),
+	}
 }
 
-// Start 启动策略服务
-func (p *Policys) loadPolicys() error {
-	query := gAlert.cql.Query(sql.LoadPolicys).Iter()
+// LoadPolicys 加载策略
+func (p *Policys) LoadPolicys(cql *gocql.Session) error {
+	query := cql.Query(sql.LoadPolicys).Iter()
 	defer func() {
 		if err := query.Close(); err != nil {
 			logger.Warn("close iter error:", zap.Error(err))
@@ -37,7 +47,6 @@ func (p *Policys) loadPolicys() error {
 	var updateDate int64
 	checkTime := time.Now().Unix()
 	for query.Scan(&name, &owner, &channel, &group, &policyID, &updateDate, &users) {
-
 		p.RLock()
 		oldPolicy, ok := p.Policys[name]
 		p.RUnlock()
@@ -66,9 +75,7 @@ func (p *Policys) loadPolicys() error {
 			continue
 		}
 
-		log.Println(policyID)
-
-		alertsQuery := gAlert.cql.Query(sql.LoadAlert, policyID)
+		alertsQuery := cql.Query(sql.LoadAlert, policyID)
 		var tmpAlerts []*util.Alert
 		if err := alertsQuery.Scan(&tmpAlerts); err != nil {
 			logger.Warn("load alert scan error", zap.String("error", err.Error()), zap.String("sql", sql.LoadAlert))
@@ -78,9 +85,18 @@ func (p *Policys) loadPolicys() error {
 			continue
 		}
 
-		log.Println(len(tmpAlerts))
-		for index, alert := range tmpAlerts {
-			log.Println(index, alert)
+		for _, tmpAlert := range tmpAlerts {
+			alert := newAlertInfo()
+			alert.Compare = tmpAlert.Compare
+			alert.Duration = tmpAlert.Duration
+			alert.Value = tmpAlert.Value
+			alertType, ok := constant.AlertType(tmpAlert.Name)
+			if !ok {
+				logger.Warn("alertType unfind error", zap.String("name", tmpAlert.Name))
+				continue
+			}
+			alert.Type = alertType
+			newPolicy.Alerts[alertType] = alert
 		}
 
 		// 保存策略
@@ -101,42 +117,33 @@ func (p *Policys) loadPolicys() error {
 	return nil
 }
 
-func newPolicys() *Policys {
-	return &Policys{
-		Policys: make(map[string]*Policy),
-	}
-}
-
 // Policy 策略
 type Policy struct {
-	AppName      string        // app名
-	Owner        string        // owner
-	ID           string        // policyid
-	Group        string        // 组
-	Channel      string        // 通道？？？？和组互斥？
-	Users        []string      // 用户
-	UpdateDate   int64         // 更新时间
-	AlertsPolicy *AlertsPolicy // 策略模版
-	checkTime    int64         // 上次检查时间
+	AppName    string             // app名
+	Owner      string             // owner
+	ID         string             // policyid
+	Group      string             // 组
+	Channel    string             // 通道？？？？和组互斥？
+	Users      []string           // 用户
+	UpdateDate int64              // 更新时间
+	Alerts     map[int]*AlertInfo // 策略模版
+	checkTime  int64              // 上次检查时间
 }
 
 func newPolicy() *Policy {
-	return &Policy{}
+	return &Policy{
+		Alerts: make(map[int]*AlertInfo),
+	}
 }
 
-// AlertsPolicy 告警策略模版表
-type AlertsPolicy struct {
-	ID     string
-	Name   string
-	Owner  string
-	Alerts []*AlertInfo
+func newAlertInfo() *AlertInfo {
+	return &AlertInfo{}
 }
 
 // AlertInfo 策略信息
 type AlertInfo struct {
 	Type     int     // 监控项类型
 	Compare  int     // 比较类型 1: > 2:<  3:=
-	Unit     int     // 单位：%、个
 	Duration int     // 持续时间, 1 代表1分钟
 	Value    float64 // 阀值
 }

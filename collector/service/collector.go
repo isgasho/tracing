@@ -8,6 +8,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/imdevlab/tracing/pkg/alert"
+
 	"github.com/imdevlab/tracing/pkg/mq"
 
 	"go.uber.org/zap"
@@ -29,6 +31,7 @@ type Collector struct {
 	ticker  *ticker.Tickers  // 定时器
 	storage *storage.Storage // 存储
 	mq      *mq.Nats         // 消息队列
+	pushC   chan *alert.Data // 推送通道
 }
 
 var gCollector *Collector
@@ -42,6 +45,7 @@ func New(l *zap.Logger) *Collector {
 		ticker:  ticker.NewTickers(misc.Conf.Ticker.Num, misc.Conf.Ticker.Interval, logger),
 		storage: storage.NewStorage(logger),
 		mq:      mq.NewNats(logger),
+		pushC:   make(chan *alert.Data, 3000),
 	}
 	return gCollector
 }
@@ -92,6 +96,12 @@ func (c *Collector) Start() error {
 		return err
 	}
 
+	// 启动tcp服务
+	if err := c.pushWork(); err != nil {
+		logger.Warn("start push work", zap.String("error", err.Error()))
+		return err
+	}
+
 	// publish test
 	// go func() {
 	// 	for {
@@ -108,6 +118,7 @@ func (c *Collector) Start() error {
 
 // Close 关闭collector
 func (c *Collector) Close() error {
+	close(c.pushC)
 	return nil
 }
 
@@ -265,4 +276,28 @@ func tcpRead(conn net.Conn, packetC chan *network.TracePack, quitC chan bool) {
 			conn.SetReadDeadline(time.Now().Add(time.Duration(misc.Conf.Collector.Timeout) * time.Second))
 		}
 	}
+}
+
+func (c *Collector) pushWork() error {
+	for {
+		select {
+		case packet, ok := <-c.pushC:
+			if ok {
+				data, err := msgpack.Marshal(packet)
+				if err != nil {
+					logger.Warn("msgpack", zap.String("error", err.Error()))
+					break
+				}
+				if err := c.mq.Publish(misc.Conf.MQ.Topic, data); err != nil {
+					logger.Warn("publish", zap.Error(err))
+				}
+			}
+			break
+		}
+	}
+	// return nil
+}
+
+func (c *Collector) publish(data *alert.Data) {
+	c.pushC <- data
 }

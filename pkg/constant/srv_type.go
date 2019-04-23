@@ -345,4 +345,5 @@ func init() {
 	ServiceType[1061] = "WEBSPHERE_METHOD"
 
 	initAnnotationKeys()
+	initAlertType()
 }

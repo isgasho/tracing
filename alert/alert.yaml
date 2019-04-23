@@ -7,11 +7,17 @@ common:
 mq:
     topic: "tracing_alert"
     addrs:
-    - "nats://10.7.14.26:4222"
-    - "nats://10.7.14.236:4222"
+        - "nats://10.7.14.26:4222"
+        - "nats://10.7.14.236:4222"
 
 db:
     cluster:
     - "10.77.0.130:9042"
     keyspace: "tracing_v1_datacenter"
     numconns: 100
+
+analyze:
+    # 定时任务间隔
+    interval: 5 
+    # alert policy 加载间隔
+    loadinterval: 30

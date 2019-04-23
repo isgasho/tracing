@@ -30,17 +30,17 @@ VALUES (?, ?, ?, ?, ?);`
 var InsertString string = `INSERT INTO app_strs (app_name, str_id, str_info) 
 VALUES (?, ?, ?);`
 
-// agent stat 信息入库
-var InsertAgentStat string = `
+// insert runtime stat 信息入库
+var InsertRuntimeStat string = `
 	INSERT
 	INTO agent_runtime(app_name, agent_id, input_date, metrics, runtime_type)
 	VALUES (?, ?, ?, ?, 1);`
 
 // agent stat 信息入库 + 过期时间
-var InsertAgentStatWithTTL string = `
-	INSERT
-	INTO agent_runtime(app_name, agent_id, input_date, metrics, runtime_type)
-	VALUES (?, ?, ?, ?, 1) USING TTL ?;`
+// var InsertAgentStatWithTTL string = `
+// 	INSERT
+// 	INTO agent_runtime(app_name, agent_id, input_date, metrics, runtime_type)
+// 	VALUES (?, ?, ?, ?, 1) USING TTL ?;`
 
 // 插入span
 var InsertSpan string = `
@@ -105,7 +105,7 @@ var InsertUnknowParentMap string = `INSERT INTO unknow_parent_map (app_name, inp
 var InsertAPICallStats string = `INSERT INTO api_call_stats (app_name, input_date, service_type, api_id, parent_name, req_recv_count, err_count, total_elapsed)
 VALUES (?,?,?,?,?,?,?,?);`
 
-//  InsertRuntimeStats ...
-var InsertRuntimeStats string = `INSERT INTO runtime_stats (app_name, agent_id, 
-	input_date, jvm_cpu_load, system_cpu_load, heap_used, non_heap, count) 
-VALUES (?,?,?,?,?,?,?,?);`
+// //  InsertRuntimeStats ...
+// var InsertRuntimeStats string = `INSERT INTO runtime_stats (app_name, agent_id,
+// 	input_date, jvm_cpu_load, system_cpu_load, heap_used, non_heap, count)
+// VALUES (?,?,?,?,?,?,?,?);`

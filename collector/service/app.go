@@ -6,10 +6,13 @@ import (
 	"time"
 
 	"github.com/imdevlab/g/utils"
+	"github.com/vmihailenco/msgpack"
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/collector/stats"
+	"github.com/imdevlab/tracing/pkg/alert"
+	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/metric"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
@@ -123,8 +126,6 @@ func (a *App) stats() {
 				}
 			}
 			break
-		// case <-a.statBatchC:
-		// 	break
 		case <-a.stopC:
 			return
 		}
@@ -354,16 +355,63 @@ func (a *App) linkTrace() error {
 		return nil
 	}
 	inputDate := key // + misc.Conf.Stats.DeferTime
+	apis := alert.NewAPIs()
 	for apiStr, apiInfo := range a.points[key].APIStats.APIs {
 		gCollector.storage.InsertAPIStats(a.name, inputDate, apiStr, apiInfo)
+		api := &alert.API{
+			Desc:     apiStr,
+			Count:    apiInfo.Count,
+			Errcount: apiInfo.ErrCount,
+			Duration: apiInfo.TotalElapsed,
+		}
+		apis.APIS[apiStr] = api
+	}
+	// 有api数据发送给mq
+	if len(apis.APIS) > 0 {
+		data := alert.NewData()
+		data.AppName = a.name
+		data.Type = constant.ALERT_TYPE_API
+		data.InputDate = key
+		payload, err := msgpack.Marshal(apis)
+		if err != nil {
+			logger.Warn("msgpack", zap.String("error", err.Error()))
+		} else {
+			data.Payload = payload
+			// 推送
+			gCollector.publish(data)
+		}
 	}
 
 	for methodID, methodInfo := range a.points[key].MethodStats.Methods {
 		gCollector.storage.InsertMethodStats(a.name, inputDate, a.points[key].MethodStats.APIStr, methodID, methodInfo)
 	}
 
+	sqls := alert.NewSQLs()
 	for sqlID, sqlInfo := range a.points[key].SQLStats.SQLs {
 		gCollector.storage.InsertSQLStats(a.name, inputDate, sqlID, sqlInfo)
+		sql := &alert.SQL{
+			ID:       sqlID,
+			Count:    sqlInfo.Count,
+			Errcount: sqlInfo.ErrCount,
+			Duration: sqlInfo.TotalElapsed,
+		}
+		sqls.SQLs[sqlID] = sql
+	}
+
+	// 有sql数据发送给mq
+	if len(sqls.SQLs) > 0 {
+		data := alert.NewData()
+		data.AppName = a.name
+		data.InputDate = key
+		data.Type = constant.ALERT_TYPE_SQL
+		payload, err := msgpack.Marshal(sqls)
+		if err != nil {
+			logger.Warn("msgpack", zap.String("error", err.Error()))
+		} else {
+			data.Payload = payload
+			// 推送
+			gCollector.publish(data)
+		}
 	}
 
 	for methodID, exceptions := range a.points[key].ExceptionsStats.MethodEx {
@@ -477,7 +525,7 @@ func (a *App) reportRuntime() error {
 	inputDate := key //+ misc.Conf.Stats.APICallDefer
 
 	for agentID, info := range a.runtimeStats[key].JVMStats.Agents {
-		gCollector.storage.InsertRuntimeStats(a.name, inputDate, agentID, info)
+		gCollector.storage.InsertRuntimeStats(a.name, agentID, inputDate, constant.JVM, info)
 	}
 
 	// 上报打点信息并删除该时间点信息

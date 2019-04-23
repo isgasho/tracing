@@ -408,67 +408,67 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 
 // WriteAgentStatBatch ....
 func (s *Storage) WriteAgentStatBatch(appName, agentID string, agentStatBatch *pinpoint.TAgentStatBatch, infoB []byte) error {
-	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
-	var insertAgentStatBatch string
-	if misc.Conf.Storage.AgentStatUseTTL {
-		for _, stat := range agentStatBatch.AgentStats {
-			batchInsert.Query(
-				sql.InsertAgentStatWithTTL,
-				appName,
-				agentID,
-				stat.GetTimestamp(),
-				infoB,
-				misc.Conf.Storage.AgentStatTTL)
-		}
-	} else {
-		for _, stat := range agentStatBatch.AgentStats {
-			batchInsert.Query(
-				sql.InsertAgentStat,
-				appName,
-				agentID,
-				stat.GetTimestamp(),
-				infoB)
-		}
-	}
+	// batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+	// var insertAgentStatBatch string
+	// if misc.Conf.Storage.AgentStatUseTTL {
+	// 	for _, stat := range agentStatBatch.AgentStats {
+	// 		batchInsert.Query(
+	// 			sql.InsertAgentStatWithTTL,
+	// 			appName,
+	// 			agentID,
+	// 			stat.GetTimestamp(),
+	// 			infoB,
+	// 			misc.Conf.Storage.AgentStatTTL)
+	// 	}
+	// } else {
+	// 	for _, stat := range agentStatBatch.AgentStats {
+	// 		batchInsert.Query(
+	// 			sql.InsertAgentStat,
+	// 			appName,
+	// 			agentID,
+	// 			stat.GetTimestamp(),
+	// 			infoB)
+	// 	}
+	// }
 
-	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-		s.logger.Warn("agent stat batch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
-		return err
-	}
+	// if err := s.cql.ExecuteBatch(batchInsert); err != nil {
+	// 	s.logger.Warn("agent stat batch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
+	// 	return err
+	// }
 
 	return nil
 }
 
 // WriteAgentStat  ...
 func (s *Storage) WriteAgentStat(appName, agentID string, agentStat *pinpoint.TAgentStat, infoB []byte) error {
-	if misc.Conf.Storage.AgentStatUseTTL {
-		query := s.cql.Query(
-			sql.InsertAgentStatWithTTL,
-			appName,
-			agentID,
-			agentStat.GetStartTimestamp(),
-			agentStat.GetTimestamp(),
-			infoB,
-			misc.Conf.Storage.AgentStatTTL,
-		)
-		if err := query.Exec(); err != nil {
-			s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
-			return err
-		}
-	} else {
-		query := s.cql.Query(
-			sql.InsertAgentStat,
-			appName,
-			agentID,
-			agentStat.GetStartTimestamp(),
-			agentStat.GetTimestamp(),
-			infoB,
-		)
-		if err := query.Exec(); err != nil {
-			s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
-			return err
-		}
-	}
+	// if misc.Conf.Storage.AgentStatUseTTL {
+	// 	query := s.cql.Query(
+	// 		sql.InsertAgentStatWithTTL,
+	// 		appName,
+	// 		agentID,
+	// 		agentStat.GetStartTimestamp(),
+	// 		agentStat.GetTimestamp(),
+	// 		infoB,
+	// 		misc.Conf.Storage.AgentStatTTL,
+	// 	)
+	// 	if err := query.Exec(); err != nil {
+	// 		s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+	// 		return err
+	// 	}
+	// } else {
+	// 	query := s.cql.Query(
+	// 		sql.InsertAgentStat,
+	// 		appName,
+	// 		agentID,
+	// 		agentStat.GetStartTimestamp(),
+	// 		agentStat.GetTimestamp(),
+	// 		infoB,
+	// 	)
+	// 	if err := query.Exec(); err != nil {
+	// 		s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
 
@@ -668,16 +668,17 @@ func (s *Storage) InsertSQLStats(appName string, inputTime int64, sqlID int32, s
 }
 
 // InsertRuntimeStats ...
-func (s *Storage) InsertRuntimeStats(appName string, inputTime int64, agentID string, info *metric.JVMInfo) error {
-	query := s.cql.Query(sql.InsertRuntimeStats,
+func (s *Storage) InsertRuntimeStats(appName string, agentID string, inputTime int64, runtimeType int, info *metric.JVMInfo) error {
+	body, err := json.Marshal(info)
+	if err != nil {
+		s.logger.Warn("InsertRuntimeStats", zap.String("error", err.Error()))
+		return err
+	}
+	query := s.cql.Query(sql.InsertRuntimeStat,
 		appName,
 		agentID,
 		inputTime,
-		info.CPU.Jvm,
-		info.CPU.System,
-		info.Memory.HeapUsed,
-		info.Memory.NonHeap,
-		info.CPU.Count,
+		body,
 	)
 
 	if err := query.Exec(); err != nil {

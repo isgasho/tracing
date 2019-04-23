@@ -22,6 +22,11 @@ type Config struct {
 		Keyspace string
 		NumConns int
 	}
+
+	Analyze struct {
+		Interval     int
+		LoadInterval int
+	}
 }
 
 var Conf *Config
