@@ -27,7 +27,7 @@ var rootCmd = &cobra.Command{
 		g.InitLogger(misc.Conf.Common.LogLevel)
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
-		a := service.New()
+		a := service.New(g.L)
 		if err := a.Start(); err != nil {
 			g.L.Fatal("agent start", zap.Error(err))
 		}

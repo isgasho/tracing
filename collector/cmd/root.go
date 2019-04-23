@@ -41,7 +41,7 @@ var rootCmd = &cobra.Command{
 		g.InitLogger(misc.Conf.Common.LogLevel)
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
-		c := service.New()
+		c := service.New(g.L)
 		if err := c.Start(); err != nil {
 			g.L.Fatal("collector start", zap.Error(err))
 		}

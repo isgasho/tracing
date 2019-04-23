@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
@@ -19,7 +18,7 @@ import (
 func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agentid *string, initName *bool) error {
 	packet := &network.SpansPacket{}
 	if err := msgpack.Unmarshal(tracePack.Payload, packet); err != nil {
-		g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
+		logger.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -30,19 +29,19 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 			case constant.TypeOfRegister:
 				agentInfo := network.NewAgentInfo()
 				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
-					g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
+					logger.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
 				// 检查内存中是否存在app信息，不存在存入数据库中
 				if !gCollector.apps.isAppExist(agentInfo.AppName) {
 					if err := gCollector.storage.AppNameStore(agentInfo.AppName); err != nil {
-						g.L.Warn("insert apps error", zap.String("error", err.Error()))
+						logger.Warn("insert apps error", zap.String("error", err.Error()))
 						return err
 					}
 				}
 
 				if err := gCollector.storage.AgentStore(agentInfo, true); err != nil {
-					g.L.Warn("agent Store", zap.String("error", err.Error()))
+					logger.Warn("agent Store", zap.String("error", err.Error()))
 					return err
 				}
 
@@ -52,10 +51,10 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 				*appname = agentInfo.AppName
 				*agentid = agentInfo.AgentID
 				*initName = true
-				g.L.Info("Online", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
+				logger.Info("Online", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
 				// 注册信息原样返回
 				if _, err := conn.Write(tracePack.Encode()); err != nil {
-					g.L.Warn("conn.Write", zap.String("error", err.Error()))
+					logger.Warn("conn.Write", zap.String("error", err.Error()))
 					return err
 				}
 
@@ -63,31 +62,31 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 			case constant.TypeOfAgentOffline:
 				agentInfo := network.NewAgentInfo()
 				if err := msgpack.Unmarshal(value.Spans, agentInfo); err != nil {
-					g.L.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
+					logger.Warn("msgpack.Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
 
 				if err := gCollector.storage.UpdateAgentState(agentInfo.AppName, agentInfo.AgentID, false); err != nil {
-					g.L.Warn("update agent state Store", zap.String("error", err.Error()))
+					logger.Warn("update agent state Store", zap.String("error", err.Error()))
 					return err
 				}
 
 				// 信息原样返回
 				if _, err := conn.Write(tracePack.Encode()); err != nil {
-					g.L.Warn("conn.Write", zap.String("error", err.Error()))
+					logger.Warn("conn.Write", zap.String("error", err.Error()))
 					return err
 				}
-				g.L.Info("Offline", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
+				logger.Info("Offline", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
 
 				break
 			case constant.TypeOfAgentInfo, constant.TypeOfSQLMetaData, constant.TypeOfAPIMetaData, constant.TypeOfStringMetaData:
 				if err := tcpRequestResponse(packet, value.Spans); err != nil {
-					g.L.Warn("tcpRequestResponse", zap.String("error", err.Error()))
+					logger.Warn("tcpRequestResponse", zap.String("error", err.Error()))
 					return err
 				}
 				break
 			default:
-				g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", value.Type)), zap.Uint16("type", value.Type))
+				logger.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", value.Type)), zap.Uint16("type", value.Type))
 				break
 			}
 		}
@@ -98,7 +97,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 		}
 		break
 	default:
-		g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", packet.Type)), zap.Uint16("value", packet.Type))
+		logger.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", packet.Type)), zap.Uint16("value", packet.Type))
 	}
 	return nil
 }
@@ -117,18 +116,18 @@ func udpRequest(appName, agentID string, data []byte) {
 		break
 	case *pinpoint.TAgentStat:
 		// if err := gCollector.storage.WriteAgentStat(appName, agentID, m, data); err != nil {
-		// 	g.L.Warn("agent stat", zap.String("error", err.Error()))
+		// 	logger.Warn("agent stat", zap.String("error", err.Error()))
 		// }
 		gCollector.apps.routerStat(appName, agentID, m)
 		break
 	case *pinpoint.TAgentStatBatch:
 		// if err := gCollector.storage.WriteAgentStatBatch(appName, agentID, m, data); err != nil {
-		// 	g.L.Warn("stat batch", zap.String("error", err.Error()))
+		// 	logger.Warn("stat batch", zap.String("error", err.Error()))
 		// }
 		gCollector.apps.routerStatBatch(appName, agentID, m)
 		break
 	default:
-		g.L.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
+		logger.Warn("unknow type", zap.String("type", fmt.Sprintf("%T", m)))
 	}
 }
 
@@ -139,34 +138,34 @@ func tcpRequestResponse(packet *network.SpansPacket, message []byte) error {
 	case *pinpoint.TAgentInfo:
 		agentInfo, err := json.Marshal(m)
 		if err != nil {
-			g.L.Warn("json.Marshal", zap.String("error", err.Error()))
+			logger.Warn("json.Marshal", zap.String("error", err.Error()))
 			return err
 		}
 		if err := gCollector.storage.AgentInfoStore(packet.AppName, packet.AgentID, m.StartTimestamp, agentInfo); err != nil {
-			g.L.Warn("agent info store", zap.String("error", err.Error()))
+			logger.Warn("agent info store", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TSqlMetaData:
 		if err := gCollector.storage.AppSQLStore(packet.AppName, m); err != nil {
-			g.L.Warn("sql store", zap.String("error", err.Error()))
+			logger.Warn("sql store", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TApiMetaData:
 		if err := gCollector.storage.AppMethodStore(packet.AppName, m); err != nil {
-			g.L.Warn("api store", zap.String("error", err.Error()))
+			logger.Warn("api store", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	case *trace.TStringMetaData:
 		if err := gCollector.storage.AppStringStore(packet.AppName, m); err != nil {
-			g.L.Warn("string store", zap.String("error", err.Error()))
+			logger.Warn("string store", zap.String("error", err.Error()))
 			return err
 		}
 		break
 	default:
-		g.L.Warn("unknown type", zap.String("type", fmt.Sprintf("%t", m)))
+		logger.Warn("unknown type", zap.String("type", fmt.Sprintf("%t", m)))
 	}
 	return nil
 }

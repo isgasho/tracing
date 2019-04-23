@@ -12,7 +12,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/collector/storage"
 	"github.com/imdevlab/tracing/collector/ticker"
@@ -20,6 +19,8 @@ import (
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/vmihailenco/msgpack"
 )
+
+var logger *zap.Logger
 
 // Collector 采集服务
 type Collector struct {
@@ -33,13 +34,14 @@ type Collector struct {
 var gCollector *Collector
 
 // New new collecotr
-func New() *Collector {
+func New(l *zap.Logger) *Collector {
+	logger = l
 	gCollector = &Collector{
 		etcd:    newEtcd(),
 		apps:    newAppStore(),
-		ticker:  ticker.NewTickers(misc.Conf.Ticker.Num, misc.Conf.Ticker.Interval, g.L),
-		storage: storage.NewStorage(g.L),
-		mq:      mq.NewNats(g.L),
+		ticker:  ticker.NewTickers(misc.Conf.Ticker.Num, misc.Conf.Ticker.Interval, logger),
+		storage: storage.NewStorage(logger),
+		mq:      mq.NewNats(logger),
 	}
 	return gCollector
 }
@@ -49,44 +51,44 @@ func (c *Collector) Start() error {
 
 	// 启动存储服务
 	if err := c.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic); err != nil {
-		g.L.Warn("mq start", zap.String("error", err.Error()))
+		logger.Warn("mq start", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动存储服务
 	if err := c.storage.Start(); err != nil {
-		g.L.Warn("storage start", zap.String("error", err.Error()))
+		logger.Warn("storage start", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 存储服务类型
 	if err := c.storage.StoreSrvType(); err != nil {
-		g.L.Warn("store server type", zap.String("error", err.Error()))
+		logger.Warn("store server type", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 初始化上报key
 	key, err := reportKey(misc.Conf.Etcd.ReportDir)
 	if err != nil {
-		g.L.Warn("get reportKey ", zap.String("error", err.Error()))
+		logger.Warn("get reportKey ", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 初始化etcd
 	if err := c.etcd.Init(misc.Conf.Etcd.Addrs, key, misc.Conf.Collector.Addr); err != nil {
-		g.L.Warn("etcd init", zap.String("error", err.Error()))
+		logger.Warn("etcd init", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动etcd服务
 	if err := c.etcd.Start(); err != nil {
-		g.L.Warn("etcd start", zap.String("error", err.Error()))
+		logger.Warn("etcd start", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动tcp服务
 	if err := c.startNetwork(); err != nil {
-		g.L.Warn("start network", zap.String("error", err.Error()))
+		logger.Warn("start network", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -95,12 +97,12 @@ func (c *Collector) Start() error {
 	// 	for {
 	// 		time.Sleep(1 * time.Second)
 	// 		if err := c.mq.Publish(misc.Conf.MQ.Topic, []byte("hello")); err != nil {
-	// 			g.L.Warn("publish", zap.Error(err))
+	// 			logger.Warn("publish", zap.Error(err))
 	// 		}
 	// 	}
 	// }()
 
-	g.L.Info("Collector start ok")
+	logger.Info("Collector start ok")
 	return nil
 }
 
@@ -143,17 +145,17 @@ func initDir(dir string) string {
 func cmdPacket(conn net.Conn, packet *network.TracePack) error {
 	cmd := network.NewCMD()
 	if err := msgpack.Unmarshal(packet.Payload, cmd); err != nil {
-		g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
+		logger.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
 		return err
 	}
 	switch cmd.Type {
 	case constant.TypeOfPing:
 		ping := network.NewPing()
 		if err := msgpack.Unmarshal(cmd.Payload, ping); err != nil {
-			g.L.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
+			logger.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
 			return err
 		}
-		// g.L.Debug("ping", zap.String("addr", conn.RemoteAddr().String()))
+		// logger.Debug("ping", zap.String("addr", conn.RemoteAddr().String()))
 	}
 	return nil
 }
@@ -162,14 +164,14 @@ func cmdPacket(conn net.Conn, packet *network.TracePack) error {
 func (c *Collector) startNetwork() error {
 	lsocket, err := net.Listen("tcp", misc.Conf.Collector.Addr)
 	if err != nil {
-		g.L.Fatal("Listen", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Collector.Addr))
+		logger.Fatal("Listen", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Collector.Addr))
 	}
 
 	go func() {
 		for {
 			conn, err := lsocket.Accept()
 			if err != nil {
-				g.L.Fatal("Accept", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Collector.Addr))
+				logger.Fatal("Accept", zap.String("msg", err.Error()), zap.String("addr", misc.Conf.Collector.Addr))
 			}
 			conn.SetReadDeadline(time.Now().Add(time.Duration(misc.Conf.Collector.Timeout) * time.Second))
 			go tcpClient(conn)
@@ -187,7 +189,7 @@ func tcpClient(conn net.Conn) {
 
 	defer func() {
 		if err := recover(); err != nil {
-			g.L.Error("tcpClient", zap.Any("msg", err))
+			logger.Error("tcpClient", zap.Any("msg", err))
 			return
 		}
 	}()
@@ -199,7 +201,7 @@ func tcpClient(conn net.Conn) {
 		close(quitC)
 
 		if err := gCollector.storage.UpdateAgentState(appname, agentid, false); err != nil {
-			g.L.Warn("update agent state Store", zap.String("error", err.Error()))
+			logger.Warn("update agent state Store", zap.String("error", err.Error()))
 		}
 	}()
 
@@ -209,25 +211,25 @@ func tcpClient(conn net.Conn) {
 		select {
 		case packet, ok := <-packetC:
 			if !ok {
-				g.L.Info("quit")
+				logger.Info("quit")
 				return
 			}
 			switch packet.Type {
 			case constant.TypeOfCmd:
 				if err := cmdPacket(conn, packet); err != nil {
-					g.L.Warn("cmd packet", zap.String("error", err.Error()))
+					logger.Warn("cmd packet", zap.String("error", err.Error()))
 					return
 				}
 				break
 			case constant.TypeOfPinpoint:
 				if err := pinpointPacket(conn, packet, &appname, &agentid, &initName); err != nil {
-					g.L.Warn("pinpoint packet", zap.String("error", err.Error()))
+					logger.Warn("pinpoint packet", zap.String("error", err.Error()))
 					return
 				}
 				break
 			case constant.TypeOfSystem:
 				// if err := v.dealSystem(packet); err != nil {
-				// 	g.L.Warn("dealSystem", zap.String("error", err.Error()))
+				// 	logger.Warn("dealSystem", zap.String("error", err.Error()))
 				// 	return
 				// }
 				log.Println("TypeOfSystem")
@@ -255,7 +257,7 @@ func tcpRead(conn net.Conn, packetC chan *network.TracePack, quitC chan bool) {
 		default:
 			packet := network.NewTracePack()
 			if err := packet.Decode(reader); err != nil {
-				g.L.Warn("tcp read error", zap.String("err", err.Error()))
+				logger.Warn("tcp read error", zap.String("err", err.Error()))
 				return
 			}
 			packetC <- packet

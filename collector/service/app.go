@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/g/utils"
 	"go.uber.org/zap"
 
@@ -106,21 +105,21 @@ func (a *App) stats() {
 		case span, ok := <-a.spanC:
 			if ok {
 				if err := a.statsSpan(span); err != nil {
-					g.L.Warn("stats span", zap.String("error", err.Error()))
+					logger.Warn("stats span", zap.String("error", err.Error()))
 				}
 			}
 			break
 		case spanChunk, ok := <-a.spanChunkC:
 			if ok {
 				if err := a.statsSpanChunk(spanChunk); err != nil {
-					g.L.Warn("stats span", zap.String("error", err.Error()))
+					logger.Warn("stats span", zap.String("error", err.Error()))
 				}
 			}
 			break
 		case agentStat, ok := <-a.statC:
 			if ok {
 				if err := a.statsAgentStat(agentStat); err != nil {
-					g.L.Warn("stats agent stat", zap.String("error", err.Error()))
+					logger.Warn("stats agent stat", zap.String("error", err.Error()))
 				}
 			}
 			break
@@ -136,7 +135,7 @@ func (a *App) statsAgentStat(agentStat *pinpoint.TAgentStat) error {
 	// 计算当前TAgentStat时间范围点
 	t, err := utils.MSToTime(agentStat.GetTimestamp())
 	if err != nil {
-		g.L.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
+		logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -166,7 +165,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	// api缓存并入库
 	if !a.apiIsExist(span.GetRPC()) {
 		if err := gCollector.storage.StoreAPI(span); err != nil {
-			g.L.Warn("store api", zap.String("error", err.Error()))
+			logger.Warn("store api", zap.String("error", err.Error()))
 			return err
 		}
 		a.storeAPI(span.GetRPC())
@@ -175,7 +174,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	// 计算当前span时间范围点
 	t, err := utils.MSToTime(span.StartTime)
 	if err != nil {
-		g.L.Warn("ms to time", zap.Int64("time", span.StartTime), zap.String("error", err.Error()))
+		logger.Warn("ms to time", zap.Int64("time", span.StartTime), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -235,7 +234,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	// 计算当前spanChunk时间范围点
 	t, err := utils.MSToTime(spanChunk.GetKeyTime())
 	if err != nil {
-		g.L.Warn("ms to time", zap.Int64("time", spanChunk.GetKeyTime()), zap.String("error", err.Error()))
+		logger.Warn("ms to time", zap.Int64("time", spanChunk.GetKeyTime()), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -293,7 +292,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 func (a *App) start() {
 	// 获取任务ID
 	a.taskID = gCollector.ticker.NewID()
-	g.L.Info("app start", zap.String("name", a.name), zap.Int64("taskID", a.taskID))
+	logger.Info("app start", zap.String("name", a.name), zap.Int64("taskID", a.taskID))
 	// 加入定时模块
 	gCollector.ticker.AddTask(a.taskID, a.tickerC)
 	// 启动计算模块

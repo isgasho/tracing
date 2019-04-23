@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/pkg/network"
 	"go.uber.org/zap"
 )
@@ -56,7 +55,7 @@ func (sc *SyncCall) syncRead(id uint32, timeOut int, isStop bool) (*network.Trac
 	}()
 	select {
 	case <-ticker.C:
-		g.L.Warn("sync timeout", zap.Uint32("id", id), zap.Int("timeOut", timeOut))
+		logger.Warn("sync timeout", zap.Uint32("id", id), zap.Int("timeOut", timeOut))
 		break
 	case packet, ok := <-packetC:
 		if ok {

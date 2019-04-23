@@ -7,7 +7,6 @@ import (
 
 	"github.com/imdevlab/tracing/pkg/util"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/pkg/sql"
 	"go.uber.org/zap"
 )
@@ -29,7 +28,7 @@ func (p *Policys) loadPolicys() error {
 	query := gAlert.cql.Query(sql.LoadPolicys).Iter()
 	defer func() {
 		if err := query.Close(); err != nil {
-			g.L.Warn("close iter error:", zap.Error(err))
+			logger.Warn("close iter error:", zap.Error(err))
 		}
 	}()
 
@@ -70,10 +69,13 @@ func (p *Policys) loadPolicys() error {
 		log.Println(policyID)
 
 		alertsQuery := gAlert.cql.Query(sql.LoadAlert, policyID)
-		// alerts := make([]*util.Alert, 0)
 		var tmpAlerts []*util.Alert
 		if err := alertsQuery.Scan(&tmpAlerts); err != nil {
-			log.Println(tmpAlerts, alertsQuery.String())
+			logger.Warn("load alert scan error", zap.String("error", err.Error()), zap.String("sql", sql.LoadAlert))
+			continue
+		}
+		if len(tmpAlerts) == 0 {
+			continue
 		}
 
 		log.Println(len(tmpAlerts))

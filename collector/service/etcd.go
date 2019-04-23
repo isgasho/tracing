@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/collector/misc"
 	"go.etcd.io/etcd/clientv3"
 
@@ -52,7 +51,7 @@ func (e *Etcd) Init(addrs []string, reportKey, reportValue string) error {
 	e.ReportKey = reportKey
 	e.ReportValue = reportValue
 
-	g.L.Info("Init", zap.String("@Key", e.ReportKey), zap.String("@Value", e.ReportValue))
+	logger.Info("Init", zap.String("@Key", e.ReportKey), zap.String("@Value", e.ReportValue))
 
 	cfg := clientv3.Config{
 		Endpoints:   addrs,
@@ -77,14 +76,14 @@ func (e *Etcd) registerWork() {
 	for {
 		select {
 		case <-e.StopC:
-			g.L.Info("Etcd", zap.String("Close", "Ok"))
+			logger.Info("Etcd", zap.String("Close", "Ok"))
 			return
 		// Timing task
 		case <-timeC:
 			if err := e.Put(e.ReportKey, e.ReportValue, misc.Conf.Etcd.TTL); err != nil {
-				g.L.Warn("Etcd", zap.String("error", err.Error()))
+				logger.Warn("Etcd", zap.String("error", err.Error()))
 			}
-			// g.L.Debug("register", zap.String("@Key", e.ReportKey), zap.String("addr", e.ReportValue))
+			// logger.Debug("register", zap.String("@Key", e.ReportKey), zap.String("addr", e.ReportValue))
 			break
 		}
 	}
@@ -94,12 +93,12 @@ func (e *Etcd) registerWork() {
 func (e *Etcd) Put(key, value string, ttl int64) error {
 	Grant, err := e.Client.Grant(context.TODO(), ttl)
 	if err != nil {
-		g.L.Error("Etcd", zap.Error(err), zap.Int64("@ReportTime", ttl))
+		logger.Error("Etcd", zap.Error(err), zap.Int64("@ReportTime", ttl))
 		return err
 	}
 	_, err = e.Client.Put(context.TODO(), key, value, clientv3.WithLease(Grant.ID))
 	if err != nil {
-		g.L.Error("Put", zap.String("@key", key), zap.String("@value", value), zap.Error(err))
+		logger.Error("Put", zap.String("@key", key), zap.String("@value", value), zap.Error(err))
 		return err
 	}
 	return nil

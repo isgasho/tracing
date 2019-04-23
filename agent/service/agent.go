@@ -10,7 +10,6 @@ import (
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/vmihailenco/msgpack"
 
-	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 )
 
@@ -29,9 +28,11 @@ type Agent struct {
 }
 
 var gAgent *Agent
+var logger *zap.Logger
 
 // New new agent
-func New() *Agent {
+func New(l *zap.Logger) *Agent {
+	logger = l
 	gAgent = &Agent{
 		etcd:      newEtcd(),
 		collector: newCollector(),
@@ -47,26 +48,26 @@ func (a *Agent) Start() error {
 
 	// etcd 初始化
 	if err := a.etcd.Init(); err != nil {
-		g.L.Warn("etcd init", zap.String("error", err.Error()))
+		logger.Warn("etcd init", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动服务发现
 	if err := a.etcd.Start(); err != nil {
-		g.L.Warn("etcd start", zap.String("error", err.Error()))
+		logger.Warn("etcd start", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 监控采集服务启动
 	if err := a.pinpoint.Start(); err != nil {
-		g.L.Warn("pinpoint start", zap.String("error", err.Error()))
+		logger.Warn("pinpoint start", zap.String("error", err.Error()))
 		return err
 	}
 
 	// agent 信息上报服务
 	go reportAgentInfo()
 
-	g.L.Info("Agent start ok")
+	logger.Info("Agent start ok")
 
 	return nil
 }
@@ -79,7 +80,7 @@ func (a *Agent) Close() error {
 func getApplicationName() error {
 	hostname, err := os.Hostname()
 	if err != nil {
-		g.L.Warn("get host name error", zap.Error(err))
+		logger.Warn("get host name error", zap.Error(err))
 		return err
 	}
 
@@ -97,7 +98,7 @@ func getApplicationName() error {
 func getAgentID() error {
 	hostname, err := os.Hostname()
 	if err != nil {
-		g.L.Warn("get host name error", zap.Error(err))
+		logger.Warn("get host name error", zap.Error(err))
 		return err
 	}
 	names := strings.Split(hostname, "-")
@@ -133,8 +134,8 @@ func (a *Agent) getAppname() error {
 	getApplicationName()
 	getAgentID()
 
-	g.L.Info("init", zap.String("appName", a.appName))
-	g.L.Info("init", zap.String("agentID", a.agentID))
+	logger.Info("init", zap.String("appName", a.appName))
+	logger.Info("init", zap.String("agentID", a.agentID))
 
 	return nil
 }
@@ -158,7 +159,7 @@ func reportAgentInfo() {
 
 			agentInfo, err := msgpack.Marshal(gAgent.agentInfo)
 			if err != nil {
-				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+				logger.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				continue
 			}
 			spans := &network.Spans{
@@ -173,7 +174,7 @@ func reportAgentInfo() {
 			spanPackets.Payload = append(spanPackets.Payload, spans)
 			payload, err := msgpack.Marshal(spanPackets)
 			if err != nil {
-				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+				logger.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				continue
 			}
 
@@ -187,19 +188,19 @@ func reportAgentInfo() {
 			}
 
 			if err := gAgent.collector.write(tracePacket); err != nil {
-				g.L.Warn("write info", zap.String("error", err.Error()))
+				logger.Warn("write info", zap.String("error", err.Error()))
 				continue
 			}
 
 			// 创建chan
 			if _, ok := gAgent.syncCall.newChan(id, 10); !ok {
-				g.L.Warn("syncCall newChan", zap.String("error", "创建sync chan失败"))
+				logger.Warn("syncCall newChan", zap.String("error", "创建sync chan失败"))
 				continue
 			}
 
 			// 阻塞同步等待，并关闭chan
 			if _, err := gAgent.syncCall.syncRead(id, 10, true); err != nil {
-				g.L.Warn("syncRead", zap.String("error", err.Error()))
+				logger.Warn("syncRead", zap.String("error", err.Error()))
 				continue
 			}
 

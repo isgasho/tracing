@@ -9,7 +9,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/agent/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
@@ -56,13 +55,13 @@ func (p *Pinpoint) Close() error {
 func (p *Pinpoint) AgentInfo() error {
 	l, err := net.Listen("tcp", misc.Conf.Pinpoint.InfoAddr)
 	if err != nil {
-		g.L.Fatal("AgentInfo", zap.Error(err))
+		logger.Fatal("AgentInfo", zap.Error(err))
 		return err
 	}
 	for {
 		conn, err := l.Accept()
 		if err != nil {
-			g.L.Fatal("AgentInfo", zap.String("addr", misc.Conf.Pinpoint.InfoAddr), zap.Error(err))
+			logger.Fatal("AgentInfo", zap.String("addr", misc.Conf.Pinpoint.InfoAddr), zap.Error(err))
 			return err
 		}
 		go p.agentInfo(conn)
@@ -74,7 +73,7 @@ func (p *Pinpoint) AgentStat() error {
 	addrInfo, _ := net.ResolveUDPAddr("udp", misc.Conf.Pinpoint.StatAddr)
 	listener, err := net.ListenUDP("udp", addrInfo)
 	if err != nil {
-		g.L.Fatal("AgentStat ListenUDP", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
+		logger.Fatal("AgentStat ListenUDP", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
 	}
 
 	for {
@@ -85,7 +84,7 @@ func (p *Pinpoint) AgentStat() error {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
 
 			} else {
-				g.L.Warn("AgentStat ReadFrom", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
+				logger.Warn("AgentStat ReadFrom", zap.String("addr", misc.Conf.Pinpoint.StatAddr), zap.String("error", err.Error()))
 			}
 			continue
 		}
@@ -95,7 +94,7 @@ func (p *Pinpoint) AgentStat() error {
 
 		spans, err := udpRead(data[:n])
 		if err != nil {
-			g.L.Warn("udpRead", zap.String("error", err.Error()))
+			logger.Warn("udpRead", zap.String("error", err.Error()))
 			return err
 		}
 		p.udpChan <- spans
@@ -107,7 +106,7 @@ func (p *Pinpoint) AgentSpan() error {
 	addrInfo, _ := net.ResolveUDPAddr("udp", misc.Conf.Pinpoint.SpanAddr)
 	listener, err := net.ListenUDP("udp", addrInfo)
 	if err != nil {
-		g.L.Fatal("listen udp", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
+		logger.Fatal("listen udp", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
 	}
 
 	for {
@@ -118,7 +117,7 @@ func (p *Pinpoint) AgentSpan() error {
 			if err, ok := err.(net.Error); ok && err.Timeout() {
 
 			} else {
-				g.L.Warn("readfrom", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
+				logger.Warn("readfrom", zap.String("addr", misc.Conf.Pinpoint.SpanAddr), zap.String("error", err.Error()))
 			}
 			continue
 		}
@@ -128,7 +127,7 @@ func (p *Pinpoint) AgentSpan() error {
 
 		spans, err := udpRead(data[:n])
 		if err != nil {
-			g.L.Warn("udpRead", zap.String("error", err.Error()))
+			logger.Warn("udpRead", zap.String("error", err.Error()))
 			return err
 		}
 		p.udpChan <- spans
@@ -159,7 +158,7 @@ func (p *Pinpoint) tcpCollector() {
 			spanPack.Payload = append(spanPack.Payload, span)
 			payload, err := msgpack.Marshal(spanPack)
 			if err != nil {
-				g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+				logger.Warn("msgpack Marshal", zap.String("error", err.Error()))
 				// 清空缓存
 				spanPack.Payload = spanPack.Payload[:0]
 				break
@@ -167,7 +166,7 @@ func (p *Pinpoint) tcpCollector() {
 			tracePack.Payload = payload
 			// 发送
 			if err := gAgent.collector.write(tracePack); err != nil {
-				g.L.Warn("write", zap.String("error", err.Error()))
+				logger.Warn("write", zap.String("error", err.Error()))
 			}
 			// 清空缓存
 			spanPack.Payload = spanPack.Payload[:0]
@@ -202,7 +201,7 @@ func (p *Pinpoint) udpCollector() {
 				if len(spanPack.Payload) >= misc.Conf.Pinpoint.SpanQueueLen {
 					payload, err := msgpack.Marshal(spanPack)
 					if err != nil {
-						g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+						logger.Warn("msgpack Marshal", zap.String("error", err.Error()))
 						// 清空缓存
 						spanPack.Payload = spanPack.Payload[:0]
 						continue
@@ -210,7 +209,7 @@ func (p *Pinpoint) udpCollector() {
 					tracePack.Payload = payload
 					// 发送
 					if err := gAgent.collector.write(tracePack); err != nil {
-						g.L.Warn("write", zap.String("error", err.Error()))
+						logger.Warn("write", zap.String("error", err.Error()))
 					}
 					// 清空缓存
 					spanPack.Payload = spanPack.Payload[:0]
@@ -232,7 +231,7 @@ func (p *Pinpoint) udpCollector() {
 
 				payload, err := msgpack.Marshal(spanPack)
 				if err != nil {
-					g.L.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
+					logger.Warn("agentInfo:msgpack.Marshal", zap.String("error", err.Error()))
 					// 清空缓存
 					spanPack.Payload = spanPack.Payload[:0]
 					continue
@@ -240,7 +239,7 @@ func (p *Pinpoint) udpCollector() {
 				tracePack.Payload = payload
 				// 发送
 				if err := gAgent.collector.write(tracePack); err != nil {
-					g.L.Warn("write", zap.String("error", err.Error()))
+					logger.Warn("write", zap.String("error", err.Error()))
 				}
 				// 清空缓存
 				spanPack.Payload = spanPack.Payload[:0]
@@ -280,23 +279,23 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 		// response flag
 		isRePacket := false
 		if _, err := io.ReadFull(reader, buf); err != nil {
-			g.L.Error("io.ReadFull", zap.Error(err))
+			logger.Error("io.ReadFull", zap.Error(err))
 			return err
 		}
 		// read packet type
 		packetType := int16(binary.BigEndian.Uint16(buf[0:2]))
 		switch packetType {
 		case proto.APPLICATION_SEND:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_SEND"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_SEND"))
 			applicationSend := proto.NewApplicationSend()
 			if err := applicationSend.Decode(conn, reader); err != nil {
-				g.L.Warn("applicationSend.Decode", zap.String("error", err.Error()))
+				logger.Warn("applicationSend.Decode", zap.String("error", err.Error()))
 				return err
 			}
 
 			spans, err := handletcp(applicationSend.GetPayload())
 			if err != nil {
-				g.L.Warn("handletcp", zap.String("error", err.Error()))
+				logger.Warn("handletcp", zap.String("error", err.Error()))
 				return err
 			}
 
@@ -304,16 +303,16 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 			break
 
 		case proto.APPLICATION_REQUEST:
-			// g.L.Debug("agentInfo", zap.String("type", "APPLICATION_REQUEST"))
+			// logger.Debug("agentInfo", zap.String("type", "APPLICATION_REQUEST"))
 			applicationRequest := proto.NewApplicationRequest()
 			if err := applicationRequest.Decode(conn, reader); err != nil {
-				g.L.Warn("decode", zap.String("error", err.Error()))
+				logger.Warn("decode", zap.String("error", err.Error()))
 				return err
 			}
 
 			spans, err := handletcp(applicationRequest.GetPayload())
 			if err != nil {
-				g.L.Warn("handle tcp", zap.String("error", err.Error()))
+				logger.Warn("handle tcp", zap.String("error", err.Error()))
 				return err
 			}
 			p.tcpChan <- spans
@@ -327,94 +326,94 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 			break
 
 		case proto.APPLICATION_RESPONSE:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_RESPONSE"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_RESPONSE"))
 			applicationResponse := proto.NewApplicationResponse()
 			if err := applicationResponse.Decode(conn, reader); err != nil {
-				g.L.Warn("response Decode", zap.String("error", err.Error()))
+				logger.Warn("response Decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.APPLICATION_STREAM_CREATE:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CREATE"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CREATE"))
 			applicationStreamCreate := proto.NewApplicationStreamCreate()
 			if err := applicationStreamCreate.Decode(conn, reader); err != nil {
-				g.L.Warn("stream create Decode", zap.String("error", err.Error()))
+				logger.Warn("stream create Decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.APPLICATION_STREAM_CLOSE:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CLOSE"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CLOSE"))
 			applicationStreamClose := proto.NewApplicationStreamClose()
 			if err := applicationStreamClose.Decode(conn, reader); err != nil {
-				g.L.Warn("stream close Decode", zap.String("error", err.Error()))
+				logger.Warn("stream close Decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.APPLICATION_STREAM_CREATE_SUCCESS:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CREATE_SUCCESS"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CREATE_SUCCESS"))
 			applicationStreamCreateSuccess := proto.NewApplicationStreamCreateSuccess()
 			if err := applicationStreamCreateSuccess.Decode(conn, reader); err != nil {
-				g.L.Warn("stream create success Decode", zap.String("error", err.Error()))
+				logger.Warn("stream create success Decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.APPLICATION_STREAM_CREATE_FAIL:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CREATE_FAIL"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_CREATE_FAIL"))
 			applicationStreamCreateFail := proto.NewApplicationStreamCreateFail()
 			if err := applicationStreamCreateFail.Decode(conn, reader); err != nil {
-				g.L.Warn("stream create fail Decode", zap.String("error", err.Error()))
+				logger.Warn("stream create fail Decode", zap.String("error", err.Error()))
 				return err
 			}
 
 			break
 
 		case proto.APPLICATION_STREAM_RESPONSE:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_RESPONSE"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_RESPONSE"))
 			applicationStreamResponse := proto.NewApplicationStreamResponse()
 			if err := applicationStreamResponse.Decode(conn, reader); err != nil {
-				g.L.Warn("stream response decode", zap.String("error", err.Error()))
+				logger.Warn("stream response decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.APPLICATION_STREAM_PING:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_PING"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_PING"))
 			applicationStreamPing := proto.NewApplicationStreamPing()
 			if err := applicationStreamPing.Decode(conn, reader); err != nil {
-				g.L.Warn("stream ping decode", zap.String("error", err.Error()))
+				logger.Warn("stream ping decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.APPLICATION_STREAM_PONG:
-			g.L.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_PONG"))
+			logger.Debug("agentInfo", zap.String("type", "APPLICATION_STREAM_PONG"))
 			applicationStreamPong := proto.NewApplicationStreamPong()
 			if err := applicationStreamPong.Decode(conn, reader); err != nil {
-				g.L.Warn("stream pong decode", zap.String("error", err.Error()))
+				logger.Warn("stream pong decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		case proto.CONTROL_HANDSHAKE:
 			// 获取并保存Agent信息
-			g.L.Debug("agentInfo", zap.String("type", "CONTROL_HANDSHAKE"))
+			logger.Debug("agentInfo", zap.String("type", "CONTROL_HANDSHAKE"))
 			controlHandShake := proto.NewControlHandShake()
 			if err := controlHandShake.Decode(conn, reader); err != nil {
-				g.L.Warn("control hand shake decode", zap.String("error", err.Error()))
+				logger.Warn("control hand shake decode", zap.String("error", err.Error()))
 				return err
 			}
 
 			agentInfo := network.NewAgentInfo()
 			if err := json.Unmarshal(controlHandShake.GetPayload(), agentInfo); err != nil {
-				g.L.Warn("json unmarshal", zap.String("error", err.Error()))
+				logger.Warn("json unmarshal", zap.String("error", err.Error()))
 				return err
 			}
 
-			g.L.Debug("agentInfo", zap.String("name", agentInfo.AppName), zap.String("id", agentInfo.AgentID))
+			logger.Debug("agentInfo", zap.String("name", agentInfo.AppName), zap.String("id", agentInfo.AgentID))
 
 			// 保存App信息
 			gAgent.appName = agentInfo.AppName
@@ -436,28 +435,28 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 			isRePacket = true
 			rePacket, err = createResponse(controlHandShake)
 			if err != nil {
-				g.L.Warn("createResponse", zap.String("error", err.Error()))
+				logger.Warn("createResponse", zap.String("error", err.Error()))
 				return err
 			}
 
 			break
 
 		case proto.CONTROL_CLIENT_CLOSE:
-			g.L.Debug("agentInfo", zap.String("type", "CONTROL_CLIENT_CLOSE"))
+			logger.Debug("agentInfo", zap.String("type", "CONTROL_CLIENT_CLOSE"))
 			// sdk客户端断线
 			gAgent.isLive = false
 			gAgent.isReportInfo = false
 			isRecvOffline = true
 			// controlClientClose := proto.NewControlClientClose()
 			// if err := controlClientClose.Decode(conn, reader); err != nil {
-			// 	g.L.Warn("controlClientClose.Decode", zap.String("error", err.Error()))
+			// 	logger.Warn("controlClientClose.Decode", zap.String("error", err.Error()))
 			// }
 			break
 		case proto.CONTROL_PING:
-			g.L.Debug("agentInfo", zap.String("type", "CONTROL_PING"))
+			logger.Debug("agentInfo", zap.String("type", "CONTROL_PING"))
 			controlPing := proto.NewControlPing()
 			if err := controlPing.Decode(conn, reader); err != nil {
-				g.L.Warn("controlPing.Decode", zap.String("error", err.Error()))
+				logger.Warn("controlPing.Decode", zap.String("error", err.Error()))
 				return err
 			}
 			isRePacket = true
@@ -466,34 +465,34 @@ func (p *Pinpoint) agentInfo(conn net.Conn) error {
 			break
 
 		case proto.CONTROL_PING_SIMPLE:
-			g.L.Debug("agentInfo", zap.String("type", "CONTROL_PING_SIMPLE"))
+			logger.Debug("agentInfo", zap.String("type", "CONTROL_PING_SIMPLE"))
 			isRePacket = true
 			controlPong := proto.NewControlPong()
 			rePacket = controlPong
 			break
 
 		case proto.CONTROL_PING_PAYLOAD:
-			g.L.Debug("agentInfo", zap.String("type", "CONTROL_PING"))
+			logger.Debug("agentInfo", zap.String("type", "CONTROL_PING"))
 			controlPingPayload := proto.NewControlPing()
 			if err := controlPingPayload.Decode(conn, reader); err != nil {
-				g.L.Warn("control ping payload decode", zap.String("error", err.Error()))
+				logger.Warn("control ping payload decode", zap.String("error", err.Error()))
 				return err
 			}
 			break
 
 		default:
-			g.L.Warn("unaware packet Type", zap.Int16("packetType", packetType))
+			logger.Warn("unaware packet Type", zap.Int16("packetType", packetType))
 		}
 
 		if isRePacket {
 			body, err := rePacket.Encode()
 			if err != nil {
-				g.L.Warn("rePacket encode", zap.String("error", err.Error()))
+				logger.Warn("rePacket encode", zap.String("error", err.Error()))
 				return err
 			}
 
 			if _, err := conn.Write(body); err != nil {
-				g.L.Warn("write", zap.String("error", err.Error()))
+				logger.Warn("write", zap.String("error", err.Error()))
 				return err
 			}
 		}
@@ -522,7 +521,7 @@ func handletcp(message []byte) (*network.Spans, error) {
 		spans.Spans = message
 		break
 	default:
-		g.L.Warn("unknown type", zap.String("type", fmt.Sprintf("unknow type [%T]", m)), zap.Any("data", tStruct))
+		logger.Warn("unknown type", zap.String("type", fmt.Sprintf("unknow type [%T]", m)), zap.Any("data", tStruct))
 		return nil, fmt.Errorf("unknow type %t", m)
 	}
 	return spans, nil
@@ -537,7 +536,7 @@ func createResponse(in proto.Packet) (proto.Packet, error) {
 		resultMap[proto.SUB_CODE] = proto.HANDSHAKE_DUPLEX_COMMUNICATION.SubCode
 		payload, err := json.Marshal(resultMap)
 		if err != nil {
-			g.L.Warn("json.Marshal", zap.String("error", err.Error()))
+			logger.Warn("json.Marshal", zap.String("error", err.Error()))
 			return nil, err
 		}
 		controlHandShakeResponse := proto.NewControlHandShakeResponse()

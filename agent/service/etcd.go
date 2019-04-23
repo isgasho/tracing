@@ -6,7 +6,6 @@ import (
 
 	"github.com/imdevlab/tracing/agent/misc"
 
-	"github.com/imdevlab/g"
 	"go.etcd.io/etcd/clientv3"
 
 	"go.uber.org/zap"
@@ -69,12 +68,12 @@ func (e *Etcd) Init() error {
 func (e *Etcd) Put(key, value string, ttl int64) error {
 	Grant, err := e.Client.Grant(context.TODO(), ttl)
 	if err != nil {
-		g.L.Error("Etcd", zap.Error(err), zap.Int64("@ReportTime", ttl))
+		logger.Error("Etcd", zap.Error(err), zap.Int64("@ReportTime", ttl))
 		return err
 	}
 	_, err = e.Client.Put(context.TODO(), key, value, clientv3.WithLease(Grant.ID))
 	if err != nil {
-		g.L.Error("Put", zap.String("@key", key), zap.String("@value", value), zap.Error(err))
+		logger.Error("Put", zap.String("@key", key), zap.String("@value", value), zap.Error(err))
 		return err
 	}
 	return nil
