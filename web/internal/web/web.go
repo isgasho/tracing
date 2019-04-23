@@ -82,6 +82,7 @@ func (s *Web) Start() error {
 
 		// agent运行时图表
 		e.GET("/apm/web/runtimeDash", app.RuntimeDashboard)
+		e.GET("/apm/web/runtimeDashByUnixTime", app.RuntimeDashByUnixTime)
 
 		//应用接口统计
 		e.GET("/apm/web/apiStats", app.ApiStats)

@@ -2,8 +2,10 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/imdevlab/g"
@@ -130,8 +132,53 @@ func RuntimeDashboard(c echo.Context) error {
 			Message: "日期参数不合法",
 		})
 	}
+	data, err := dashData(appName, agentID, start.Unix(), end.Unix())
+	if err != nil {
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
 
-	q := misc.Cql.Query(`SELECT input_date,metrics  FROM agent_runtime WHERE app_name = ?  and agent_id = ? and input_date > ? and input_date < ? `, appName, agentID, start.Unix(), end.Unix())
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   data,
+	})
+}
+
+func RuntimeDashByUnixTime(c echo.Context) error {
+	appName := c.FormValue("app_name")
+	agentID := c.FormValue("agent_id")
+	start, _ := strconv.ParseFloat(c.FormValue("start"), 64)
+	end, _ := strconv.ParseFloat(c.FormValue("end"), 64)
+	if start == 0 || end == 0 {
+		g.L.Info("日期参数不合法", zap.String("start", c.FormValue("start")), zap.String("end", c.FormValue("end")))
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusOK,
+			ErrCode: g.ParamInvalidC,
+			Message: "日期参数不合法",
+		})
+	}
+
+	fmt.Println(start, end)
+	data, err := dashData(appName, agentID, int64(start), int64(end))
+	if err != nil {
+		return c.JSON(http.StatusOK, g.Result{
+			Status:  http.StatusInternalServerError,
+			ErrCode: g.DatabaseC,
+			Message: g.DatabaseE,
+		})
+	}
+
+	return c.JSON(http.StatusOK, g.Result{
+		Status: http.StatusOK,
+		Data:   data,
+	})
+}
+
+func dashData(appName, agentID string, start, end int64) (*RuntimeResult, error) {
+	q := misc.Cql.Query(`SELECT input_date,metrics  FROM agent_runtime WHERE app_name = ?  and agent_id = ? and input_date > ? and input_date < ? `, appName, agentID, start, end)
 	iter := q.Iter()
 
 	var ms jvmMetrics
@@ -156,15 +203,8 @@ func RuntimeDashboard(c echo.Context) error {
 
 	if err := iter.Close(); err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
-		return c.JSON(http.StatusOK, g.Result{
-			Status:  http.StatusInternalServerError,
-			ErrCode: g.DatabaseC,
-			Message: g.DatabaseE,
-		})
+		return nil, err
 	}
 
-	return c.JSON(http.StatusOK, g.Result{
-		Status: http.StatusOK,
-		Data:   RuntimeResult{timeline, jvmCPUList, jvmHeapList},
-	})
+	return &RuntimeResult{timeline, jvmCPUList, jvmHeapList}, nil
 }
