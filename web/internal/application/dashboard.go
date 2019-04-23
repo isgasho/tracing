@@ -59,7 +59,7 @@ func Dashboard(c echo.Context) error {
 		if current.Unix() > end.Unix() {
 			break
 		}
-		cs := time2String(current)
+		cs := misc.TimeToChartString(current)
 		timeline = append(timeline, cs)
 		timeBucks[cs] = &Stat{}
 		current = current.Add(time.Duration(step) * time.Minute)
@@ -79,7 +79,7 @@ func Dashboard(c echo.Context) error {
 		i := int(t.Sub(start).Minutes()) / step
 		t1 := start.Add(time.Minute * time.Duration(i*step))
 
-		ts := time2String(t1)
+		ts := misc.TimeToChartString(t1)
 		app := timeBucks[ts]
 		app.Count += count
 		app.totalElapsed += float64(tElapsed)
@@ -94,10 +94,9 @@ func Dashboard(c echo.Context) error {
 
 	// 对每个桶里的数据进行计算
 	for _, app := range timeBucks {
-		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
-		app.ErrorPercent = 100 * ep
-		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
-		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
+		app.ErrorPercent = 100 * utils.DecimalPrecision(app.errCount/float64(app.Count))
+		app.AverageElapsed = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
+		app.Apdex = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
 		app.Count = app.Count / step
 	}
 
@@ -139,15 +138,4 @@ func Dashboard(c echo.Context) error {
 			ErrorList:   errorList,
 		},
 	})
-}
-
-type AgentStat struct {
-	AgentID     string `json:"agent_id"`
-	HostName    string `json:"host_name"`
-	IsLive      bool   `json:"is_live"`
-	IsContainer bool   `json:"is_container"`
-}
-
-func time2String(t time.Time) string {
-	return t.Format("01-02 15:04")
 }

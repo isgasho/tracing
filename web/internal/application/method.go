@@ -42,8 +42,7 @@ func Methods(c echo.Context) error {
 	for iter.Scan(&apiID, &api, &serType, &elapsed, &maxE, &minE, &count, &errCount) {
 		am, ok := ad[apiID]
 		if !ok {
-			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
-			ad[apiID] = &ApiMethod{apiID, api, constant.ServiceType[serType], 0, elapsed, maxE, minE, count, ave, errCount, "", ""}
+			ad[apiID] = &ApiMethod{apiID, api, constant.ServiceType[serType], 0, elapsed, maxE, minE, count, utils.DecimalPrecision(float64(elapsed / count)), errCount, "", ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -58,7 +57,7 @@ func Methods(c echo.Context) error {
 			am.Count += count
 			am.ErrorCount += errCount
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
+			am.AverageElapsed = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
 		}
 
 		totalElapsed += elapsed

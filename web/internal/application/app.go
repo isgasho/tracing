@@ -74,34 +74,6 @@ func QueryApis(c echo.Context) error {
 	})
 }
 
-func QueryAgents(c echo.Context) error {
-	appName := c.FormValue("app_name")
-	q := `SELECT agent_id,host_name,is_live,is_container FROM agents WHERE app_name=?`
-	iter := misc.Cql.Query(q, appName).Iter()
-
-	var agentID, hostName string
-	var isLive, isContainer bool
-
-	agents := make([]*AgentStat, 0)
-	for iter.Scan(&agentID, &hostName, &isLive, &isContainer) {
-		agents = append(agents, &AgentStat{
-			AgentID:     agentID,
-			HostName:    hostName,
-			IsLive:      isLive,
-			IsContainer: isContainer,
-		})
-	}
-
-	if err := iter.Close(); err != nil {
-		g.L.Warn("close iter error:", zap.Error(err))
-	}
-
-	return c.JSON(http.StatusOK, g.Result{
-		Status: http.StatusOK,
-		Data:   agents,
-	})
-}
-
 func QueryAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, g.Result{
 		Status: http.StatusOK,

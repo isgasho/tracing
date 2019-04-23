@@ -80,6 +80,9 @@ func (s *Web) Start() error {
 		// 查询APP底下的所有API
 		e.GET("/apm/web/appApis", app.QueryApis)
 
+		// agent运行时图表
+		e.GET("/apm/web/runtimeDash", app.RuntimeDashboard)
+
 		//应用接口统计
 		e.GET("/apm/web/apiStats", app.ApiStats)
 		//获取指定接口的详细方法统计

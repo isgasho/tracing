@@ -83,3 +83,10 @@ func GetClassByID(appName string, id int) string {
 
 	return class
 }
+
+func TimeToChartString(t time.Time) string {
+	return t.Format("01-02 15:04")
+}
+func TimeToChartString1(t time.Time) string {
+	return t.Format("01-02 15:04:05")
+}

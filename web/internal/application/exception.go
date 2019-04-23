@@ -56,8 +56,7 @@ func ExceptionStats(c echo.Context) error {
 	for iter.Scan(&methodID, &exceptionID, &serType, &elapsed, &maxE, &minE, &count) {
 		am, ok := ad[methodID]
 		if !ok {
-			ave, _ := utils.DecimalPrecision(float64(elapsed / count))
-			ad[methodID] = &Exception{exceptionID, "", constant.ServiceType[serType], elapsed, maxE, minE, count, ave, "", ""}
+			ad[methodID] = &Exception{exceptionID, "", constant.ServiceType[serType], elapsed, maxE, minE, count, utils.DecimalPrecision(float64(elapsed / count)), "", ""}
 		} else {
 			am.Elapsed += elapsed
 			// 取最大值
@@ -71,7 +70,7 @@ func ExceptionStats(c echo.Context) error {
 
 			am.Count += count
 			// 平均 = 过去的平均 * 过去总次数  + 最新的平均 * 最新的次数/ (过去总次数 + 最新次数)
-			am.AverageElapsed, _ = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
+			am.AverageElapsed = utils.DecimalPrecision((am.AverageElapsed*float64(am.Count) + float64(elapsed)) / float64((am.Count + count)))
 		}
 	}
 
@@ -138,7 +137,7 @@ func ExceptionDashboard(c echo.Context) error {
 		if current.Unix() > end.Unix() {
 			break
 		}
-		cs := time2String(current)
+		cs := misc.TimeToChartString(current)
 		timeline = append(timeline, cs)
 		timeBucks[cs] = &Stat{}
 		current = current.Add(time.Duration(step) * time.Minute)
@@ -158,7 +157,7 @@ func ExceptionDashboard(c echo.Context) error {
 		i := int(t.Sub(start).Minutes()) / step
 		t1 := start.Add(time.Minute * time.Duration(i*step))
 
-		ts := time2String(t1)
+		ts := misc.TimeToChartString(t1)
 		app := timeBucks[ts]
 		app.Count += count
 		app.totalElapsed += float64(tElapsed)
@@ -170,9 +169,8 @@ func ExceptionDashboard(c echo.Context) error {
 
 	// 对每个桶里的数据进行计算
 	for _, app := range timeBucks {
-		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
-		app.ErrorPercent = 100 * ep
-		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
+		app.ErrorPercent = 100 * utils.DecimalPrecision(app.errCount/float64(app.Count))
+		app.AverageElapsed = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
 		app.Count = app.Count / step
 	}
 

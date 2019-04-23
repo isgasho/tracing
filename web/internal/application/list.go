@@ -52,10 +52,9 @@ func List(c echo.Context) error {
 	}
 
 	for _, app := range apps {
-		ep, _ := utils.DecimalPrecision(app.errCount / float64(app.Count))
-		app.ErrorPercent = 100 * ep
-		app.AverageElapsed, _ = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
-		app.Apdex, _ = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
+		app.ErrorPercent = 100 * utils.DecimalPrecision(app.errCount/float64(app.Count))
+		app.AverageElapsed = utils.DecimalPrecision(app.totalElapsed / float64(app.Count))
+		app.Apdex = utils.DecimalPrecision((app.satisfaction + app.tolerate/2) / float64(app.Count))
 		napps = append(napps, app)
 	}
 
@@ -150,10 +149,9 @@ func ListWithSetting(c echo.Context) error {
 	}
 
 	for _, stat := range statsMap {
-		ep, _ := utils.DecimalPrecision(stat.errCount / float64(stat.Count))
-		stat.ErrorPercent = ep * 100
-		stat.AverageElapsed, _ = utils.DecimalPrecision(stat.totalElapsed / float64(stat.Count))
-		stat.Apdex, _ = utils.DecimalPrecision((stat.satisfaction + stat.tolerate/2) / float64(stat.Count))
+		stat.ErrorPercent = utils.DecimalPrecision(stat.errCount/float64(stat.Count)) * 100
+		stat.AverageElapsed = utils.DecimalPrecision(stat.totalElapsed / float64(stat.Count))
+		stat.Apdex = utils.DecimalPrecision((stat.satisfaction + stat.tolerate/2) / float64(stat.Count))
 		stats = append(stats, stat)
 	}
 
