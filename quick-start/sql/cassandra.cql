@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS alerts_app (
     group            text,              -- 应用关联的用户组
     channel          text,              -- 不使用用户组时，单独设置告警通道
     users            list<text>,        -- 不使用用户组时,单独设置通知的用户
-    extra_alerts     map<text, frozen<alert>>,  -- 额外的url告警项设置(可以自行指定url，设置特殊的告警规则)
+    api_alerts     text,              -- 额外的api告警项设置(可以自行指定url，设置特殊的告警规则)
     update_date      bigint,            -- 记录更新时间
     PRIMARY KEY (name,owner)
 ) WITH gc_grace_seconds = 10800;
