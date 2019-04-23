@@ -36,7 +36,7 @@ func (c *Collector) add(key, addr string) error {
 			delete(c.clients, key)
 			c.Unlock()
 			c.hash.Remove(key)
-			g.L.Warn("hash get", zap.String("error", err.Error()))
+			logger.Warn("hash get", zap.String("error", err.Error()))
 			return err
 		}
 		// 链接
@@ -58,7 +58,7 @@ func (c *Collector) add(key, addr string) error {
 	// 已经存在的上报的信息也需要检查
 	ruleKey, err := c.hash.Get(gAgent.appName)
 	if err != nil {
-		g.L.Warn("hash get", zap.String("error", err.Error()))
+		logger.Warn("hash get", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -110,7 +110,7 @@ func newCollector() *Collector {
 func (c *Collector) write(packet *network.TracePack) error {
 	key, err := c.hash.Get(gAgent.appName)
 	if err != nil {
-		g.L.Warn("write", zap.String("error", err.Error()))
+		logger.Warn("write", zap.String("error", err.Error()))
 		return err
 	}
 	// 可优化，去除锁
@@ -123,7 +123,7 @@ func (c *Collector) write(packet *network.TracePack) error {
 
 	// 发送
 	if err = client.write(packet); err != nil {
-		g.L.Warn("write", zap.String("error", err.Error()))
+		logger.Warn("write", zap.String("error", err.Error()))
 		return err
 	}
 	return nil

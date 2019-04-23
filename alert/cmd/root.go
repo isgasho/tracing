@@ -48,7 +48,7 @@ to quickly create a Cobra application.`,
 		g.InitLogger(misc.Conf.Common.LogLevel)
 		g.L.Info("Application version", zap.String("version", misc.Conf.Common.Version))
 
-		a := service.New()
+		a := service.New(g.L)
 		if err := a.Start(); err != nil {
 			g.L.Fatal("alert start", zap.Error(err))
 		}

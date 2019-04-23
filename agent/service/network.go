@@ -6,7 +6,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/imdevlab/g"
 	"github.com/imdevlab/tracing/agent/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
@@ -39,7 +38,7 @@ func (t *tcpClient) init(addr string) error {
 
 	defer func() {
 		if err := recover(); err != nil {
-			g.L.Warn("tcp init", zap.Stack("server"), zap.Any("err", err))
+			logger.Warn("tcp init", zap.Stack("server"), zap.Any("err", err))
 		}
 	}()
 
@@ -53,7 +52,7 @@ func (t *tcpClient) init(addr string) error {
 
 	t.conn, err = net.Dial("tcp", addr)
 	if err != nil {
-		g.L.Warn("tcp connect", zap.String("err", err.Error()), zap.String("addr", addr))
+		logger.Warn("tcp connect", zap.String("err", err.Error()), zap.String("addr", addr))
 		return err
 	}
 
@@ -69,9 +68,9 @@ func (t *tcpClient) init(addr string) error {
 		for {
 			select {
 			case <-ticker.C:
-				// g.L.Debug("keeplive", zap.String("addr", t.addr))
+				// logger.Debug("keeplive", zap.String("addr", t.addr))
 				if err := t.keeplive(); err != nil {
-					g.L.Warn("keeplive", zap.String("error", err.Error()))
+					logger.Warn("keeplive", zap.String("error", err.Error()))
 					return
 				}
 				break
@@ -88,14 +87,14 @@ func (t *tcpClient) init(addr string) error {
 		default:
 			packet, err := t.read(reader)
 			if err != nil {
-				g.L.Warn("read", zap.Error(err))
+				logger.Warn("read", zap.Error(err))
 				return err
 			}
 			// 发给上层处理
 			switch packet.IsSync {
 			case constant.TypeOfSyncYes:
 				if err := gAgent.syncCall.syncWrite(packet.ID, packet); err != nil {
-					g.L.Warn("syncWrite", zap.Error(err))
+					logger.Warn("syncWrite", zap.Error(err))
 				}
 				break
 			default:
@@ -120,7 +119,7 @@ func (t *tcpClient) keeplive() error {
 	ping := network.NewPing()
 	b, err := msgpack.Marshal(ping)
 	if err != nil {
-		g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+		logger.Warn("msgpack Marshal", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -130,7 +129,7 @@ func (t *tcpClient) keeplive() error {
 
 	buf, err := msgpack.Marshal(cmd)
 	if err != nil {
-		g.L.Warn("msgpack Marshal", zap.String("error", err.Error()))
+		logger.Warn("msgpack Marshal", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -143,7 +142,7 @@ func (t *tcpClient) keeplive() error {
 	}
 
 	if err := t.write(packet); err != nil {
-		g.L.Warn("write", zap.String("error", err.Error()))
+		logger.Warn("write", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -154,7 +153,7 @@ func (t *tcpClient) keeplive() error {
 func (t *tcpClient) read(reader io.Reader) (*network.TracePack, error) {
 	packet := &network.TracePack{}
 	if err := packet.Decode(reader); err != nil {
-		g.L.Warn("tcp read decode", zap.String("error", err.Error()))
+		logger.Warn("tcp read decode", zap.String("error", err.Error()))
 		return nil, err
 	}
 	return packet, nil
@@ -166,7 +165,7 @@ func (t *tcpClient) write(packet *network.TracePack) error {
 	if t.conn != nil {
 		_, err := t.conn.Write(body)
 		if err != nil {
-			g.L.Warn("tcp write", zap.String("error", err.Error()))
+			logger.Warn("tcp write", zap.String("error", err.Error()))
 			return err
 		}
 	}

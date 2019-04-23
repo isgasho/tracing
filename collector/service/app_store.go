@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/imdevlab/g"
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
@@ -73,14 +72,14 @@ func (a *AppStore) routerStatBatch(appName, agentID string, stats *pinpoint.TAge
 	app, ok := a.getApp(appName)
 	if !ok {
 		err := fmt.Errorf("unfind app, app name is %s", appName)
-		g.L.Warn("routerStatBatch err", zap.String("error", err.Error()))
+		logger.Warn("routerStatBatch err", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 接收 stat
 	for _, stat := range stats.AgentStats {
 		if err := app.recvAgentStat(appName, agentID, stat); err != nil {
-			g.L.Warn("recv agent stat", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+			logger.Warn("recv agent stat", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
 			return err
 		}
 	}
@@ -93,13 +92,13 @@ func (a *AppStore) routerStat(appName, agentID string, stat *pinpoint.TAgentStat
 	app, ok := a.getApp(appName)
 	if !ok {
 		err := fmt.Errorf("unfind app, app name is %s", appName)
-		g.L.Warn("routerStat err", zap.String("error", err.Error()))
+		logger.Warn("routerStat err", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 接收 stat
 	if err := app.recvAgentStat(appName, agentID, stat); err != nil {
-		g.L.Warn("recv agent stat", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+		logger.Warn("recv agent stat", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -122,7 +121,7 @@ func (a *AppStore) routerSapn(appName, agentID string, span *trace.TSpan) error 
 
 	// 接收span
 	if err := app.recvSpan(appName, agentID, span); err != nil {
-		g.L.Warn("recv span", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+		logger.Warn("recv span", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
 		return err
 	}
 
@@ -144,7 +143,7 @@ func (a *AppStore) routersapnChunk(appName, agentID string, spanChunk *trace.TSp
 
 	// 接收spanChunk
 	if err := app.recvSpanChunk(appName, agentID, spanChunk); err != nil {
-		g.L.Warn("recv spanChunk", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
+		logger.Warn("recv spanChunk", zap.String("appName", appName), zap.String("agentID", agentID), zap.String("error", err.Error()))
 		return err
 	}
 
