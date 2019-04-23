@@ -26,6 +26,7 @@ type AppAlert struct {
 	Users      []string `json:"users"`
 	UserNames  []string `json:"user_names"`
 	UpdateDate string   `json:"update_date"`
+	ApiAlerts  string   `json:"api_alerts"`
 }
 
 func CreateApp(c echo.Context) error {
@@ -33,7 +34,7 @@ func CreateApp(c echo.Context) error {
 	policy := c.FormValue("policy")
 	channel := c.FormValue("channel")
 	usersS := c.FormValue("users")
-
+	apiAlerts := c.FormValue("api_alerts")
 	if appName == "" || policy == "" || channel == "" || usersS == "" {
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusBadRequest,
@@ -66,7 +67,7 @@ func CreateApp(c echo.Context) error {
 	}
 
 	// 插入
-	q := misc.Cql.Query(`INSERT INTO  alerts_app (name,owner,policy_id,channel,users,update_date) VALUES (?,?,?,?,?,?)`, appName, li.ID, policy, channel, users, time.Now().Unix())
+	q := misc.Cql.Query(`INSERT INTO  alerts_app (name,owner,policy_id,channel,users,update_date,api_alerts) VALUES (?,?,?,?,?,?,?)`, appName, li.ID, policy, channel, users, time.Now().Unix(), apiAlerts)
 	err = q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
@@ -88,6 +89,7 @@ func EditApp(c echo.Context) error {
 	policy := c.FormValue("policy")
 	channel := c.FormValue("channel")
 	usersS := c.FormValue("users")
+	apiAlerts := c.FormValue("api_alerts")
 
 	if appName == "" || policy == "" || channel == "" || usersS == "" {
 		return c.JSON(http.StatusOK, g.Result{
@@ -131,7 +133,7 @@ func EditApp(c echo.Context) error {
 	}
 
 	// 插入
-	q := misc.Cql.Query(`UPDATE alerts_app SET policy_id=?,channel=?,users=?,update_date=? WHERE name=? and owner=? IF EXISTS`, policy, channel, users, time.Now().Unix(), appName, owner)
+	q := misc.Cql.Query(`UPDATE alerts_app SET policy_id=?,channel=?,users=?,update_date=?,api_alerts=? WHERE name=? and owner=? IF EXISTS`, policy, channel, users, time.Now().Unix(), apiAlerts, appName, owner)
 	err = q.Exec()
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
@@ -209,20 +211,20 @@ func AppList(c echo.Context) error {
 	polies := make(map[string]string)
 	var userNames []string
 	var updateDate int64
-	var name, owner, channel, policy string
+	var name, owner, channel, policy, apiAlerts string
 	var users []string
 
 	var iter *gocql.Iter
 	switch tp {
 	case "1": // 查看全部应用告警
-		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date FROM alerts_app`).Iter()
+		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date,api_alerts FROM alerts_app`).Iter()
 	case "2": // 用户自己创建的
-		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date FROM alerts_app WHERE owner=?`, li.ID).Iter()
+		iter = misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date,api_alerts FROM alerts_app WHERE owner=?`, li.ID).Iter()
 	case "3": // 用户设定的应用列表
 		_, appNames := app.UserSetting(li.ID)
 		for _, an := range appNames {
-			q := misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date FROM alerts_app WHERE name=?`, an)
-			err := q.Scan(&name, &owner, &policy, &channel, &users, &updateDate)
+			q := misc.Cql.Query(`SELECT name,owner,policy_id,channel,users,update_date,api_alerts FROM alerts_app WHERE name=?`, an)
+			err := q.Scan(&name, &owner, &policy, &channel, &users, &updateDate, &apiAlerts)
 			if err != nil {
 				g.L.Warn("query database error:", zap.Error(err))
 				continue
@@ -241,13 +243,13 @@ func AppList(c echo.Context) error {
 				userNames = append(userNames, un)
 			}
 			t := utils.Time2StringSecond(time.Unix(updateDate, 0))
-			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames, t})
+			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames, t, apiAlerts})
 			polies[policy] = ""
 		}
 	}
 
 	if tp == "1" || tp == "2" {
-		for iter.Scan(&name, &owner, &policy, &channel, &users, &updateDate) {
+		for iter.Scan(&name, &owner, &policy, &channel, &users, &updateDate, &apiAlerts) {
 			var on string
 			ownerNameR, ok := session.UsersMap.Load(owner)
 			if ok {
@@ -262,7 +264,7 @@ func AppList(c echo.Context) error {
 				userNames = append(userNames, un)
 			}
 			t := utils.Time2StringSecond(time.Unix(updateDate, 0))
-			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames, t})
+			apps = append(apps, &AppAlert{name, owner, on, policy, "", channel, users, userNames, t, apiAlerts})
 			polies[policy] = ""
 		}
 

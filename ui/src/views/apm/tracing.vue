@@ -490,6 +490,11 @@ export default {
       padding-top:30px;
     }
   }
+
+  .ivu-modal-body {
+    padding: 0;
+    margin-top: 16px;
+  }
 </style>
 
 

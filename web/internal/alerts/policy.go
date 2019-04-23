@@ -195,7 +195,7 @@ func QueryPolicy(c echo.Context) error {
 	var updateDate int64
 	var alerts []*util.Alert
 
-	q := misc.Cql.Query(`SELECT id,name,owner,alerts,update FROM alerts_policy WHERE id=?`, pid)
+	q := misc.Cql.Query(`SELECT id,name,owner,alerts,update_date FROM alerts_policy WHERE id=?`, pid)
 	err := q.Scan(&id, &name, &owner, &alerts, &updateDate)
 	if err != nil {
 		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))

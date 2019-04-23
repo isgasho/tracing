@@ -1,5 +1,5 @@
 <template>
-    <Tooltip placement="bottom" max-width="600" delay="300" @on-popper-show="beforeShow">
+    <Tooltip placement="bottom" max-width="800" :delay="300" @on-popper-show="beforeShow">
         {{policyName}}
         <div slot="content" style="padding: 15px 15px">
            <Table stripe :columns="policyLabels" :data="policy.alerts" class="margin-top-15">
