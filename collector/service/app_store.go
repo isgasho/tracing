@@ -71,9 +71,14 @@ func (a *AppStore) getApp(appName string) (*App, bool) {
 func (a *AppStore) routerStatBatch(appName, agentID string, stats *pinpoint.TAgentStatBatch) error {
 	app, ok := a.getApp(appName)
 	if !ok {
-		err := fmt.Errorf("unfind app, app name is %s", appName)
-		logger.Warn("routerStatBatch err", zap.String("error", err.Error()))
-		return err
+		// 缓存App
+		a.storeAgent(appName, agentID, stats.GetStartTimestamp(), 0)
+
+		// 新App在重新找一次
+		app, ok = a.getApp(appName)
+		if !ok {
+			return fmt.Errorf("unfind app, app name is %s", appName)
+		}
 	}
 
 	// 接收 stat
@@ -91,9 +96,14 @@ func (a *AppStore) routerStatBatch(appName, agentID string, stats *pinpoint.TAge
 func (a *AppStore) routerStat(appName, agentID string, stat *pinpoint.TAgentStat) error {
 	app, ok := a.getApp(appName)
 	if !ok {
-		err := fmt.Errorf("unfind app, app name is %s", appName)
-		logger.Warn("routerStat err", zap.String("error", err.Error()))
-		return err
+		// 缓存App
+		a.storeAgent(appName, agentID, stat.GetStartTimestamp(), 0)
+
+		// 新App在重新找一次
+		app, ok = a.getApp(appName)
+		if !ok {
+			return fmt.Errorf("unfind app, app name is %s", appName)
+		}
 	}
 
 	// 接收 stat
