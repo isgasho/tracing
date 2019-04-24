@@ -125,79 +125,12 @@ func (a *App) stats() {
 				}
 			}
 			break
-		case agentStat, ok := <-a.statC:
-			if ok {
-
-				if err := a.tmpstatsAgentStat(agentStat); err != nil {
-					logger.Warn("stats agent stat", zap.String("error", err.Error()))
-				}
-				// if err := a.statsAgentStat(agentStat); err != nil {
-				// 	logger.Warn("stats agent stat", zap.String("error", err.Error()))
-				// }
-			}
+		case <-a.statC:
 			break
 		case <-a.stopC:
 			return
 		}
 	}
-}
-
-func (a *App) statsAgentStat(agentStat *pinpoint.TAgentStat) error {
-	// 计算当前TAgentStat时间范围点
-	// t, err := utils.MSToTime(agentStat.GetTimestamp())
-	// if err != nil {
-	// 	logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
-	// 	return err
-	// }
-
-	// // 获取时间戳并将其精确到秒
-	// nowSecond := t.Unix()
-	// if a.runtimeKey == 0 {
-	// 	a.runtimeKey = nowSecond + misc.Conf.Stats.RuntimeDefer
-	// } else {
-	// 	// 需要更新计算下标key
-	// 	if nowSecond > a.runtimeKey {
-	// 		a.runtimeKey = nowSecond + misc.Conf.Stats.RuntimeDefer
-	// 	}
-	// }
-	// runtimeStat, ok := a.runtimeStats[a.runtimeKey]
-	// if !ok {
-	// 	runtimeStat = stats.NewRuntimeStats()
-	// 	a.runtimeStats[a.runtimeKey] = runtimeStat
-	// }
-
-	// runtimeStat.JVMCounter(agentStat)
-
-	return nil
-}
-
-func (a *App) tmpstatsAgentStat(agentStat *pinpoint.TAgentStat) error {
-	// 计算当前TAgentStat时间范围点
-	// t, err := utils.MSToTime(agentStat.GetTimestamp())
-	// if err != nil {
-	// 	logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
-	// 	return err
-	// }
-	// statSecond := t.Second()
-	// statMin := t.Unix() - int64(statSecond)
-
-	// index := getblockIndex(statSecond)
-	// logger.Info("Index", zap.Int("min", t.Minute()), zap.Int("second", statSecond), zap.Int("index", index))
-
-	// runtimeStats, ok := a.tmpruntimeStats[statMin]
-	// if !ok {
-	// 	runtimeStats = make(map[int64]*stats.RuntimeStats)
-	// 	a.tmpruntimeStats[statMin] = runtimeStats
-	// }
-
-	// runtimeStat, ok := runtimeStats[int64(index)]
-	// if !ok {
-	// 	runtimeStat = stats.NewRuntimeStats()
-	// 	runtimeStats[int64(index)] = runtimeStat
-	// }
-
-	// runtimeStat.JVMCounter(agentStat)
-	return nil
 }
 
 // stats 计算模块
@@ -219,32 +152,32 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	}
 
 	// 获取时间戳并将其精确到分钟
-	nowSecond := t.Unix() - int64(t.Second())
+	spanTime := t.Unix() - int64(t.Second())
 
-	// 查找时间点，不存在新申请
-	lstats, ok := a.points[nowSecond]
+	// 查找时间点，不存在新申请, span统计的范围是分钟，所以这里直接用优化过后的spanTime
+	lstats, ok := a.points[spanTime]
 	if !ok {
 		lstats = stats.NewStats()
-		a.points[nowSecond] = lstats
-	}
-	// 计算
-	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
-	if a.srvMapKey == 0 {
-		a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
-	} else {
-		// 需要更新计算下标key
-		if nowSecond > a.srvMapKey {
-			a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
-		}
+		a.points[spanTime] = lstats
 	}
 
 	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
 	if a.apiCallKey == 0 {
-		a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
+		a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
 	} else {
 		// 需要更新计算下标key
-		if nowSecond > a.apiCallKey {
-			a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
+		if spanTime > a.apiCallKey {
+			a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
+		}
+	}
+
+	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
+	if a.srvMapKey == 0 {
+		a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
+	} else {
+		// 当前span的时间已经超过上次的范围，所以要新生成一个key,当前时间加上时间范围
+		if spanTime > a.srvMapKey {
+			a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
 		}
 	}
 
@@ -270,7 +203,6 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 
 // statsSpanChunk 计算模块
 func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
-
 	// 计算当前spanChunk时间范围点
 	t, err := utils.MSToTime(spanChunk.GetKeyTime())
 	if err != nil {
@@ -279,33 +211,21 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	}
 
 	// 获取时间戳
-	nowSecond := t.Unix() - int64(t.Second())
+	spanChunkTime := t.Unix() - int64(t.Second())
 
 	// 查找时间点，不存在新申请
-	lstats, ok := a.points[nowSecond]
+	lstats, ok := a.points[spanChunkTime]
 	if !ok {
 		lstats = stats.NewStats()
-		a.points[nowSecond] = lstats
+		a.points[spanChunkTime] = lstats
 	}
 
-	// 计算
 	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
 	if a.srvMapKey == 0 {
-		a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
+		a.srvMapKey = spanChunkTime + misc.Conf.Stats.MapRange
 	} else {
-		// 需要更新计算下标key
-		if nowSecond > a.srvMapKey {
-			a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
-		}
-	}
-
-	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
-	if a.apiCallKey == 0 {
-		a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
-	} else {
-		// 需要更新计算下标key
-		if nowSecond > a.apiCallKey {
-			a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
+		if spanChunkTime > a.srvMapKey {
+			a.srvMapKey = spanChunkTime + misc.Conf.Stats.MapRange
 		}
 	}
 
@@ -315,6 +235,16 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 		// 新点保存
 		srvMap = metric.NewSrvMapStats()
 		a.srvmap[a.srvMapKey] = srvMap
+	}
+
+	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
+	if a.apiCallKey == 0 {
+		a.apiCallKey = spanChunkTime + misc.Conf.Stats.APICallRange
+	} else {
+		// 需要更新计算下标key
+		if spanChunkTime > a.apiCallKey {
+			a.apiCallKey = spanChunkTime + misc.Conf.Stats.APICallRange
+		}
 	}
 
 	// 获取Apicall计算节点
@@ -387,15 +317,15 @@ func (a *App) linkTrace() error {
 		return nil
 	}
 
-	key := a.orderlyKey[0]
+	inputDate := a.orderlyKey[0]
+	now := time.Now().Unix()
 
-	// 延迟计算，防止defer 时间内span未上报
-	if time.Now().Unix() < key+misc.Conf.Stats.DeferTime {
+	if now < inputDate+misc.Conf.Stats.DeferTime {
 		return nil
 	}
-	inputDate := key // + misc.Conf.Stats.DeferTime
+
 	apis := alert.NewAPIs()
-	for apiStr, apiInfo := range a.points[key].APIStats.APIs {
+	for apiStr, apiInfo := range a.points[inputDate].APIStats.APIs {
 		gCollector.storage.InsertAPIStats(a.name, inputDate, apiStr, apiInfo)
 		api := &alert.API{
 			Desc:     apiStr,
@@ -410,7 +340,7 @@ func (a *App) linkTrace() error {
 		data := alert.NewData()
 		data.AppName = a.name
 		data.Type = constant.ALERT_TYPE_API
-		data.InputDate = key
+		data.InputDate = inputDate
 		payload, err := msgpack.Marshal(apis)
 		if err != nil {
 			logger.Warn("msgpack", zap.String("error", err.Error()))
@@ -421,12 +351,12 @@ func (a *App) linkTrace() error {
 		}
 	}
 
-	for methodID, methodInfo := range a.points[key].MethodStats.Methods {
-		gCollector.storage.InsertMethodStats(a.name, inputDate, a.points[key].MethodStats.APIStr, methodID, methodInfo)
+	for methodID, methodInfo := range a.points[inputDate].MethodStats.Methods {
+		gCollector.storage.InsertMethodStats(a.name, inputDate, a.points[inputDate].MethodStats.APIStr, methodID, methodInfo)
 	}
 
 	sqls := alert.NewSQLs()
-	for sqlID, sqlInfo := range a.points[key].SQLStats.SQLs {
+	for sqlID, sqlInfo := range a.points[inputDate].SQLStats.SQLs {
 		gCollector.storage.InsertSQLStats(a.name, inputDate, sqlID, sqlInfo)
 		sql := &alert.SQL{
 			ID:       sqlID,
@@ -441,7 +371,7 @@ func (a *App) linkTrace() error {
 	if len(sqls.SQLs) > 0 {
 		data := alert.NewData()
 		data.AppName = a.name
-		data.InputDate = key
+		data.InputDate = inputDate
 		data.Type = constant.ALERT_TYPE_SQL
 		payload, err := msgpack.Marshal(sqls)
 		if err != nil {
@@ -453,12 +383,12 @@ func (a *App) linkTrace() error {
 		}
 	}
 
-	for methodID, exceptions := range a.points[key].ExceptionsStats.MethodEx {
+	for methodID, exceptions := range a.points[inputDate].ExceptionsStats.MethodEx {
 		gCollector.storage.InsertExceptionStats(a.name, inputDate, methodID, exceptions.Exceptions)
 	}
 
 	// 上报打点信息并删除该时间点信息
-	delete(a.points, key)
+	delete(a.points, inputDate)
 	return nil
 }
 
@@ -477,32 +407,30 @@ func (a *App) reportSrvMap() error {
 		return nil
 	}
 
-	key := a.orderlyKey[0]
-	// 延迟计算，防止defer 时间内span未上报
-	if time.Now().Unix() < key+misc.Conf.Stats.MapDefer {
+	inputDate := a.orderlyKey[0]
+	now := time.Now().Unix()
+	if now < inputDate+misc.Conf.Stats.DeferTime {
 		return nil
 	}
 
-	inputDate := key // + misc.Conf.Stats.MapDefer
-
-	for parentName, parentInfo := range a.srvmap[key].Parents {
+	for parentName, parentInfo := range a.srvmap[inputDate].Parents {
 		gCollector.storage.InsertParentMap(a.name, a.appType, inputDate, parentName, parentInfo)
 	}
 
-	for childType, child := range a.srvmap[key].Childs {
+	for childType, child := range a.srvmap[inputDate].Childs {
 		for destinationStr, destination := range child.Destinations {
 			gCollector.storage.InsertChildMap(a.name, a.appType, inputDate, int32(childType), destinationStr, destination)
 		}
 	}
 
-	unknowParent := a.srvmap[key].UnknowParent
+	unknowParent := a.srvmap[inputDate].UnknowParent
 	// 只有被调用才可以入库
 	if unknowParent.Count > 0 {
 		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, inputDate, unknowParent)
 	}
 
 	// 上报打点信息并删除该时间点信息
-	delete(a.srvmap, key)
+	delete(a.srvmap, inputDate)
 
 	return nil
 }
@@ -522,20 +450,20 @@ func (a *App) reportCall() error {
 		return nil
 	}
 
-	key := a.orderlyKey[0]
-	// 延迟计算，防止defer 时间内span未上报
-	if time.Now().Unix() < key+misc.Conf.Stats.APICallDefer {
+	inputDate := a.orderlyKey[0]
+	now := time.Now().Unix()
+	if now < inputDate+misc.Conf.Stats.DeferTime {
 		return nil
 	}
-	inputDate := key //+ misc.Conf.Stats.APICallDefer
-	for apiID, apiInfo := range a.apiCall[key].APIS {
+
+	for apiID, apiInfo := range a.apiCall[inputDate].APIS {
 		for parentName, parentInfo := range apiInfo.Parents {
 			gCollector.storage.InsertAPICallStats(a.name, a.appType, inputDate, apiID, parentName, parentInfo)
 		}
 	}
 
 	// 上报打点信息并删除该时间点信息
-	delete(a.apiCall, key)
+	delete(a.apiCall, inputDate)
 
 	return nil
 }

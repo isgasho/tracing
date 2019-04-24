@@ -4,19 +4,19 @@ common:
   admintoken: "tracing.dev"
 
 collector:
-  addr: "127.0.0.1:8082"
-  # addr: "10.50.16.242:8082"
+  # addr: "127.0.0.1:8082"
+  addr: "10.77.0.125:8082"
   timeout: 30
 
 ticker:
   num: 10
-  interval: 1 # 定时器间隔时间
+  interval: 30 # 定时器间隔时间
 
 etcd:
   addrs:
-      - "127.0.0.1:2379"
-      # - "10.7.24.191:2379"
-      # - "10.7.24.192:2379"
+      # - "127.0.0.1:2379"
+      - "10.7.24.191:2379"
+      - "10.7.24.192:2379"
   timeout: 10
   reporttime: 5
   ttl: 10
@@ -42,16 +42,15 @@ stats:
   defertime: 60
   # 应用拓扑图计算时间范围，单位秒
   # mapdefer: 900
-  mapdefer: 60
+  maprange: 60
   # API应用调用计算时间范围，单位秒
   # apicalldefer: 900
-  apicalldefer: 60
+  apicallrange: 60
   # APDEX 满意时间指标，单位毫秒
   satisfactiontime: 3000
   # APDEX 可容忍时间指标，单位毫秒
   toleratetime: 6000
-  # runtime 计算延迟，单位秒, 5的倍数，不能超过60
-  runtimedefer: 15
+
 
 mq:
   topic: "tracing_alert"
