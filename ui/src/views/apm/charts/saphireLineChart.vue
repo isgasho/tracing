@@ -23,13 +23,33 @@ export default {
       type: String,
       default: '200px'
     },
-     dateList: {
+    timeline: {
         type: Array,
         default: []
     },
     valueList: {
         type: Array,
         default: []
+    },
+    title: {
+      type: String,
+      default: '图表'
+    },
+    titleFontSize : {
+        type: Number,
+        default: 16
+    },
+    unit: {
+      type: String,
+      default: '(%)'
+    },
+    group: {
+        type: String,
+        default: 'group-dashboard'
+    },
+    showXAxis: {
+        type: Boolean,
+        default: true
     }
   },
   data() {
@@ -38,7 +58,7 @@ export default {
     }
   },
   watch: {
-    dateList(val) {
+    timeline(val) {
       this.initChart()
     }
   },
@@ -59,10 +79,10 @@ export default {
       var option = {
     backgroundColor: "#fff",
      title: {
-              text: '吞吐率',
+              text: this.title,
               textStyle: {
                 fontWeight: 'normal',
-                fontSize: 16
+                fontSize: this.titleFontSize
             },
               x: 'center',
           },
@@ -79,25 +99,26 @@ export default {
             containLabel: true
         },
 		xAxis: [{
+      show: this.showXAxis,
 			type: 'category',
 			boundaryGap: false,
-			axisLine: { //坐标轴轴线相关设置。数学上的x轴
-				 show: true,
-				 lineStyle: {
-					//  color: '#233e64'
-				 },
-			 },
-			//  axisLabel: { //坐标轴刻度标签的相关设置
-			// 	 textStyle: {
-			// 		 color: '#6a9cd5',
-			// 		 margin:15,
+			// axisLine: { //坐标轴轴线相关设置。数学上的x轴
+			// 	 show: true,
+			// 	 lineStyle: {
+			// 		 color: '#233e64'
 			// 	 },
 			//  },
+			 axisLabel: { //坐标轴刻度标签的相关设置
+				//  textStyle: {
+				// 	 color: '#6a9cd5',
+				// 	 margin:15,
+				//  },
+			 },
 			 axisTick: { show: false,},
-			data: this.dateList,
+			data: this.timeline,
 		}],
 		yAxis: [{
-            name: '单位（rpm）',
+            name: '单位'+this.unit,
 			type: 'value',
 			// splitNumber: 7,
 			splitLine: {
@@ -107,13 +128,12 @@ export default {
 				 }
 			 },
 			 axisLine: {show: true,},
-			//  axisLabel: {
-			//  	margin:20,
-			// 	 textStyle: {
-			// 		 color: '#6a9cd5',
-					 
-			// 	 },
-			//  },
+			 axisLabel: {
+				 textStyle: {
+					//  color: '#6a9cd5',
+             fontSize: 10
+				 },
+       },
 			 axisTick: { show: false,},  
 		}],
 		series: [{
@@ -151,7 +171,7 @@ export default {
 };
       this.chart.setOption(option)
 
-      this.chart.group = 'group-dashboard';
+      this.chart.group = this.group;
     }
   }
 }

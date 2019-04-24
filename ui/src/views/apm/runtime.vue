@@ -36,20 +36,22 @@
     </Row>  
 
      <Modal v-model="dashVisible" :footer-hide="true">
-        <div class="padding-left-20">
-          <blueLineChart width="430px" height="200px" id="runtime-jvmcpu" title="JVM CPU Usage" :timeline="timeline" :valueList="jvmCpuList"></blueLineChart>
-          <blueLineChart width="430px" height="200px" id="runtime-jvmheap" title="JVM Heap Usage" unit="(MB)" :timeline="timeline" :valueList="jvmHeapList" class="margin-top-20"></blueLineChart>
-        </div>
+        <Row style="padding:10px">
+          <blueLineChart width="430px" height="200px" id="runtime-jvmcpu" title="JVM CPU Usage" :timeline="timeline" :valueList="jvmCpuList" :group="chartGroup"></blueLineChart>
+          <saphireLineChart width="430px" height="200px" id="runtime-jvmheap" title="JVM Heap Usage" unit="(MB)" :timeline="timeline" :valueList="jvmHeapList" class="margin-top-20" :group="chartGroup"></saphireLineChart>
+        </Row>
     </Modal>
   </div>   
 </template>
 
 <script>
+import echarts from 'echarts'
 import request from '@/utils/request' 
 import blueLineChart from './charts/blueLineChart'
+import saphireLineChart from './charts/saphireLineChart'
 export default {
   name: 'runtime',
-  components: {blueLineChart},
+  components: {blueLineChart,saphireLineChart},
   data () {
     return {
       agents: [],
@@ -91,7 +93,8 @@ export default {
 
         timeline: [],
         jvmCpuList: [],
-        jvmHeapList: []
+        jvmHeapList: [],
+        chartGroup: 'runtimeGroup'
     }
   },
   watch: {
@@ -120,7 +123,6 @@ export default {
             agent_id: r.agent_id
           }
       }).then(res => {   
-        console.log('runtime dash',res.data.data)
         this.timeline =  res.data.data.timeline
         this.jvmCpuList = res.data.data.jvm_cpu_list        
         this.jvmHeapList = res.data.data.jvm_heap_list
@@ -146,6 +148,7 @@ export default {
   },
   mounted() {
     this.initAgents()
+    echarts.connect(this.chartGroup);
   }
 }
 </script>

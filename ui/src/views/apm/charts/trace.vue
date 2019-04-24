@@ -152,7 +152,8 @@ export default {
                                     errCode: 0,
                                     api: point.api,
                                     showTime: formatTime(point.x),
-                                    startTime: point.x
+                                    startTime: point.x,
+                                    remote_addr: point.remote_addr
                                 };
                                 traces.push(trace);
                               
@@ -170,7 +171,8 @@ export default {
                                     errCode: 1,
                                     api: point2.api,
                                     showTime: formatTime(point2.x),
-                                    startTime: point2.x
+                                    startTime: point2.x,
+                                    remote_addr: point2.remote_addr
                                 };
                                 traces.push(trace2);
                             }
