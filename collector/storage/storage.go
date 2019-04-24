@@ -411,6 +411,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 // WriteAgentStatBatch ....
 func (s *Storage) WriteAgentStatBatch(appName, agentID string, agentStatBatch *pinpoint.TAgentStatBatch, infoB []byte) error {
 	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+
 	for _, agentStat := range agentStatBatch.AgentStats {
 		jvmInfo := metric.NewJVMInfo()
 		jvmInfo.CPULoad.Jvm = agentStat.CpuLoad.GetJvmCpuLoad()
