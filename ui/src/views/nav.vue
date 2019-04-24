@@ -3,31 +3,31 @@
       <div style="height:6px;background-color: #F2BC56;"></div>
       <Row class="nav" >
         <ul class="product-switcher" :class="{'open':isOpen}">
-            <li class="notched"  @click="switchProduct">
+            <li class="notched hover-cursor"  @click="switchProduct">
                 <a href="#"  title="Switch to another New Relic product">
                     <div style="color:white;font-weight:bold;margin-left:35px;">传化监控平台</div>
                 </a>
             </li>
-            <li class="product ng-scope insights active">
-            </li>
-            <li class="product ng-scope apm not-active">
+            <li class="product ng-scope apm not-active hover-cursor">
                 <router-link to="/apm/ui/list">
                     <a>应用监控APM</a>
                 </router-link >
             </li>
-            <li class="product ng-scope browser not-active">
+            <li class="product ng-scope browser not-active" @click="todoTip()">
                 业务监控
             </li>
             <!-- <li class="product ng-scope system not-active">
                 系统监控
             </li> -->
-            <li class="product ng-scope alerts not-active">
+            <li class="product ng-scope alerts not-active hover-cursor">
                 <router-link to="/apm/ui/alerts">
                     <a>告警平台</a>
                 </router-link >
-            </li>
-            <li class="product ng-scope infrastructure not-active">
-                使用帮助
+            </li> 
+            <li class="product ng-scope infrastructure not-active hover-cursor">
+                <router-link to="/apm/ui/docs">
+                    <a>帮助文档</a>
+                </router-link >
             </li>
         </ul>
         <span class="hover-cursor">
@@ -75,6 +75,9 @@ export default {
   mounted() {
   },
   methods: {
+    todoTip() {
+        this.$Message.info('尚未开放，敬请期待')
+    },
     getBG() {
         var p = window.location.pathname
         var routes = this.$router.options.routes 
@@ -196,6 +199,8 @@ export default {
 //     background-color: #F2BC56;
 //     z-index: 1019;
 // }
+
+
 
 .product-switcher ul {
     list-style: none;
@@ -391,8 +396,6 @@ export default {
         left: 0%;
     }
 }
-
-
 
 
 

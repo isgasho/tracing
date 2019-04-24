@@ -1,0 +1,463 @@
+.v-note-wrapper {
+    z-index: 10 !important;
+    background: transparent !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-edit.divarea-wrapper.scroll-style::-webkit-scrollbar {
+    width: 1px !important;
+}
+
+.v-note-wrapper .v-note-panel {
+    box-shadow: none !important;
+}
+
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content {
+    background: transparent !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content p {
+    margin: 0 0 25px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content p code {
+    border: 1px solid #DADADA;
+    background-color: #F3F3F3;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: normal;
+    font-size: 14px;
+}
+
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-content h1,
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-content h2,
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-content h3,
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-content h4 {
+    color: rgb(36, 41, 46) !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-content h5,
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-content h6 {
+    color: rgb(106, 115, 125) !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper .v-note-navigation-title {
+    box-shadow: none !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-navigation-wrapper {
+    box-shadow: 0 0px 1px rgba(0, 0, 0, 0.157), 0 0px 1px rgba(0, 0, 0, 0.227) !important;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote h1:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote h2:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote h3:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote h4:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote h5:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote h6:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote li:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote ol:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote p:last-child,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote ul:last-child {
+    margin-bottom: 0
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-description p {
+    margin: 0
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content li p {
+    overflow: visible
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a {
+    color: rgba(0, 0, 0, .84);
+    text-decoration: none;
+    background-image: linear-gradient(to bottom, rgba(0, 0, 0, .68) 50%, rgba(0, 0, 0, 0) 50%);
+    background-repeat: repeat-x;
+    background-size: 2px .2em;
+    background-position: 0 1.07em
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a.active,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a:active,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a:focus {
+    color: #3194d0
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a.disabled,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a.disabled.active,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a.disabled:active,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a.disabled:focus,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a.disabled:hover,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a[disabled],
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a[disabled].active,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a[disabled]:active,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a[disabled]:focus,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content a[disabled]:hover {
+    cursor: not-allowed;
+    color: #f5f5f5
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content p,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul {
+    word-break: break-word!important;
+    word-break: break-all
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul ul,
+ol ul {
+    list-style-type: circle;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content hr {
+    margin: 0 0 20px;
+    border-top: 1px solid #ddd;
+    height: 0;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h1,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h2,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h3,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h4,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h5,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h6 {
+    margin: 0 0 15px;
+    font-weight: 700;
+    color: #2f2f2f;
+    line-height: 1.7;
+    text-rendering: optimizelegibility;
+    border-bottom: none;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h1 {
+    font-size: 30px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h2 {
+    font-size: 28px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h3 {
+    font-size: 22px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h4 {
+    font-size: 20px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h5 {
+    font-size: 16px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content h6 {
+    font-size: 14px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content img {
+    max-width: 100%;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote {
+    margin-top: 35px !important;
+    margin-bottom: 25px !important;
+    font-style: italic !important;
+    font-size: 20px !important;
+    color: rgba(0, 0, 0, .68) !important;
+    padding-left: 50px !important;
+    border: none !important;
+    /* padding: 20px;
+    margin-bottom: 25px; */
+    /* background-color: #f7f7f7; */
+    /* background-color: #f7f7f7;
+    border-left: 6px solid #b4b4b4; */
+    /* background-color: #F0FFE8;
+    border-left: 6px solid #54B30E;
+    word-break: break-word!important;
+    word-break: break-all;
+    font-size: 16px;
+    font-weight: 400; */
+    /* line-height: 30px */
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote p {
+    font-size: 16px;
+    font-weight: 400;
+    /* line-height: 1.7 */
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content blockquote .image-package {
+    width: auto;
+    margin-left: 0
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol {
+    list-style-type: decimal;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul {
+    list-style-type: disc;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul {
+    padding: 0;
+    margin-left: 32px;
+    margin-bottom: 20px;
+    display: block;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol li,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul li {
+    margin-bottom: 10px;
+    /* line-height: 30px */
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol li ol,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol li ul,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul li ol,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul li ul {
+    margin-top: 15px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ol .image-package,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content ul .image-package {
+    width: auto!important;
+    margin-left: 0!important
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content pre {
+    font-size: 14px;
+    word-wrap: normal;
+    word-break: break-word!important;
+    word-break: break-all;
+    white-space: pre;
+    overflow: auto;
+    border-radius: 0;
+    /* border: .3px solid #ddd; */
+    page-break-inside: avoid;
+    display: block;
+    /* line-height: 1.42857; */
+    color: #333;
+    background-color: #f8f8f8;
+    border-radius: 4px;
+    line-height: 27px;
+    padding: 15px;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content pre code {
+    padding: 0;
+    background-color: transparent;
+    /* white-space: pre */
+    font-size: inherit;
+    color: inherit;
+    white-space: pre-wrap;
+    background-color: transparent;
+    border-radius: 0
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table {
+    width: 100%;
+    margin-bottom: 20px;
+    border: 0px solid #ddd;
+    border-collapse: collapse;
+    border-left: none;
+    word-break: normal;
+    display: table;
+    overflow: auto;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table tr:nth-of-type(2n) {
+    background-color: rgba(243, 243, 243, 0.3);
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table thead th {
+    vertical-align: middle;
+    text-align: inherit;
+    /* color: rgb(70, 164, 23); */
+    font-size: 14px;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table tr {
+    border-top: .3px solid #ddd;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table thead tr {
+    border-top: none;
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table td,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table th {
+    padding: 12px 8px;
+    border: 0px solid #ddd;
+    line-height: 20px;
+    vertical-align: middle
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table th {
+    font-weight: 500
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content table .image-package {
+    width: auto;
+    margin-left: 0
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-container {
+    z-index: 100;
+    position: relative;
+    background-color: #eee;
+    transition: background-color .1s linear;
+    margin: 0 auto
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-container .image-container-fill {
+    z-index: 50
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-container .image-view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-container .image-view img.image-loading {
+    will-change: filter, opacity;
+    -webkit-filter: blur(4px);
+    filter: blur(4px);
+    opacity: .3
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-container .image-view img {
+    transition: all .15s linear;
+    z-index: 100;
+    will-change: filter, opacity;
+    -webkit-filter: blur(0);
+    filter: blur(0);
+    opacity: 1
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package {
+    padding-bottom: 25px;
+    width: 700px;
+    margin-left: -40px;
+    text-align: center
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package img {
+    max-width: 100%;
+    height: auto;
+    vertical-align: middle;
+    border: 0;
+    cursor: -webkit-zoom-in;
+    transition: all .25s ease-in-out
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-caption {
+    min-width: 20%;
+    max-width: 80%;
+    min-height: 22px;
+    display: inline-block;
+    padding: 10px;
+    margin: 0 auto;
+    border-bottom: 1px solid #d9d9d9;
+    font-size: 14px;
+    color: #969696;
+    line-height: 1.7
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .image-package .image-caption:empty {
+    display: none
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package {
+    position: relative;
+    margin: -20px auto 20px;
+    text-align: center
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-placeholder-area {
+    position: relative;
+    display: inline-block;
+    height: 110px;
+    padding: 10px;
+    padding-left: 120px;
+    box-sizing: border-box;
+    border: 1px solid #d9d9d9;
+    background-color: hsla(0, 0%, 71%, .1);
+    text-align: left;
+    cursor: pointer
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-placeholder-area:after {
+    content: " ";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    display: block;
+    width: 110px;
+    height: 110px;
+    background-color: rgba(0, 0, 0, .3);
+    background-image: url(//cdn2.jianshu.io/assets/common/play-btn-c4bc06b9dfe063495b6b8277b14bc5c3.png);
+    background-position: 30px;
+    background-size: 50px;
+    background-repeat: no-repeat;
+    transition: all .1s linear
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-placeholder-area:hover:after {
+    background-color: transparent
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-placeholder-area .video-cover {
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    display: block;
+    width: 110px;
+    height: 110px;
+    opacity: .8;
+    transition: opacity .1s linear
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-description {
+    min-width: 20%;
+    min-height: 22px;
+    display: none;
+    padding: 10px;
+    margin: 0 auto;
+    border-bottom: 1px solid #d9d9d9;
+    font-size: 13px;
+    color: #999;
+    line-height: 1.7
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-description:empty {
+    display: none
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-close-button,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-provider-button {
+    text-align: left;
+    font-size: 14px;
+    padding: 0;
+    line-height: 14px;
+    cursor: pointer;
+    transition: opacity .1s linear
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-close-button i,
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-provider-button i {
+    position: relative;
+    top: 1px
+}
+
+.v-note-wrapper .v-note-panel .v-note-show .v-show-content .video-package .video-provider-button {
+    float: right
+}

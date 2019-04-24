@@ -5,6 +5,7 @@ import Nav from '@/views/nav'
 import ApmNav from '@/views/apm/nav'
 import AlertsNav from '@/views/alerts/nav'
 
+import DocNav from '@/views/docs/nav'
 Vue.use(Router)
 
 export default new Router({
@@ -54,7 +55,17 @@ export default new Router({
     { path: '/', component: () => import('@/views/index')},
     { path: '/apm/ui/callback', component: () => import('@/views/login/callback')},
 
+    //doc 
+    { 
+      path: '/apm/ui/docs',
+      component: DocNav,
+      redirect: '/apm/ui/docs/about',
+      children: [
+        { path: 'about', component: () => import('@/views/docs/pages/about')},
 
+        { path: 'install', component: () => import('@/views/docs/pages/install')}
+      ]
+    },
     { path: '/404', component: () => import('@/views/errorPage/page404')},
     { path: '*', redirect: '/404'}
   ]

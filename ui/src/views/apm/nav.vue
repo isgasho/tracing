@@ -156,7 +156,7 @@ export default {
     initItem() {
        this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
-        this.items = ['monitoring','dashboard','tracing','serviceMap','runtime','system','stats','api','database','method','exception','profiling','thread','memory']
+        this.items = ['monitoring','dashboard','tracing','serviceMap','runtime','stats','api','database','method','exception','profiling','thread','memory']
         this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2,system:2, profiling:1,thread:2,memory:2,stats:1,database:2,api:2,exception:2,method:2}
         this.names = {monitoring: '监控','dashboard': "应用总览",
             tracing: '链路跟踪',serviceMap:'应用拓扑',  
