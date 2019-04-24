@@ -1,17 +1,17 @@
 <template>
   <div class="app-containe padding-top-10" style="overflow-y:scroll;overflow-x:none;background-color:white">
-     <Row :gutter="20">
+     <Row>
          <Col span="10">
             <respTime width="100%" height="280px" id="apm-resp" :dateList="dateList" :valueList="elapsedList"></respTime>
          </Col>
-         <Col span="10" offset="1">
+         <Col span="10">
             <apdex width="100%" height="296px" id="apm-apdex" :dateList="dateList" :valueList="apdexList"></apdex>
          </Col>
      </Row>
-     <Row :gutter="20">
-        <Col span="8">
-        <rpm width="100%" height="200px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
-              <error width="100%" height="200px" id="apm-error" :dateList="dateList" :valueList="errorList"></error>
+     <Row>
+        <Col span="9">
+            <rpm width="100%" height="200px" id="apm-rpm" :dateList="dateList" :valueList="countList"></rpm>
+            <error width="100%" height="200px" id="apm-error" :dateList="dateList" :valueList="errorList"></error>
              
          </Col>
           <Col span="6" offset="1" style="padding:8px 10px;padding-left:20px">
@@ -27,7 +27,7 @@
                    恭喜，当前没有任何告警
                </div>
           </Col>
-          <Col span="9" style="padding:8px 10px;padding-left:20px;padding-right:60px">
+          <Col span="8" style="padding:8px 10px;padding-left:20px">
                 <div class="font-size-18">节点最新状态</div>
                 <Table :columns="trLabels" :data="agentList"  class="margin-top-10"></Table>
           </Col>

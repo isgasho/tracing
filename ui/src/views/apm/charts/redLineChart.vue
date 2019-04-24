@@ -168,25 +168,38 @@ export default {
                     width: 2
                 }
             },
+            symbolSize:0,  
+            lineStyle: {
+                normal: {
+                    width: 1,
+                    color: {
+                        type: 'linear',
+                        x: 0,
+                        y: 0,
+                        x2: 1,
+                        y2: 0,
+                        colorStops: [{
+                            offset: 0, color: 'red' // 0% 处的颜色
+                        }, {
+                            offset: 1, color: 'yellowgreen' // 100% 处的颜色
+                        }],
+                        globalCoord: false // 缺省为 false
+                    },
+                    opacity: 0.9
+                }
+            },
             areaStyle: {
                 normal: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
                         offset: 0,
-                        color: 'rgba(82, 191, 255, 0.3)'
+                        color: 'rgba(219, 50, 51, 0.3)'
                     }, {
                         offset: 0.8,
-                        color: 'rgba(82, 191, 255, 0)'
+                        color: 'rgba(219, 50, 51, 0)'
                     }], false),
-                    shadowColor: 'rgba(228, 139, 76, 0.1)',
+                    shadowColor: 'rgba(0, 0, 0, 0.1)',
                     shadowBlur: 10
                 }
-            },
-            symbolSize:0,  
-            itemStyle: {
-                normal: {
-                    color: 'rgb(82, 191, 255)',
-                    borderColor:'#e48b4c'
-                },
             },
             data: this.valueList2,
         }  ]

@@ -102,13 +102,16 @@
               
             </div>
           </Col>
-          <Col span="12" style="margin-top:-6px">
+          <Col span="12" style="margin-top:-8px">
             <Row>
                 <Col span="8">
-                  <blueLineChart width="240px" height="130px" id="runtime-jvmcpu" title="cpu" :timeline="timeline" :valueList="jvmCpuList" :titleFontSize="12" :showXAxis="false"></blueLineChart>
+                  <blueLineChart width="240px" height="130px" id="tracing-jvmcpu" titleFontSize="12" name2="jvm" name1="system" title="cpu" :timeline="timeline" :valueList2="jvmCpuList" :valueList1="systemCpuList" :group="chartGroup" :showXAxis="false"></blueLineChart>
                 </Col>
                  <Col span="8">
-                   <saphireLineChart  width="240px" height="130px" id="runtime-jvmheap" title="heap" :timeline="timeline" :valueList="jvmHeapList" :titleFontSize="12" :showXAxis="false"></saphireLineChart>
+                   <greenLineChart width="240px" height="130px" id="tracing-jvmheap" titleFontSize="12" title="heap" name1="heap max" name2="heap usage"  :timeline="timeline" :valueList1="heapMaxList" :valueList2="jvmHeapList"  :group="chartGroup" :showXAxis="false"></greenLineChart>
+                </Col>
+                <Col span="8">
+                   <redLineChart width="240px" height="130px" id="tracing-fullgc" titleFontSize="12" title="fullgc"  name2="总耗时" :timeline="timeline" :valueList2="fullgcDurationList"  :group="chartGroup" :showXAxis="false"></redLineChart>
                 </Col>
             </Row>
             
@@ -135,7 +138,7 @@
                   <Icon v-show="r.icon=='bug'" type="ios-bug" />
                    <Icon v-show="r.icon=='info'" type="md-information-circle" />
                   {{getMethod(r.method)}}
-                </span>
+                </span> 
               </Col>
               <Col span="4"  class="item"> {{r.params}}</Col>
               <Col span="2" class="item" style="padding-left:25px">{{showDuration(r.duration)}}</Col>
@@ -192,12 +195,13 @@
 <script>
 import request from '@/utils/request' 
 import trace from './charts/trace'
-import blueLineChart from './charts/blueLineChart'
 import echarts from 'echarts'
-import saphireLineChart from './charts/saphireLineChart'
+import blueLineChart from './charts/blueLineChart'
+import greenLineChart from './charts/greenLineChart'
+import redLineChart from './charts/redLineChart'
 export default {
   name: 'tracing',
-  components: {trace,blueLineChart,saphireLineChart},
+  components: {trace,blueLineChart,greenLineChart,redLineChart},
   data () {
     return {
       tracesData: {},
@@ -211,6 +215,8 @@ export default {
       remoteAddr: '',
       apis : [],
       currentApi: '',
+      
+      chartGroup: 'tracing',
 
       traceLabels: [
             {
@@ -269,7 +275,8 @@ export default {
 
        timeline: [],
         jvmCpuList: [],
-        jvmHeapList: []
+        jvmHeapList: [],
+        fullgcDurationList: []
     }
   },
   watch: {
@@ -461,15 +468,18 @@ export default {
           method: 'GET',
           params: {
             app_name: this.$store.state.apm.appName,
-            start: startTime/1000 - 60,
-            end: startTime/1000 + 60,
+            start: startTime/1000 - 30,
+            end: startTime/1000 + 30,
             agent_id: agentID
           }
       }).then(res => {   
         console.log(res.data.data)
         this.timeline =  res.data.data.timeline
-        this.jvmCpuList = res.data.data.jvm_cpu_list        
+        this.jvmCpuList = res.data.data.jvm_cpu_list
+        this.systemCpuList = res.data.data.sys_cpu_list        
         this.jvmHeapList = res.data.data.jvm_heap_list
+        this.heapMaxList = res.data.data.heap_max_list
+        this.fullgcDurationList = res.data.data.fullgc_duration_list
 
           this.$Loading.finish();
       }).catch(error => {
@@ -480,7 +490,7 @@ export default {
   },
   mounted() {
     this.apiList()
-    echarts.connect('group-dashboard');
+    echarts.connect(this.chartGroup);
   }
 }
 </script>

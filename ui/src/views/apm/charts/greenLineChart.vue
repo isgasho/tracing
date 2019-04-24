@@ -1,5 +1,5 @@
 <template>
-  <div :class="className" :id="id" :style="{height:height,width:width}"></div>
+  <span :class="className" :id="id" :style="{height:height,width:width}"></span>
 </template>
 
 <script>
@@ -24,13 +24,45 @@ export default {
       default: '200px'
     },
 
-    dateList: {
+    timeline: {
         type: Array,
         default: []
     },
-    valueList: {
+    name1: {
+        type: String,
+        default: ''
+    },
+    valueList1: {
         type: Array,
         default: []
+    },
+    name2: {
+        type: String,
+        default: ''
+    },
+    valueList2: {
+        type: Array,
+        default: []
+    },
+    title: {
+      type: String,
+      default: '图表'
+    },
+    titleFontSize : {
+        type: Number,
+        default: 16
+    },
+    unit: {
+      type: String,
+      default: '(%)'
+    },
+    group: {
+        type: String,
+        default: 'group-dashboard'
+    },
+    showXAxis: {
+        type: Boolean,
+        default: true
     }
   },
   data() {
@@ -39,7 +71,7 @@ export default {
     }
   },
   watch: {
-    dateList(val) {
+    timeline(val) {
       this.initChart()
     }
   },
@@ -59,10 +91,10 @@ export default {
       var option = {
         backgroundColor: '#fff',
         title: {
-            text: '响应时间',
+            text: this.title,
             textStyle: {
                 fontWeight: 'normal',
-                fontSize: 16
+                fontSize: this.titleFontSize
             },
             left: 'center'
         },
@@ -75,19 +107,24 @@ export default {
             left: '4%',
             right: '2%',
             bottom: '8%',
-            top:'14%',
+            top:'18%',
             containLabel: true
         },
         xAxis: [{
+            show:this.showXAxis,
             type: 'category',
             boundaryGap: false,
-            axisLine: {
+            axisLine: { //坐标轴轴线相关设置。数学上的x轴
+              show: true,
+              lineStyle: {
+                //  color: '#233e64'
+              },
             },
-            data: this.dateList
+              data: this.timeline
         }],
         yAxis: [{
             type: 'value',
-             name: '单位（毫秒）',
+             name: '单位' + this.unit,
             axisTick: {
                 show: false
             },
@@ -96,50 +133,54 @@ export default {
             //         color: '#57617B'
             //     }
             // },
-            // axisLabel: {
-            //     textStyle: {
-            //         fontSize: 12
-            //     }
-            // },
+            axisLabel: {
+                textStyle: {
+                    fontSize: 10
+                }
+            },
             splitLine: {
                 show: false
             }
         }],
         series: [{
-            name: '',
+            name: this.name1,
             type: 'line',
             smooth: true,
-            lineStyle: {
+            symbolSize:0,  
+            itemStyle: {
                 normal: {
-                    width: 2
+                    color: '#d68262'
+                }
+            },
+            data: this.valueList1,
+        },
+        {
+            name: this.name2,
+            type: 'line',
+            smooth: true,
+            symbolSize:0,  
+            itemStyle: {
+                normal: {
+                    color: '#8ec6ad'
                 }
             },
             areaStyle: {
                 normal: {
                     color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
                         offset: 0,
-                        color: 'rgba(82, 191, 255, 0.3)'
+                        color: '#8ec6ad'
                     }, {
-                        offset: 0.8,
-                        color: 'rgba(82, 191, 255, 0)'
-                    }], false),
-                    shadowColor: 'rgba(228, 139, 76, 0.1)',
-                    shadowBlur: 10
+                        offset: 1,
+                        color: '#ffe'
+                    }])
                 }
             },
-            symbolSize:0,  
-            itemStyle: {
-                normal: {
-                    color: 'rgb(82, 191, 255)',
-                    borderColor:'#e48b4c'
-                },
-            },
-            data: this.valueList,
-        } ]
+            data: this.valueList2,
+        }  ]
     };
       this.chart.setOption(option)
 
-      this.chart.group = 'group-dashboard';
+      this.chart.group = this.group;
     }
   }
 }

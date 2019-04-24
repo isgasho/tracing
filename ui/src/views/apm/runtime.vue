@@ -35,10 +35,21 @@
       </Col>
     </Row>  
 
-     <Modal v-model="dashVisible" :footer-hide="true">
+     <Modal v-model="dashVisible" :footer-hide="true" width="1000px"  :styles="{top: '20px'}">
         <Row style="padding:10px">
-          <blueLineChart width="430px" height="200px" id="runtime-jvmcpu" title="JVM CPU Usage" :timeline="timeline" :valueList="jvmCpuList" :group="chartGroup"></blueLineChart>
-          <saphireLineChart width="430px" height="200px" id="runtime-jvmheap" title="JVM Heap Usage" unit="(MB)" :timeline="timeline" :valueList="jvmHeapList" class="margin-top-20" :group="chartGroup"></saphireLineChart>
+          <Col span="12">
+             <blueLineChart width="430px" height="200px" id="runtime-jvmcpu"  name2="jvm" name1="system" title="CPU Usage" :timeline="timeline" :valueList2="jvmCpuList" :valueList1="systemCpuList" :group="chartGroup"></blueLineChart>
+             <div>
+               <greenLineChart width="430px" height="200px" id="runtime-jvmheap" title="JVM Heap" name1="heap max" name2="heap usage" unit="(MB)" :timeline="timeline" :valueList1="heapMaxList" :valueList2="jvmHeapList" class="margin-top-20" :group="chartGroup"></greenLineChart>
+              </div>
+          </Col>
+          <Col span="12">
+            <yInverseChart width="430px" height="420px" id="runtime-fullgc" title="Full GC" name1="次数" name2="耗时" unit1="发生次数" unit2="累计耗时(ms)" :timeline="timeline" :valueList1="fullgcCountList" :valueList2="fullgcDurationList" class="margin-top-20" :group="chartGroup"></yInverseChart>
+          </Col>
+
+         
+          
+          
         </Row>
     </Modal>
   </div>   
@@ -48,10 +59,11 @@
 import echarts from 'echarts'
 import request from '@/utils/request' 
 import blueLineChart from './charts/blueLineChart'
-import saphireLineChart from './charts/saphireLineChart'
+import greenLineChart from './charts/greenLineChart'
+import yInverseChart from './charts/yInverseChart'
 export default {
   name: 'runtime',
-  components: {blueLineChart,saphireLineChart},
+  components: {blueLineChart,greenLineChart,yInverseChart},
   data () {
     return {
       agents: [],
@@ -93,7 +105,11 @@ export default {
 
         timeline: [],
         jvmCpuList: [],
+        systemCpuList: [],
         jvmHeapList: [],
+        heapMaxList: [],
+        fullgcCountList :[],
+        fullgcDurationList: [],
         chartGroup: 'runtimeGroup'
     }
   },
@@ -124,10 +140,13 @@ export default {
           }
       }).then(res => {   
         this.timeline =  res.data.data.timeline
-        this.jvmCpuList = res.data.data.jvm_cpu_list        
+        this.jvmCpuList = res.data.data.jvm_cpu_list
+        this.systemCpuList = res.data.data.sys_cpu_list        
         this.jvmHeapList = res.data.data.jvm_heap_list
-
-       
+        this.heapMaxList = res.data.data.heap_max_list
+        this.fullgcCountList = res.data.data.fullgc_count_list
+        this.fullgcDurationList = res.data.data.fullgc_duration_list
+         
         this.dashVisible = true
           this.$Loading.finish();
       }).catch(error => {

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "axios": "0.17.1",
-    "echarts": "3.8.5",
+    "echarts": "^4.2.1",
     "iview": "^3.3.2",
     "js-cookie": "2.2.0",
     "screenfull": "^4.2.0",

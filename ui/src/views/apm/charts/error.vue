@@ -114,7 +114,7 @@ export default {
         stack: '总量',
         smooth: true,
         symbol: 'circle',
-        symbolSize: 5,
+        symbolSize: 0,
         showSymbol: false,
         animationDelay: 0,
         animationDuration: 1000,
