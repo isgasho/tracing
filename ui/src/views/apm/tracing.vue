@@ -2,7 +2,6 @@
   <div>
     <Row class="padding-20">
        <Col span="7" style="background:rgb(248, 248, 248)"  class="padding-20 padding-bottom-10">
-       
           <div  class="font-size-18">链路过滤  <Button ghost type="primary" style="float:right;margin-top:3px;padding-left:15px;padding-right:15px;" size="small" @click="queryTraces">查询</Button></div>
           <div class="margin-top-10 no-border">
             <div class="font-size-12">请求API</div>
@@ -11,6 +10,10 @@
                 {{ api }}
               </Option>
             </Select>
+          </div>
+          <div class="margin-top-10 no-border">
+            <div class="font-size-12">客户端地址(remote addr)</div>
+            <Input class="margin-top-5" v-model="remoteAddr" placeholder="e.g.  10.0.0.1" style="width: 100%;border:none;" size="large" />
           </div>
           <Row class="margin-top-15 no-border" style="border-bottom: 1px solid #ddd;padding-bottom:25px">
             <Col span="11">
@@ -44,7 +47,7 @@
           </div>
        </Col>
        <Col span="15" offset="1">
-        <trace :graphData="tracesData" v-if="tracesData.is_suc==true" style='height: 440px' @selTraces="selectTraces"></trace>
+        <trace :graphData="tracesData" v-if="tracesData.is_suc==true" style='height: 500px' @selTraces="selectTraces"></trace>
        </Col>
     </Row>
 
@@ -63,14 +66,19 @@
           </span> -->
 
         <div style="padding-left:10px;padding-right:10px" class="margin-top-20 margin-bottom-40">
-          <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="showTraceTable()" class="margin-top-15" @on-row-click="showTrace"></Table>
+          <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="showTraceTable()" class="margin-top-15">
+              <template slot-scope="{ row }" slot="operation">
+                    <Icon type="ios-eye" style="color: #777" @click="showTrace(row)"/>
+              </template>
+          </Table>
         </div>
       </div>
 
     <!-- 链路展示Modal -->
     <Modal v-model="traceVisible" :footer-hide="true" :z-index="500" fullscreen>
-        <div slot="header" style="padding-top:5px;padding-bottom:0px;border-bottom:none">
-            <div class="font-size-16" style="font-weight:bold">{{$store.state.apm.appName}} : {{selectedTrace.api}}</div>
+        <Row slot="header" style="padding-top:0px;padding-bottom:0px;border-bottom:none;height:80px;">
+          <Col span="12">
+             <div class="font-size-16 margin-top-30" style="font-weight:bold">{{$store.state.apm.appName}} : {{selectedTrace.api}}</div>
             <div  style="margin-top:13px;font-weight:bold;font-size:12px">
               <span class="meta-word">
                 时间:
@@ -93,9 +101,22 @@
               {{selectedTrace.agentId}}
               
             </div>
-        </div>
+          </Col>
+          <Col span="12" style="margin-top:-6px">
+            <Row>
+                <Col span="8">
+                  <blueLineChart width="240px" height="130px" id="runtime-jvmcpu" title="cpu" :timeline="timeline" :valueList="jvmCpuList" :titleFontSize="12" :showXAxis="false"></blueLineChart>
+                </Col>
+                 <Col span="8">
+                   <saphireLineChart  width="240px" height="130px" id="runtime-jvmheap" title="heap" :timeline="timeline" :valueList="jvmHeapList" :titleFontSize="12" :showXAxis="false"></saphireLineChart>
+                </Col>
+            </Row>
+            
+            
+          </Col>
+        </Row>
 
-        <div class="padding-top-5 trace-pane" style="padding-bottom:50px">
+        <div class="trace-pane" style="padding-bottom:50px;padding-top:27px">
           <Row>
             <Col span="13" class="title split-border">方法(点击具体方法名可查看详情)</Col>
             <Col span="4"  class="title">参数</Col>
@@ -171,9 +192,12 @@
 <script>
 import request from '@/utils/request' 
 import trace from './charts/trace'
+import blueLineChart from './charts/blueLineChart'
+import echarts from 'echarts'
+import saphireLineChart from './charts/saphireLineChart'
 export default {
   name: 'tracing',
-  components: {trace},
+  components: {trace,blueLineChart,saphireLineChart},
   data () {
     return {
       tracesData: {},
@@ -184,6 +208,7 @@ export default {
       selectedTraces: [],
       searchError: false,
       searchTraceID : '',
+      remoteAddr: '',
       apis : [],
       currentApi: '',
 
@@ -205,13 +230,23 @@ export default {
             {
                 title: '服务器ID',
                 key: 'agentId',
-                width: 250
+                width: 150
+            },
+            {
+                title: 'Remote Addr',
+                key: 'remote_addr',
+                width: 150
             },
             {
                 title: '链路ID',
                 key: 'traceId'
             },
-
+            {
+                title: '查看详情',
+                slot: 'operation',
+                width: 100,
+                align: 'center'
+            }
         ],
 
       selSucCount: 0,
@@ -229,7 +264,12 @@ export default {
        // 0: 同时显示成功、错误的点
        // 1: 只显示成功的点
        // 2: 只显示错误的点
-       tableFilter: 0
+       tableFilter: 0,
+
+
+       timeline: [],
+        jvmCpuList: [],
+        jvmHeapList: []
     }
   },
   watch: {
@@ -300,7 +340,7 @@ export default {
             limit: this.resultLimit,
             search_error: this.searchError,
             search_trace_id: this.searchTraceID,
-
+            remote_addr: this.remoteAddr,
             start: JSON.parse(this.$store.state.apm.selDate)[0],
             end: JSON.parse(this.$store.state.apm.selDate)[1],
           }
@@ -393,11 +433,13 @@ export default {
         this.traceVisible = true
         console.log(this.selectedTrace)
         console.log(this.traceData)
-
+        
         this.$Loading.finish();
       }).catch(error => {
         this.$Loading.error();
       })
+
+      this.dashboard(this.selectedTrace.agentId,this.selectedTrace.startTime)
     },
     apiList() {
        request({
@@ -409,10 +451,36 @@ export default {
       }).then(res => {
         this.apis = res.data.data
       })
-    }
+    },
+    // 加载JVM详细图表
+    dashboard(agentID,startTime) {
+      this.$Loading.start();
+      // 加载当前APP的dashbord数据
+      request({
+          url: '/apm/web/runtimeDashByUnixTime',
+          method: 'GET',
+          params: {
+            app_name: this.$store.state.apm.appName,
+            start: startTime/1000 - 60,
+            end: startTime/1000 + 60,
+            agent_id: agentID
+          }
+      }).then(res => {   
+        console.log(res.data.data)
+        this.timeline =  res.data.data.timeline
+        this.jvmCpuList = res.data.data.jvm_cpu_list        
+        this.jvmHeapList = res.data.data.jvm_heap_list
+
+          this.$Loading.finish();
+      }).catch(error => {
+        this.$Loading.error();
+      })
+    },
+
   },
   mounted() {
     this.apiList()
+    echarts.connect('group-dashboard');
   }
 }
 </script>
@@ -491,6 +559,9 @@ export default {
     }
   }
 
+  .ivu-modal-header {
+    padding-top: 0px;
+  }
   .ivu-modal-body {
     padding: 0;
     margin-top: 16px;

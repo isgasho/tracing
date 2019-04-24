@@ -1,5 +1,5 @@
 <template>
-  <div :class="className" :id="id" :style="{height:height,width:width}"></div>
+  <span :class="className" :id="id" :style="{height:height,width:width}"></span>
 </template>
 
 <script>
@@ -36,9 +36,21 @@ export default {
       type: String,
       default: '图表'
     },
+    titleFontSize : {
+        type: Number,
+        default: 16
+    },
     unit: {
       type: String,
       default: '(%)'
+    },
+    group: {
+        type: String,
+        default: 'group-dashboard'
+    },
+    showXAxis: {
+        type: Boolean,
+        default: true
     }
   },
   data() {
@@ -48,12 +60,10 @@ export default {
   },
   watch: {
     timeline(val) {
-         console.log('blue chart',this.timeline,this.valueList)
       this.initChart()
     }
   },
   mounted() {
-    console.log('blue chart',this.timeline,this.valueList)
     this.initChart()
   },
   beforeDestroy() {
@@ -72,7 +82,7 @@ export default {
             text: this.title,
             textStyle: {
                 fontWeight: 'normal',
-                fontSize: 16
+                fontSize: this.titleFontSize
             },
             left: 'center'
         },
@@ -89,6 +99,7 @@ export default {
             containLabel: true
         },
         xAxis: [{
+            show:this.showXAxis,
             type: 'category',
             boundaryGap: false,
             axisLine: {
@@ -106,11 +117,11 @@ export default {
             //         color: '#57617B'
             //     }
             // },
-            // axisLabel: {
-            //     textStyle: {
-            //         fontSize: 12
-            //     }
-            // },
+            axisLabel: {
+                textStyle: {
+                    fontSize: 10
+                }
+            },
             splitLine: {
                 show: false
             }
@@ -149,7 +160,7 @@ export default {
     };
       this.chart.setOption(option)
 
-      this.chart.group = 'group-dashboard';
+      this.chart.group = this.group;
     }
   }
 }

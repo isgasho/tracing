@@ -5,14 +5,14 @@
         <ul class="product-switcher" :class="{'open':isOpen}">
             <li class="notched"  @click="switchProduct">
                 <a href="#"  title="Switch to another New Relic product">
-                    <div style="color:white;font-weight:bold;margin-left:35px;">OpenAPM</div>
+                    <div style="color:white;font-weight:bold;margin-left:35px;">传化监控平台</div>
                 </a>
             </li>
             <li class="product ng-scope insights active">
             </li>
             <li class="product ng-scope apm not-active">
                 <router-link to="/apm/ui/list">
-                    <a>应用监控</a>
+                    <a>应用监控APM</a>
                 </router-link >
             </li>
             <li class="product ng-scope browser not-active">

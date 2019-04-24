@@ -17,12 +17,13 @@ import (
 )
 
 type Trace struct {
-	ID        string `json:"id"`
-	API       string `json:"api"`
-	Elapsed   int    `json:"y"`
-	AgentID   string `json:"agent_id"`
-	InputDate int64  `json:"x"`
-	Error     int    `json:"error"`
+	ID         string `json:"id"`
+	API        string `json:"api"`
+	Elapsed    int    `json:"y"`
+	AgentID    string `json:"agent_id"`
+	InputDate  int64  `json:"x"`
+	Error      int    `json:"error"`
+	RemoteAddr string `json:"remote_addr"`
 }
 
 type Traces []*Trace
@@ -61,6 +62,7 @@ func QueryTraces(c echo.Context) error {
 
 	searchError, _ := strconv.ParseBool(c.FormValue("search_error"))
 	searchTraceID := c.FormValue("search_trace_id")
+	raddr := c.FormValue("remote_addr")
 	if err != nil {
 		limit = 50
 	}
@@ -69,11 +71,11 @@ func QueryTraces(c echo.Context) error {
 
 	var q *gocql.Query
 	if searchTraceID != "" {
-		q = misc.Cql.Query("SELECT trace_id,api,elapsed,agent_id,input_date,error FROM traces WHERE trace_id=?", searchTraceID)
+		q = misc.Cql.Query("SELECT trace_id,api,elapsed,agent_id,input_date,error,remote_addr FROM traces WHERE trace_id=?", searchTraceID)
 	} else {
 		// 根据查询条件，拼装查询语句和参数
 		// 默认条件1
-		qs := "SELECT trace_id,api,elapsed,agent_id,input_date,error FROM app_operation_index WHERE app_name=?"
+		qs := "SELECT trace_id,api,elapsed,agent_id,input_date,error,remote_addr FROM app_operation_index WHERE app_name=?"
 		args := []interface{}{appName}
 
 		// api条件
@@ -92,6 +94,12 @@ func QueryTraces(c echo.Context) error {
 			args = append(args, max)
 		}
 
+		// 查询指定的remote_addr
+		if raddr != "" {
+			qs = qs + " and remote_addr=?"
+			args = append(args, raddr)
+		}
+
 		// 仅查询错误条件
 		if searchError {
 			// 只搜索错误
@@ -107,11 +115,11 @@ func QueryTraces(c echo.Context) error {
 
 	var elapsed, isError int
 	var inputDate int64
-	var tid, agentID string
+	var tid, agentID, remoteAddr string
 
 	traceMap := make(map[string]*Trace)
-	for iter.Scan(&tid, &api, &elapsed, &agentID, &inputDate, &isError) {
-		traceMap[tid] = &Trace{tid, api, elapsed, agentID, inputDate, isError}
+	for iter.Scan(&tid, &api, &elapsed, &agentID, &inputDate, &isError, &remoteAddr) {
+		traceMap[tid] = &Trace{tid, api, elapsed, agentID, inputDate, isError, remoteAddr}
 	}
 
 	if err := iter.Close(); err != nil {
