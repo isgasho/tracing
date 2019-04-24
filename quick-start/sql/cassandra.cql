@@ -211,6 +211,7 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
     api             text,
     elapsed         int,
     trace_id        text,
+    remote_addr     text,
     span_id         bigint,
     error           tinyint,            
     PRIMARY KEY (app_name, api, input_date, method_id, agent_id)
@@ -219,6 +220,10 @@ CREATE TABLE IF NOT EXISTS  app_operation_index (
 CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON app_operation_index (remote_addr) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;
+
 
 -- agent runtime 信息表
 CREATE TABLE IF NOT EXISTS agent_runtime (

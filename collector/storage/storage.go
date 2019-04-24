@@ -6,6 +6,7 @@ import (
 
 	"github.com/gocql/gocql"
 	"github.com/imdevlab/g"
+	"github.com/imdevlab/g/utils"
 	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/metric"
@@ -396,6 +397,7 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 		span.GetRPC(),
 		span.GetSpanId(),
 		span.GetErr(),
+		span.GetRemoteAddr(),
 	)
 
 	if err := query.Exec(); err != nil {
@@ -408,67 +410,101 @@ func (s *Storage) appOperationIndex(span *trace.TSpan) error {
 
 // WriteAgentStatBatch ....
 func (s *Storage) WriteAgentStatBatch(appName, agentID string, agentStatBatch *pinpoint.TAgentStatBatch, infoB []byte) error {
-	// batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
-	// var insertAgentStatBatch string
-	// if misc.Conf.Storage.AgentStatUseTTL {
-	// 	for _, stat := range agentStatBatch.AgentStats {
-	// 		batchInsert.Query(
-	// 			sql.InsertAgentStatWithTTL,
-	// 			appName,
-	// 			agentID,
-	// 			stat.GetTimestamp(),
-	// 			infoB,
-	// 			misc.Conf.Storage.AgentStatTTL)
-	// 	}
-	// } else {
-	// 	for _, stat := range agentStatBatch.AgentStats {
-	// 		batchInsert.Query(
-	// 			sql.InsertAgentStat,
-	// 			appName,
-	// 			agentID,
-	// 			stat.GetTimestamp(),
-	// 			infoB)
-	// 	}
-	// }
+	batchInsert := s.cql.NewBatch(gocql.UnloggedBatch)
+	for _, agentStat := range agentStatBatch.AgentStats {
+		jvmInfo := metric.NewJVMInfo()
+		jvmInfo.CPULoad.Jvm = agentStat.CpuLoad.GetJvmCpuLoad()
+		jvmInfo.CPULoad.System = agentStat.CpuLoad.GetSystemCpuLoad()
+		jvmInfo.GC.Type = agentStat.Gc.GetType()
+		jvmInfo.GC.HeapUsed = agentStat.Gc.GetJvmMemoryHeapUsed()
+		jvmInfo.GC.HeapMax = agentStat.Gc.GetJvmMemoryHeapMax()
+		jvmInfo.GC.NonHeapUsed = agentStat.Gc.GetJvmMemoryNonHeapUsed()
+		jvmInfo.GC.NonHeapMax = agentStat.Gc.GetJvmMemoryHeapMax()
+		jvmInfo.GC.GcOldCount = agentStat.Gc.GetJvmGcOldCount()
+		jvmInfo.GC.JvmGcOldTime = agentStat.Gc.GetJvmGcOldTime()
+		jvmInfo.GC.JvmGcNewCount = agentStat.Gc.GetJvmGcDetailed().GetJvmGcNewCount()
+		jvmInfo.GC.JvmGcNewTime = agentStat.Gc.GetJvmGcDetailed().GetJvmGcNewTime()
+		jvmInfo.GC.JvmPoolCodeCacheUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolCodeCacheUsed()
+		jvmInfo.GC.JvmPoolNewGenUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolNewGenUsed()
+		jvmInfo.GC.JvmPoolOldGenUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolOldGenUsed()
+		jvmInfo.GC.JvmPoolSurvivorSpaceUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolSurvivorSpaceUsed()
+		jvmInfo.GC.JvmPoolPermGenUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolPermGenUsed()
+		jvmInfo.GC.JvmPoolMetaspaceUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolMetaspaceUsed()
 
-	// if err := s.cql.ExecuteBatch(batchInsert); err != nil {
-	// 	s.logger.Warn("agent stat batch", zap.String("error", err.Error()), zap.String("SQL", insertAgentStatBatch))
-	// 	return err
-	// }
+		body, err := json.Marshal(jvmInfo)
+		if err != nil {
+			s.logger.Warn("json marshal", zap.String("error", err.Error()))
+			continue
+		}
+
+		t, err := utils.MSToTime(agentStat.GetTimestamp())
+		if err != nil {
+			s.logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
+			continue
+		}
+
+		batchInsert.Query(
+			sql.InsertRuntimeStat,
+			appName,
+			agentID,
+			t.Unix(),
+			body,
+			1)
+	}
+	if err := s.cql.ExecuteBatch(batchInsert); err != nil {
+		s.logger.Warn("agent stat batch", zap.String("error", err.Error()), zap.String("SQL", sql.InsertRuntimeStat))
+		return err
+	}
 
 	return nil
 }
 
 // WriteAgentStat  ...
 func (s *Storage) WriteAgentStat(appName, agentID string, agentStat *pinpoint.TAgentStat, infoB []byte) error {
-	// if misc.Conf.Storage.AgentStatUseTTL {
-	// 	query := s.cql.Query(
-	// 		sql.InsertAgentStatWithTTL,
-	// 		appName,
-	// 		agentID,
-	// 		agentStat.GetStartTimestamp(),
-	// 		agentStat.GetTimestamp(),
-	// 		infoB,
-	// 		misc.Conf.Storage.AgentStatTTL,
-	// 	)
-	// 	if err := query.Exec(); err != nil {
-	// 		s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
-	// 		return err
-	// 	}
-	// } else {
-	// 	query := s.cql.Query(
-	// 		sql.InsertAgentStat,
-	// 		appName,
-	// 		agentID,
-	// 		agentStat.GetStartTimestamp(),
-	// 		agentStat.GetTimestamp(),
-	// 		infoB,
-	// 	)
-	// 	if err := query.Exec(); err != nil {
-	// 		s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
-	// 		return err
-	// 	}
-	// }
+	jvmInfo := metric.NewJVMInfo()
+	jvmInfo.CPULoad.Jvm = agentStat.CpuLoad.GetJvmCpuLoad()
+	jvmInfo.CPULoad.System = agentStat.CpuLoad.GetSystemCpuLoad()
+	jvmInfo.GC.Type = agentStat.Gc.GetType()
+	jvmInfo.GC.HeapUsed = agentStat.Gc.GetJvmMemoryHeapUsed()
+	jvmInfo.GC.HeapMax = agentStat.Gc.GetJvmMemoryHeapMax()
+	jvmInfo.GC.NonHeapUsed = agentStat.Gc.GetJvmMemoryNonHeapUsed()
+	jvmInfo.GC.NonHeapMax = agentStat.Gc.GetJvmMemoryHeapMax()
+	jvmInfo.GC.GcOldCount = agentStat.Gc.GetJvmGcOldCount()
+	jvmInfo.GC.JvmGcOldTime = agentStat.Gc.GetJvmGcOldTime()
+	jvmInfo.GC.JvmGcNewCount = agentStat.Gc.GetJvmGcDetailed().GetJvmGcNewCount()
+	jvmInfo.GC.JvmGcNewTime = agentStat.Gc.GetJvmGcDetailed().GetJvmGcNewTime()
+	jvmInfo.GC.JvmPoolCodeCacheUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolCodeCacheUsed()
+	jvmInfo.GC.JvmPoolNewGenUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolNewGenUsed()
+	jvmInfo.GC.JvmPoolOldGenUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolOldGenUsed()
+	jvmInfo.GC.JvmPoolSurvivorSpaceUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolSurvivorSpaceUsed()
+	jvmInfo.GC.JvmPoolPermGenUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolPermGenUsed()
+	jvmInfo.GC.JvmPoolMetaspaceUsed = agentStat.Gc.GetJvmGcDetailed().GetJvmPoolMetaspaceUsed()
+
+	body, err := json.Marshal(jvmInfo)
+	if err != nil {
+		s.logger.Warn("json marshal", zap.String("error", err.Error()))
+		return err
+	}
+
+	t, err := utils.MSToTime(agentStat.GetTimestamp())
+	if err != nil {
+		s.logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
+		return err
+	}
+
+	query := s.cql.Query(
+		sql.InsertRuntimeStat,
+		appName,
+		agentID,
+		t.Unix(),
+		body,
+		1,
+	)
+	if err := query.Exec(); err != nil {
+		s.logger.Warn("inster agentstat", zap.String("SQL", query.String()), zap.String("error", err.Error()))
+		return err
+	}
+
 	return nil
 }
 

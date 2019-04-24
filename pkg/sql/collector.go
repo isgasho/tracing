@@ -34,7 +34,7 @@ VALUES (?, ?, ?);`
 var InsertRuntimeStat string = `
 	INSERT
 	INTO agent_runtime(app_name, agent_id, input_date, metrics, runtime_type)
-	VALUES (?, ?, ?, ?, 1);`
+	VALUES (?, ?, ?, ?, ?);`
 
 // agent stat 信息入库 + 过期时间
 // var InsertAgentStatWithTTL string = `
@@ -60,8 +60,8 @@ VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 // 插入api索引
 var InsertOperIndex string = `
 	INSERT
-	INTO app_operation_index(app_name, agent_id, method_id, input_date, elapsed, trace_id, api, span_id, error)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	INTO app_operation_index(app_name, agent_id, method_id, input_date, elapsed, trace_id, api, span_id, error, remote_addr)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 var InsertAPIs string = `INSERT INTO app_apis (app_name, api) VALUES (?, ?) ;`
 

@@ -36,7 +36,7 @@ func NewTickers(tickerNum int, tickerTime int, l *zap.Logger) *Tickers {
 		tickers.hash.Add(fmt.Sprintf("%d", index))
 		ticker := newTicker(tickerTime)
 		// 延迟启动时间
-		deferTime := rand.Intn(30)
+		deferTime := rand.Intn(10)
 		logger.Info("deferTime", zap.Int("deferTime", deferTime))
 		// 启动定时器
 		go ticker.start(deferTime)

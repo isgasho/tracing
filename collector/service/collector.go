@@ -301,3 +301,16 @@ func (c *Collector) pushWork() error {
 func (c *Collector) publish(data *alert.Data) {
 	c.pushC <- data
 }
+
+func getblockIndex(value int) int {
+	if 0 <= value && value <= 15 {
+		return 0
+	} else if 16 <= value && value <= 30 {
+		return 1
+	} else if 31 <= value && value <= 45 {
+		return 2
+	} else if 46 <= value && value <= 59 {
+		return 3
+	}
+	return 0
+}

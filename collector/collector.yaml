@@ -10,7 +10,7 @@ collector:
 
 ticker:
   num: 10
-  interval: 60 # 定时器间隔时间
+  interval: 1 # 定时器间隔时间
 
 etcd:
   addrs:
@@ -50,7 +50,7 @@ stats:
   satisfactiontime: 3000
   # APDEX 可容忍时间指标，单位毫秒
   toleratetime: 6000
-  # runtime 计算延迟，单位秒
+  # runtime 计算延迟，单位秒, 5的倍数，不能超过60
   runtimedefer: 15
 
 mq:

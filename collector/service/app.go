@@ -24,40 +24,44 @@ import (
 // App 单个服务信息
 type App struct {
 	sync.RWMutex
-	appType      int32                          // 服务类型
-	taskID       int64                          // 定时任务ID
-	name         string                         // 服务名称
-	agents       map[string]*Agent              // agent集合
-	stopC        chan bool                      // 停止通道
-	tickerC      chan bool                      // 定时任务通道
-	spanC        chan *trace.TSpan              // span类型通道
-	spanChunkC   chan *trace.TSpanChunk         // span chunk类型通道
-	statC        chan *pinpoint.TAgentStat      // jvm状态类型通道
-	apis         map[string]struct{}            // 接口信息
-	orderlyKey   stats.OrderlyKey               // 排序打点
-	points       map[int64]*stats.Stats         // 计算点集合
-	srvMapKey    int64                          // 拓扑计算当前计算key
-	srvmap       map[int64]*metric.SrvMapStats  // 服务拓扑图
-	apiCallKey   int64                          // API被调用计算当前计算key
-	apiCall      map[int64]*metric.APICallStats // API被调用
-	runtimeStats map[int64]*stats.RuntimeStats  // runtime stats
-	runtimeKey   int64                          // runtime key
+	appType    int32                          // 服务类型
+	taskID     int64                          // 定时任务ID
+	name       string                         // 服务名称
+	agents     map[string]*Agent              // agent集合
+	stopC      chan bool                      // 停止通道
+	tickerC    chan bool                      // 定时任务通道
+	spanC      chan *trace.TSpan              // span类型通道
+	spanChunkC chan *trace.TSpanChunk         // span chunk类型通道
+	statC      chan *pinpoint.TAgentStat      // jvm状态类型通道
+	apis       map[string]struct{}            // 接口信息
+	orderlyKey stats.OrderlyKey               // 排序打点
+	points     map[int64]*stats.Stats         // 计算点集合
+	srvMapKey  int64                          // 拓扑计算当前计算key
+	srvmap     map[int64]*metric.SrvMapStats  // 服务拓扑图
+	apiCallKey int64                          // API被调用计算当前计算key
+	apiCall    map[int64]*metric.APICallStats // API被调用
+	// runtimeStats    map[int64]*stats.RuntimeStats           // runtime stats
+	// runtimeKey      int64                                   // runtime key
+	// tmpruntimeStats map[int64]map[int64]*stats.RuntimeStats // runtime stats
+	// runtimeBlockNum int                                     // 块的总数
 }
 
 func newApp(name string, appType int32) *App {
 	app := &App{
-		appType:      appType,
-		name:         name,
-		agents:       make(map[string]*Agent),
-		tickerC:      make(chan bool, 10),
-		spanC:        make(chan *trace.TSpan, 200),
-		spanChunkC:   make(chan *trace.TSpanChunk, 200),
-		statC:        make(chan *pinpoint.TAgentStat, 200),
-		apis:         make(map[string]struct{}),
-		points:       make(map[int64]*stats.Stats),
-		srvmap:       make(map[int64]*metric.SrvMapStats),
-		apiCall:      make(map[int64]*metric.APICallStats),
-		runtimeStats: make(map[int64]*stats.RuntimeStats),
+		appType:    appType,
+		name:       name,
+		agents:     make(map[string]*Agent),
+		tickerC:    make(chan bool, 10),
+		spanC:      make(chan *trace.TSpan, 200),
+		spanChunkC: make(chan *trace.TSpanChunk, 200),
+		statC:      make(chan *pinpoint.TAgentStat, 200),
+		apis:       make(map[string]struct{}),
+		points:     make(map[int64]*stats.Stats),
+		srvmap:     make(map[int64]*metric.SrvMapStats),
+		apiCall:    make(map[int64]*metric.APICallStats),
+		// runtimeStats:    make(map[int64]*stats.RuntimeStats),
+		// tmpruntimeStats: make(map[int64]map[int64]*stats.RuntimeStats),
+		// runtimeBlockNum: int(60 / misc.Conf.Stats.RuntimeDefer),
 	}
 	app.start()
 	return app
@@ -95,15 +99,17 @@ func (a *App) storeAgent(agentid string, startTime int64) {
 func (a *App) stats() {
 	for {
 		select {
-		case <-a.tickerC:
-			// 链路统计信息计算
-			a.linkTrace()
-			// 拓扑信息计算
-			a.reportSrvMap()
-			// 被调用统计
-			a.reportCall()
-			// runtime 统计
-			a.reportRuntime()
+		case _, ok := <-a.tickerC:
+			if ok {
+				// 链路统计信息计算
+				a.linkTrace()
+				// 拓扑信息计算
+				a.reportSrvMap()
+				// 被调用统计
+				a.reportCall()
+				// runtime 统计
+				a.reportRuntime()
+			}
 			break
 		case span, ok := <-a.spanC:
 			if ok {
@@ -121,9 +127,13 @@ func (a *App) stats() {
 			break
 		case agentStat, ok := <-a.statC:
 			if ok {
-				if err := a.statsAgentStat(agentStat); err != nil {
+
+				if err := a.tmpstatsAgentStat(agentStat); err != nil {
 					logger.Warn("stats agent stat", zap.String("error", err.Error()))
 				}
+				// if err := a.statsAgentStat(agentStat); err != nil {
+				// 	logger.Warn("stats agent stat", zap.String("error", err.Error()))
+				// }
 			}
 			break
 		case <-a.stopC:
@@ -134,30 +144,59 @@ func (a *App) stats() {
 
 func (a *App) statsAgentStat(agentStat *pinpoint.TAgentStat) error {
 	// 计算当前TAgentStat时间范围点
-	t, err := utils.MSToTime(agentStat.GetTimestamp())
-	if err != nil {
-		logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
-		return err
-	}
+	// t, err := utils.MSToTime(agentStat.GetTimestamp())
+	// if err != nil {
+	// 	logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
+	// 	return err
+	// }
 
-	// 获取时间戳并将其精确到秒
-	nowSecond := t.Unix()
-	if a.runtimeKey == 0 {
-		a.runtimeKey = nowSecond + misc.Conf.Stats.RuntimeDefer
-	} else {
-		// 需要更新计算下标key
-		if nowSecond > a.runtimeKey+misc.Conf.Stats.RuntimeDefer {
-			a.runtimeKey = nowSecond + misc.Conf.Stats.RuntimeDefer
-		}
-	}
-	runtimeStat, ok := a.runtimeStats[a.runtimeKey]
-	if !ok {
-		runtimeStat = stats.NewRuntimeStats()
-		a.runtimeStats[a.runtimeKey] = runtimeStat
-	}
+	// // 获取时间戳并将其精确到秒
+	// nowSecond := t.Unix()
+	// if a.runtimeKey == 0 {
+	// 	a.runtimeKey = nowSecond + misc.Conf.Stats.RuntimeDefer
+	// } else {
+	// 	// 需要更新计算下标key
+	// 	if nowSecond > a.runtimeKey {
+	// 		a.runtimeKey = nowSecond + misc.Conf.Stats.RuntimeDefer
+	// 	}
+	// }
+	// runtimeStat, ok := a.runtimeStats[a.runtimeKey]
+	// if !ok {
+	// 	runtimeStat = stats.NewRuntimeStats()
+	// 	a.runtimeStats[a.runtimeKey] = runtimeStat
+	// }
 
-	runtimeStat.JVMCounter(agentStat)
+	// runtimeStat.JVMCounter(agentStat)
 
+	return nil
+}
+
+func (a *App) tmpstatsAgentStat(agentStat *pinpoint.TAgentStat) error {
+	// 计算当前TAgentStat时间范围点
+	// t, err := utils.MSToTime(agentStat.GetTimestamp())
+	// if err != nil {
+	// 	logger.Warn("ms to time", zap.Int64("time", agentStat.GetTimestamp()), zap.String("error", err.Error()))
+	// 	return err
+	// }
+	// statSecond := t.Second()
+	// statMin := t.Unix() - int64(statSecond)
+
+	// index := getblockIndex(statSecond)
+	// logger.Info("Index", zap.Int("min", t.Minute()), zap.Int("second", statSecond), zap.Int("index", index))
+
+	// runtimeStats, ok := a.tmpruntimeStats[statMin]
+	// if !ok {
+	// 	runtimeStats = make(map[int64]*stats.RuntimeStats)
+	// 	a.tmpruntimeStats[statMin] = runtimeStats
+	// }
+
+	// runtimeStat, ok := runtimeStats[int64(index)]
+	// if !ok {
+	// 	runtimeStat = stats.NewRuntimeStats()
+	// 	runtimeStats[int64(index)] = runtimeStat
+	// }
+
+	// runtimeStat.JVMCounter(agentStat)
 	return nil
 }
 
@@ -194,7 +233,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
 	} else {
 		// 需要更新计算下标key
-		if nowSecond > a.srvMapKey+misc.Conf.Stats.MapDefer {
+		if nowSecond > a.srvMapKey {
 			a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
 		}
 	}
@@ -204,7 +243,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
 	} else {
 		// 需要更新计算下标key
-		if nowSecond > a.apiCallKey+misc.Conf.Stats.APICallDefer {
+		if nowSecond > a.apiCallKey {
 			a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
 		}
 	}
@@ -255,7 +294,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 		a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
 	} else {
 		// 需要更新计算下标key
-		if nowSecond > a.srvMapKey+misc.Conf.Stats.MapDefer {
+		if nowSecond > a.srvMapKey {
 			a.srvMapKey = nowSecond + misc.Conf.Stats.MapDefer
 		}
 	}
@@ -265,7 +304,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 		a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
 	} else {
 		// 需要更新计算下标key
-		if nowSecond > a.apiCallKey+misc.Conf.Stats.APICallDefer {
+		if nowSecond > a.apiCallKey {
 			a.apiCallKey = nowSecond + misc.Conf.Stats.APICallDefer
 		}
 	}
@@ -503,33 +542,59 @@ func (a *App) reportCall() error {
 
 // reportRuntime runtime计算结果上报&存储
 func (a *App) reportRuntime() error {
-	// 清空之前节点
-	a.orderlyKey = a.orderlyKey[:0]
-	// 赋值
-	for key := range a.runtimeStats {
-		a.orderlyKey = append(a.orderlyKey, key)
-	}
-	// 排序
-	sort.Sort(a.orderlyKey)
-	// 如果没有计算节点直接返回
-	if a.orderlyKey.Len() <= 0 {
-		return nil
-	}
+	// // 清空之前节点
+	// a.orderlyKey = a.orderlyKey[:0]
+	// // 赋值
+	// for key := range a.tmpruntimeStats {
+	// 	a.orderlyKey = append(a.orderlyKey, key)
+	// }
+	// // 排序
+	// sort.Sort(a.orderlyKey)
+	// // 如果没有计算节点直接返回
+	// if a.orderlyKey.Len() <= 0 {
+	// 	return nil
+	// }
+	// statMin := a.orderlyKey[0]
+	// runtimeStats, ok := a.tmpruntimeStats[statMin]
+	// if !ok {
+	// 	return nil
+	// }
 
-	key := a.orderlyKey[0]
-	// 延迟计算，防止defer 时间内span未上报
-	if time.Now().Unix() < key+misc.Conf.Stats.RuntimeDefer {
-		return nil
-	}
+	// // 清空之前节点
+	// a.orderlyKey = a.orderlyKey[:0]
+	// // 赋值
+	// for key := range runtimeStats {
+	// 	a.orderlyKey = append(a.orderlyKey, key)
+	// }
 
-	inputDate := key //+ misc.Conf.Stats.APICallDefer
+	// // 排序
+	// sort.Sort(a.orderlyKey)
+	// // 如果没有计算节点直接返回
+	// if a.orderlyKey.Len() == 0 {
+	// 	log.Println("没有数据点")
+	// 	return nil
+	// }
 
-	for agentID, info := range a.runtimeStats[key].JVMStats.Agents {
-		gCollector.storage.InsertRuntimeStats(a.name, agentID, inputDate, constant.JVM, info)
-	}
+	// blockIndex := a.orderlyKey[0]
+	// // 延迟计算，防止defer 时间内span未上报
+	// if statMin+blockIndex*misc.Conf.Stats.RuntimeDefer > time.Now().Unix() {
+	// 	log.Println("未到15秒")
+	// 	return nil
+	// }
 
-	// 上报打点信息并删除该时间点信息
-	delete(a.runtimeStats, key)
+	// log.Println("可以标记的下标为", blockIndex)
+
+	// for agentID, info := range runtimeStats[blockIndex].JVMStats.Agents {
+	// 	gCollector.storage.InsertRuntimeStats(a.name, agentID, statMin+blockIndex*misc.Conf.Stats.RuntimeDefer, constant.JVM, info)
+	// }
+	// delete(runtimeStats, blockIndex)
+	// if int(blockIndex)+1 == a.runtimeBlockNum {
+	// 	log.Println("可以删除分钟")
+	// 	delete(a.tmpruntimeStats, statMin)
+	// }
+
+	// // // 上报打点信息并删除该时间点信息
+	// // delete(a.runtimeStats, key)
 
 	return nil
 }
