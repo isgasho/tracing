@@ -36,14 +36,8 @@ type App struct {
 	apis       map[string]struct{}            // 接口信息
 	orderlyKey stats.OrderlyKey               // 排序打点
 	points     map[int64]*stats.Stats         // 计算点集合
-	srvMapKey  int64                          // 拓扑计算当前计算key
-	srvmap     map[int64]*metric.SrvMapStats  // 服务拓扑图
 	apiCallKey int64                          // API被调用计算当前计算key
 	apiCall    map[int64]*metric.APICallStats // API被调用
-	// runtimeStats    map[int64]*stats.RuntimeStats           // runtime stats
-	// runtimeKey      int64                                   // runtime key
-	// tmpruntimeStats map[int64]map[int64]*stats.RuntimeStats // runtime stats
-	// runtimeBlockNum int                                     // 块的总数
 }
 
 func newApp(name string, appType int32) *App {
@@ -57,11 +51,7 @@ func newApp(name string, appType int32) *App {
 		statC:      make(chan *pinpoint.TAgentStat, 200),
 		apis:       make(map[string]struct{}),
 		points:     make(map[int64]*stats.Stats),
-		srvmap:     make(map[int64]*metric.SrvMapStats),
 		apiCall:    make(map[int64]*metric.APICallStats),
-		// runtimeStats:    make(map[int64]*stats.RuntimeStats),
-		// tmpruntimeStats: make(map[int64]map[int64]*stats.RuntimeStats),
-		// runtimeBlockNum: int(60 / misc.Conf.Stats.RuntimeDefer),
 	}
 	app.start()
 	return app
@@ -103,12 +93,8 @@ func (a *App) stats() {
 			if ok {
 				// 链路统计信息计算
 				a.linkTrace()
-				// 拓扑信息计算
-				a.reportSrvMap()
 				// 被调用统计
 				a.reportCall()
-				// runtime 统计
-				a.reportRuntime()
 			}
 			break
 		case span, ok := <-a.spanC:
@@ -161,7 +147,24 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		a.points[spanTime] = lstats
 	}
 
-	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
+	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
+	// if a.srvMapKey == 0 {
+	// 	a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
+	// } else {
+	// 	// 当前span的时间已经超过上次的范围，所以要新生成一个key,当前时间加上时间范围
+	// 	if spanTime > a.srvMapKey {
+	// 		a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
+	// 	}
+	// }
+
+	// 获取拓扑计算点
+	// srvMap, ok := a.srvmap[a.srvMapKey]
+	// if !ok {
+	// 	// 新点保存
+	// 	srvMap = metric.NewSrvMapStats()
+	// 	a.srvmap[a.srvMapKey] = srvMap
+	// }
+	// api被调用需要将nowSecond加上一个时间范围
 	if a.apiCallKey == 0 {
 		a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
 	} else {
@@ -170,25 +173,6 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 			a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
 		}
 	}
-
-	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
-	if a.srvMapKey == 0 {
-		a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
-	} else {
-		// 当前span的时间已经超过上次的范围，所以要新生成一个key,当前时间加上时间范围
-		if spanTime > a.srvMapKey {
-			a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
-		}
-	}
-
-	// 获取拓扑计算点
-	srvMap, ok := a.srvmap[a.srvMapKey]
-	if !ok {
-		// 新点保存
-		srvMap = metric.NewSrvMapStats()
-		a.srvmap[a.srvMapKey] = srvMap
-	}
-
 	// 获取Apicall计算节点
 	apiCall, ok := a.apiCall[a.apiCallKey]
 	if !ok {
@@ -196,7 +180,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		a.apiCall[a.apiCallKey] = apiCall
 	}
 
-	lstats.SpanCounter(span, srvMap, apiCall)
+	lstats.SpanCounter(span, apiCall)
 
 	return nil
 }
@@ -221,23 +205,6 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	}
 
 	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
-	if a.srvMapKey == 0 {
-		a.srvMapKey = spanChunkTime + misc.Conf.Stats.MapRange
-	} else {
-		if spanChunkTime > a.srvMapKey {
-			a.srvMapKey = spanChunkTime + misc.Conf.Stats.MapRange
-		}
-	}
-
-	// 获取拓扑计算点
-	srvMap, ok := a.srvmap[a.srvMapKey]
-	if !ok {
-		// 新点保存
-		srvMap = metric.NewSrvMapStats()
-		a.srvmap[a.srvMapKey] = srvMap
-	}
-
-	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
 	if a.apiCallKey == 0 {
 		a.apiCallKey = spanChunkTime + misc.Conf.Stats.APICallRange
 	} else {
@@ -254,7 +221,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 		a.apiCall[a.apiCallKey] = apiCall
 	}
 
-	lstats.SpanChunkCounter(spanChunk, srvMap, apiCall)
+	lstats.SpanChunkCounter(spanChunk, apiCall)
 
 	return nil
 }
@@ -387,51 +354,24 @@ func (a *App) linkTrace() error {
 		gCollector.storage.InsertExceptionStats(a.name, inputDate, methodID, exceptions.Exceptions)
 	}
 
-	// 上报打点信息并删除该时间点信息
-	delete(a.points, inputDate)
-	return nil
-}
-
-// 各类拓扑图定时计算上报
-func (a *App) reportSrvMap() error {
-	// 清空之前节点
-	a.orderlyKey = a.orderlyKey[:0]
-	// 赋值
-	for key := range a.srvmap {
-		a.orderlyKey = append(a.orderlyKey, key)
-	}
-	// 排序
-	sort.Sort(a.orderlyKey)
-	// 如果没有计算节点直接返回
-	if a.orderlyKey.Len() <= 0 {
-		return nil
-	}
-
-	inputDate := a.orderlyKey[0]
-	now := time.Now().Unix()
-	if now < inputDate+misc.Conf.Stats.DeferTime {
-		return nil
-	}
-
-	for parentName, parentInfo := range a.srvmap[inputDate].Parents {
+	for parentName, parentInfo := range a.points[inputDate].ServerMap.Parents {
 		gCollector.storage.InsertParentMap(a.name, a.appType, inputDate, parentName, parentInfo)
 	}
 
-	for childType, child := range a.srvmap[inputDate].Childs {
+	for childType, child := range a.points[inputDate].ServerMap.Childs {
 		for destinationStr, destination := range child.Destinations {
 			gCollector.storage.InsertChildMap(a.name, a.appType, inputDate, int32(childType), destinationStr, destination)
 		}
 	}
 
-	unknowParent := a.srvmap[inputDate].UnknowParent
+	unknowParent := a.points[inputDate].ServerMap.UnknowParent
 	// 只有被调用才可以入库
 	if unknowParent.Count > 0 {
 		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, inputDate, unknowParent)
 	}
 
 	// 上报打点信息并删除该时间点信息
-	delete(a.srvmap, inputDate)
-
+	delete(a.points, inputDate)
 	return nil
 }
 
@@ -464,65 +404,6 @@ func (a *App) reportCall() error {
 
 	// 上报打点信息并删除该时间点信息
 	delete(a.apiCall, inputDate)
-
-	return nil
-}
-
-// reportRuntime runtime计算结果上报&存储
-func (a *App) reportRuntime() error {
-	// // 清空之前节点
-	// a.orderlyKey = a.orderlyKey[:0]
-	// // 赋值
-	// for key := range a.tmpruntimeStats {
-	// 	a.orderlyKey = append(a.orderlyKey, key)
-	// }
-	// // 排序
-	// sort.Sort(a.orderlyKey)
-	// // 如果没有计算节点直接返回
-	// if a.orderlyKey.Len() <= 0 {
-	// 	return nil
-	// }
-	// statMin := a.orderlyKey[0]
-	// runtimeStats, ok := a.tmpruntimeStats[statMin]
-	// if !ok {
-	// 	return nil
-	// }
-
-	// // 清空之前节点
-	// a.orderlyKey = a.orderlyKey[:0]
-	// // 赋值
-	// for key := range runtimeStats {
-	// 	a.orderlyKey = append(a.orderlyKey, key)
-	// }
-
-	// // 排序
-	// sort.Sort(a.orderlyKey)
-	// // 如果没有计算节点直接返回
-	// if a.orderlyKey.Len() == 0 {
-	// 	log.Println("没有数据点")
-	// 	return nil
-	// }
-
-	// blockIndex := a.orderlyKey[0]
-	// // 延迟计算，防止defer 时间内span未上报
-	// if statMin+blockIndex*misc.Conf.Stats.RuntimeDefer > time.Now().Unix() {
-	// 	log.Println("未到15秒")
-	// 	return nil
-	// }
-
-	// log.Println("可以标记的下标为", blockIndex)
-
-	// for agentID, info := range runtimeStats[blockIndex].JVMStats.Agents {
-	// 	gCollector.storage.InsertRuntimeStats(a.name, agentID, statMin+blockIndex*misc.Conf.Stats.RuntimeDefer, constant.JVM, info)
-	// }
-	// delete(runtimeStats, blockIndex)
-	// if int(blockIndex)+1 == a.runtimeBlockNum {
-	// 	log.Println("可以删除分钟")
-	// 	delete(a.tmpruntimeStats, statMin)
-	// }
-
-	// // // 上报打点信息并删除该时间点信息
-	// // delete(a.runtimeStats, key)
 
 	return nil
 }

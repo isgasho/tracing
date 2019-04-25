@@ -123,6 +123,11 @@ func (s *Storage) UpdateAgentState(appname string, agentid string, islive bool) 
 	return nil
 }
 
+// GetCql 获取cql
+func (s *Storage) GetCql() *gocql.Session {
+	return s.cql
+}
+
 // AppNameStore 存储Appname
 func (s *Storage) AppNameStore(name string) error {
 	query := s.cql.Query(
@@ -615,8 +620,9 @@ func (s *Storage) InsertParentMap(appName string, appType int32, inputTime int64
 		parentName,
 		parentInfo.Type,
 		parentInfo.Count,
-		parentInfo.ErrCount,
-		parentInfo.Totalelapsed,
+		parentInfo.AccessErrCount,
+		parentInfo.ExceptionCount,
+		parentInfo.Duration,
 	)
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("insert parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
@@ -635,8 +641,8 @@ func (s *Storage) InsertChildMap(appName string, appType int32, inputTime int64,
 		childType,
 		destinationStr,
 		destination.Count,
-		destination.ErrCount,
-		destination.Totalelapsed,
+		destination.ExceptionCount,
+		destination.Duration,
 	)
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("insert child map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
@@ -653,8 +659,8 @@ func (s *Storage) InsertUnknowParentMap(appName string, appType int32, inputTime
 		inputTime,
 		appType,
 		unknowParent.Count,
-		unknowParent.ErrCount,
-		unknowParent.Totalelapsed,
+		unknowParent.ExceptionCount,
+		unknowParent.Duration,
 	)
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("insert unknow parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
@@ -673,8 +679,8 @@ func (s *Storage) InsertAPICallStats(appName string, appType int32, inputTime in
 		apiID,
 		parentname,
 		parentInfo.Count,
-		parentInfo.ErrCount,
-		parentInfo.Totalelapsed,
+		parentInfo.ExceptionCount,
+		parentInfo.Duration,
 	)
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("insert api call stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))

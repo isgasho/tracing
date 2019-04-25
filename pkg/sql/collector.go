@@ -90,20 +90,24 @@ var InsertExceptionStats string = `INSERT INTO exception_stats (app_name, method
 	min_elapsed, count, service_type) VALUES (?,?,?,?,?,?,?,?,?);`
 
 // 父节点应用拓扑图入库
-var InsertParentMap string = `INSERT INTO parent_map (app_name, input_date, service_type, parent_name, parent_type, req_recv_count, err_count, total_elapsed)
-	VALUES (?,?,?,?,?,?,?,?);`
+var InsertParentMap string = `INSERT INTO parent_map (app_name, input_date,
+	 service_type, parent_name, parent_type, req_recv_count, access_err_count, exception_count, duration)
+	VALUES (?,?,?,?,?,?,?,?,?);`
 
 // 子节点应用拓扑入库
-var InsertChildMap string = `INSERT INTO child_map (app_name, input_date, service_type, child_type, destinations, req_send_count, err_count, total_elapsed)
+var InsertChildMap string = `INSERT INTO child_map (app_name, input_date, service_type, child_type, destinations, req_send_count, exception_count, duration)
 	VALUES (?,?,?,?,?,?,?,?);`
 
 // 未知父节点应用拓扑图入库
-var InsertUnknowParentMap string = `INSERT INTO unknow_parent_map (app_name, input_date, service_type, req_recv_count, err_count, total_elapsed)
+var InsertUnknowParentMap string = `INSERT INTO unknow_parent_map (app_name, input_date, service_type, req_recv_count, exception_count, duration)
 	VALUES (?,?,?,?,?,?);`
 
 // Api被调用统计信息
-var InsertAPICallStats string = `INSERT INTO api_call_stats (app_name, input_date, service_type, api_id, parent_name, req_recv_count, err_count, total_elapsed)
+var InsertAPICallStats string = `INSERT INTO api_call_stats (app_name, input_date, service_type, api_id, parent_name, req_recv_count, err_count, duration)
 VALUES (?,?,?,?,?,?,?,?);`
+
+var LoadAgents string = `SELECT service_type, agent_id, start_time, ip FROM agents WHERE app_name=?;`
+var LoadApps string = `SELECT app_name FROM apps ;`
 
 // //  InsertRuntimeStats ...
 // var InsertRuntimeStats string = `INSERT INTO runtime_stats (app_name, agent_id,

@@ -350,8 +350,9 @@ CREATE TABLE IF NOT EXISTS parent_map (
     parent_name         text,               -- 父应用名
     parent_type         int,                -- 父应用类型
     req_recv_count      int,                -- 被请求次数
-    err_count           int,                -- 错误次数
-    total_elapsed       int,                -- 总耗时
+    access_err_count    int,                -- 错误次数
+    exception_count     int,                -- 异常次数
+    duration            int,                -- 总耗时
     PRIMARY KEY (app_name, input_date, parent_name)
 ) WITH gc_grace_seconds = 10800;
 
@@ -368,8 +369,8 @@ CREATE TABLE IF NOT EXISTS child_map (
     child_type          int,                -- 子应用类型
     destinations        text,               -- 访问目标
     req_send_count      int,                -- 请求次数
-    err_count           int,                -- 错误次数
-    total_elapsed       int,                -- 总耗时
+    exception_count     int,                -- 异常次数
+    duration            int,                -- 总耗时
     PRIMARY KEY (app_name, input_date, child_type, destinations)
 ) WITH gc_grace_seconds = 10800;
 
@@ -378,16 +379,14 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON child_map (input_date)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
-
-
 -- 未知类型或者未接入监控的parent拓扑图
 CREATE TABLE IF NOT EXISTS unknow_parent_map (
     app_name            text,               -- 应用名
     input_date          bigint,             -- 插入时间
     service_type        int,                -- 应用类型
     req_recv_count      int,                -- 被请求次数
-    err_count           int,                -- 错误次数
-    total_elapsed       int,                -- 总耗时
+    exception_count     int,                -- 异常次数
+    duration            int,                -- 总耗时
     PRIMARY KEY (app_name, input_date)
 ) WITH gc_grace_seconds = 10800;
 
@@ -405,7 +404,7 @@ CREATE TABLE IF NOT EXISTS api_call_stats (
     parent_name         text,               -- 访问者/父节点名称
     req_recv_count      int,                -- 被请求次数
     err_count           int,                -- 错误次数
-    total_elapsed       int,                -- 总耗时
+    duration            int,                -- 总耗时
     PRIMARY KEY (app_name, input_date, api_id, parent_name)
 ) WITH gc_grace_seconds = 10800;
 
@@ -414,6 +413,21 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
+CREATE TABLE IF NOT EXISTS service_map (
+    app_name            text,               -- 当前应用名
+    service_type        int,                -- 当前应用类型
+    target_name         text,               -- 目标应用名  
+    target_type         int,                -- 目标应用类型    
+    req_count           int,                -- 请求次数
+    err_count           int,                -- 错误次数
+    total_elapsed       int,                -- 总耗时
+    input_date          bigint,             -- 插入时间
+    PRIMARY KEY (app_name, input_date, target_type, target_name)
+) WITH gc_grace_seconds = 10800;
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (input_date) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
+    WITH OPTIONS = {'mode': 'SPARSE'};
 
 -- CREATE TABLE IF NOT EXISTS runtime_stats (
 --     app_name                    text,

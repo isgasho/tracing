@@ -1,6 +1,10 @@
 package stats
 
 import (
+	"fmt"
+	"log"
+	"strings"
+
 	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/metric"
@@ -13,6 +17,7 @@ type Stats struct {
 	MethodStats     *metric.MethodStats     // 接口计算统计
 	SQLStats        *metric.SQLStats        // sql语句计算统计
 	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
+	ServerMap       *metric.SrvMapStats     // 服务拓扑图
 }
 
 // NewStats ....
@@ -22,11 +27,12 @@ func NewStats() *Stats {
 		MethodStats:     metric.NewMethodStats(),
 		SQLStats:        metric.NewSQLStats(),
 		ExceptionsStats: metric.NewExceptionsStats(),
+		ServerMap:       metric.NewSrvMapStats(),
 	}
 }
 
 // SpanCounter 计算
-func (s *Stats) SpanCounter(span *trace.TSpan, srvMap *metric.SrvMapStats, apiCall *metric.APICallStats) error {
+func (s *Stats) SpanCounter(span *trace.TSpan, apiCall *metric.APICallStats) error {
 	// 计算API信息
 	{
 		s.apiCounter(span)
@@ -39,27 +45,28 @@ func (s *Stats) SpanCounter(span *trace.TSpan, srvMap *metric.SrvMapStats, apiCa
 
 	// 计算服务拓扑图
 	{
-		parentMapCounter(srvMap, span)
+		s.parentMapCounter(span)
 	}
+
 	// 计算method、sql、exceptions
 	{
-		s.eventsCounter(span, srvMap)
+		s.eventsCounter(span)
 	}
 
 	return nil
 }
 
 // SpanChunkCounter counter 计算
-func (s *Stats) SpanChunkCounter(spanChunk *trace.TSpanChunk, srvMap *metric.SrvMapStats, apiCall *metric.APICallStats) error {
+func (s *Stats) SpanChunkCounter(spanChunk *trace.TSpanChunk, apiCall *metric.APICallStats) error {
 	// 计算method、sql、exceptions
 	{
-		s.eventsCounterSpanChunk(spanChunk, srvMap)
+		s.eventsCounterSpanChunk(spanChunk)
 	}
 	return nil
 }
 
 // eventsCounterSpanChunk  计算method、sql、exceptions,
-func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk, srvMap *metric.SrvMapStats) {
+func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk) {
 	// 这里获取不到api str 是否要抛弃该数据包， 或者method就不要放在api这个key下面
 	if len(s.MethodStats.APIStr) == 0 {
 		// continue
@@ -105,41 +112,52 @@ func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
 		api.Parents[span.GetParentApplicationName()] = parent
 	}
 	parent.Count++
-	parent.Totalelapsed += span.Elapsed
+	parent.Duration += span.Elapsed
 	if span.GetErr() != 0 {
-		parent.ErrCount++
+		parent.ExceptionCount++
 	}
 }
 
 // parentMapCounter 计算服务拓扑图
-func parentMapCounter(srvMap *metric.SrvMapStats, span *trace.TSpan) {
+func (s *Stats) parentMapCounter(span *trace.TSpan) {
 	// spanID 为-1的情况该服务就是父节点
 	if span.ParentSpanId == -1 {
-		srvMap.UnknowParent.Count++
-		srvMap.UnknowParent.Totalelapsed += span.Elapsed
+		s.ServerMap.UnknowParent.Count++
+		s.ServerMap.UnknowParent.Duration += span.Elapsed
 		if span.GetErr() != 0 {
-			srvMap.UnknowParent.ErrCount++
+			s.ServerMap.UnknowParent.ExceptionCount++
 		}
 		return
 	}
 
-	srvMap.AppType = span.GetServiceType()
-	parent, ok := srvMap.Parents[span.GetParentApplicationName()]
+	s.ServerMap.AppType = span.GetServiceType()
+	parent, ok := s.ServerMap.Parents[span.GetParentApplicationName()]
 	if !ok {
 		parent = metric.NewParentInfo()
 		parent.Type = span.GetParentApplicationType()
-		srvMap.Parents[span.GetParentApplicationName()] = parent
+		s.ServerMap.Parents[span.GetParentApplicationName()] = parent
 	}
 
 	parent.Count++
-	parent.Totalelapsed += span.Elapsed
+	parent.Duration += span.Elapsed
 	if span.GetErr() != 0 {
-		parent.ErrCount++
+		parent.ExceptionCount++
 	}
 }
 
+func getip(destinationID string) (string, error) {
+	strs := strings.Split(destinationID, ":")
+	if len(strs) != 2 {
+		return "", fmt.Errorf("unknow addr")
+	}
+	if len(strs[0]) == 0 {
+		return "", fmt.Errorf("error ip")
+	}
+	return strs[0], nil
+}
+
 // 计算child拓扑图
-func childMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent, isErr bool) {
+func (s *Stats) childMapCounter(event *trace.TSpanEvent, isErr bool) {
 	if event.ServiceType == constant.DUBBO_CONSUMER ||
 		event.ServiceType == constant.HTTP_CLIENT_4 ||
 		event.ServiceType == constant.MYSQL_EXECUTE_QUERY ||
@@ -151,11 +169,22 @@ func childMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent, isErr 
 		if len(destinationID) <= 0 {
 			return
 		}
-
-		child, ok := srvMap.Childs[event.ServiceType]
+		child, ok := s.ServerMap.Childs[event.ServiceType]
 		if !ok {
 			child = metric.NewChild()
-			srvMap.Childs[event.ServiceType] = child
+			s.ServerMap.Childs[event.ServiceType] = child
+		}
+
+		// http&&dubbo做特殊处理
+		if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
+			ip, err := getip(destinationID)
+			log.Println(destinationID, ip, err)
+			if err == nil {
+				appName, ok := misc.AddrStore.Get(ip)
+				if ok {
+					destinationID = appName
+				}
+			}
 		}
 
 		destination, ok := child.Destinations[destinationID]
@@ -163,12 +192,11 @@ func childMapCounter(srvMap *metric.SrvMapStats, event *trace.TSpanEvent, isErr 
 			destination = metric.NewDestination()
 			child.Destinations[destinationID] = destination
 		}
-
 		destination.Count++
 		if isErr {
-			destination.ErrCount++
+			destination.ExceptionCount++
 		}
-		destination.Totalelapsed += event.EndElapsed
+		destination.Duration += event.EndElapsed
 	}
 }
 
@@ -183,10 +211,8 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 		apiInfo = metric.NewAPIInfo()
 		s.APIStats.Store(apiStr, apiInfo)
 	}
-
 	apiInfo.TotalElapsed += span.Elapsed
 	apiInfo.Count++
-
 	// 耗时小于满意时间满意次数加1
 	if span.Elapsed < misc.Conf.Stats.SatisfactionTime {
 		apiInfo.SatisfactionCount++
@@ -202,7 +228,6 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 	if apiInfo.MinElapsed == 0 || apiInfo.MinElapsed > span.Elapsed {
 		apiInfo.MinElapsed = span.Elapsed
 	}
-
 	// 获取是否有错误
 	if span.GetErr() != 0 {
 		apiInfo.ErrCount++
@@ -210,7 +235,7 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 }
 
 // counterEvents 计算method、SQL信息
-func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
+func (s *Stats) eventsCounter(span *trace.TSpan) {
 	if len(s.MethodStats.APIStr) == 0 {
 		s.MethodStats.APIStr = span.GetRPC()
 	}
@@ -220,13 +245,10 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
 		if event.GetExceptionInfo() != nil {
 			isErr = true
 		}
-
 		// app后续服务拓扑图计算
-		childMapCounter(srvMap, event, isErr)
-
+		s.childMapCounter(event, isErr)
 		// 计算method
 		s.methodCount(event.GetApiId(), int(event.GetServiceType()), event.EndElapsed, isErr)
-
 		// 计算sql
 		annotations := event.GetAnnotations()
 		for _, annotation := range annotations {
@@ -235,7 +257,6 @@ func (s *Stats) eventsCounter(span *trace.TSpan, srvMap *metric.SrvMapStats) {
 				s.sqlCount(annotation.Value.GetIntStringStringValue().GetIntValue(), event.EndElapsed, isErr)
 			}
 		}
-
 		// 异常计算
 		s.exceptionCount(event.GetApiId(), event)
 	}

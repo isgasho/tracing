@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
@@ -47,6 +48,7 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 
 				// 内存缓存Agent信息
 				gCollector.apps.storeAgent(agentInfo.AppName, agentInfo.AgentID, agentInfo.StartTimestamp, agentInfo.ServiceType)
+				misc.AddrStore.Add(agentInfo.AppName, agentInfo.IP4S)
 
 				*appname = agentInfo.AppName
 				*agentid = agentInfo.AgentID

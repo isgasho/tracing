@@ -55,13 +55,13 @@ func (c *Collector) Start() error {
 
 	// 启动存储服务
 	if err := c.mq.Start(misc.Conf.MQ.Addrs, misc.Conf.MQ.Topic); err != nil {
-		logger.Warn("mq start", zap.String("error", err.Error()))
+		logger.Warn("mq start  error", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动存储服务
 	if err := c.storage.Start(); err != nil {
-		logger.Warn("storage start", zap.String("error", err.Error()))
+		logger.Warn("storage start  error", zap.String("error", err.Error()))
 		return err
 	}
 
@@ -71,46 +71,42 @@ func (c *Collector) Start() error {
 		return err
 	}
 
+	// 存储服务类型
+	if err := c.apps.start(); err != nil {
+		logger.Warn("apps start error", zap.String("error", err.Error()))
+		return err
+	}
+
 	// 初始化上报key
 	key, err := reportKey(misc.Conf.Etcd.ReportDir)
 	if err != nil {
-		logger.Warn("get reportKey ", zap.String("error", err.Error()))
+		logger.Warn("get reportKey error", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 初始化etcd
 	if err := c.etcd.Init(misc.Conf.Etcd.Addrs, key, misc.Conf.Collector.Addr); err != nil {
-		logger.Warn("etcd init", zap.String("error", err.Error()))
+		logger.Warn("etcd init error", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动etcd服务
 	if err := c.etcd.Start(); err != nil {
-		logger.Warn("etcd start", zap.String("error", err.Error()))
+		logger.Warn("etcd start error", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动tcp服务
 	if err := c.startNetwork(); err != nil {
-		logger.Warn("start network", zap.String("error", err.Error()))
+		logger.Warn("start network error", zap.String("error", err.Error()))
 		return err
 	}
 
 	// 启动tcp服务
 	if err := c.pushWork(); err != nil {
-		logger.Warn("start push work", zap.String("error", err.Error()))
+		logger.Warn("start push work error", zap.String("error", err.Error()))
 		return err
 	}
-
-	// publish test
-	// go func() {
-	// 	for {
-	// 		time.Sleep(1 * time.Second)
-	// 		if err := c.mq.Publish(misc.Conf.MQ.Topic, []byte("hello")); err != nil {
-	// 			logger.Warn("publish", zap.Error(err))
-	// 		}
-	// 	}
-	// }()
 
 	logger.Info("Collector start ok")
 	return nil

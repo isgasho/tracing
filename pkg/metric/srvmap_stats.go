@@ -19,10 +19,11 @@ func NewSrvMapStats() *SrvMapStats {
 
 // ParentInfo 调用信息
 type ParentInfo struct {
-	Type         int16
-	Totalelapsed int32
-	Count        int
-	ErrCount     int
+	Type           int16
+	Duration       int32
+	Count          int
+	AccessErrCount int
+	ExceptionCount int
 }
 
 // NewParentInfo ...
@@ -49,16 +50,16 @@ func NewDestination() *Destination {
 
 // Destination 目标
 type Destination struct {
-	Totalelapsed int32
-	Count        int
-	ErrCount     int
+	Duration       int32
+	Count          int
+	ExceptionCount int
 }
 
 // UnknowParent 未接入监控的服务，只能抓到访问地址
 type UnknowParent struct {
-	Totalelapsed int32
-	Count        int
-	ErrCount     int
+	Duration       int32
+	Count          int
+	ExceptionCount int
 }
 
 // NewUnknowParent ...

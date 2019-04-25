@@ -3,17 +3,69 @@ package service
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"go.uber.org/zap"
 
+	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/sql"
 )
 
 // AppStore 所有app服务信息
 type AppStore struct {
 	sync.RWMutex
 	apps map[string]*App // app集合
+}
+
+func (a *AppStore) start() error {
+	if err := a.loadApps(); err != nil {
+		logger.Warn("loadApps", zap.String("error", err.Error()))
+		return err
+	}
+	go func() {
+		for {
+			time.Sleep(1 * time.Second)
+			if err := a.loadApps(); err != nil {
+				logger.Warn("loadApps", zap.String("error", err.Error()))
+			}
+		}
+	}()
+	return nil
+}
+
+func (a *AppStore) loadApps() error {
+	cql := gCollector.storage.GetCql()
+	if cql == nil {
+		return fmt.Errorf("get cql failed")
+	}
+
+	appsIter := cql.Query(sql.LoadApps).Iter()
+	defer func() {
+		if err := appsIter.Close(); err != nil {
+			logger.Warn("close apps iter error:", zap.Error(err))
+		}
+	}()
+
+	// @TODO 这里未来要做hash过滤，不属于该collector节点App信息不需要保存，以节省资源
+	var appName string
+	for appsIter.Scan(&appName) {
+		var appType int32
+		var agentID, ip string
+		var startTime int64
+
+		agentsIter := cql.Query(sql.LoadAgents, appName).Iter()
+		for agentsIter.Scan(&appType, &agentID, &startTime, &ip) {
+			gCollector.apps.storeAgent(appName, agentID, startTime, appType)
+			misc.AddrStore.Add(appName, ip)
+		}
+		if err := agentsIter.Close(); err != nil {
+			logger.Warn("close apps iter error:", zap.Error(err))
+		}
+	}
+
+	return nil
 }
 
 // isExist app是否存在
@@ -37,19 +89,18 @@ func (a *AppStore) storeAgent(name string, id string, startTime int64, appType i
 		a.apps[name] = app
 		a.Unlock()
 	}
+	app.appType = appType
 	app.storeAgent(id, startTime)
 }
 
 // isExist agent是否存在
 func (a *AppStore) isAgentExist(name, agentid string) bool {
-
 	a.RLock()
 	app, ok := a.apps[name]
 	a.RUnlock()
 	if !ok {
 		return false
 	}
-
 	// app中是否存在
 	return app.isExist(agentid)
 }

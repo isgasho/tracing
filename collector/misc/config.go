@@ -67,6 +67,7 @@ var Conf *Config
 // InitConfig ...
 func InitConfig(path string) {
 	conf := &Config{}
+	initAddrStore()
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatal("InitConfig:ioutil.ReadFile", err)
