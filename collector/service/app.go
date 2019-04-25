@@ -147,23 +147,6 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		a.points[spanTime] = lstats
 	}
 
-	// 计算服务拓扑图，api被调用需要将spanKey加上一个时间范围
-	// if a.srvMapKey == 0 {
-	// 	a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
-	// } else {
-	// 	// 当前span的时间已经超过上次的范围，所以要新生成一个key,当前时间加上时间范围
-	// 	if spanTime > a.srvMapKey {
-	// 		a.srvMapKey = spanTime + misc.Conf.Stats.MapRange
-	// 	}
-	// }
-
-	// 获取拓扑计算点
-	// srvMap, ok := a.srvmap[a.srvMapKey]
-	// if !ok {
-	// 	// 新点保存
-	// 	srvMap = metric.NewSrvMapStats()
-	// 	a.srvmap[a.srvMapKey] = srvMap
-	// }
 	// api被调用需要将nowSecond加上一个时间范围
 	if a.apiCallKey == 0 {
 		a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
@@ -294,6 +277,7 @@ func (a *App) linkTrace() error {
 	apis := alert.NewAPIs()
 	for apiStr, apiInfo := range a.points[inputDate].APIStats.APIs {
 		gCollector.storage.InsertAPIStats(a.name, inputDate, apiStr, apiInfo)
+
 		api := &alert.API{
 			Desc:     apiStr,
 			Count:    apiInfo.Count,

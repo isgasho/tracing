@@ -633,16 +633,21 @@ func (s *Storage) InsertParentMap(appName string, appType int32, inputTime int64
 }
 
 // InsertChildMap ...
-func (s *Storage) InsertChildMap(appName string, appType int32, inputTime int64, childType int32, destinationStr string, destination *metric.Destination) error {
+func (s *Storage) InsertChildMap(appName string,
+	appType int32, inputDate int64,
+	targetType int32, targetName string,
+	reqInfo *metric.Destination) error {
+	// @TODO code统计
 	query := s.cql.Query(sql.InsertChildMap,
 		appName,
-		inputTime,
 		appType,
-		childType,
-		destinationStr,
-		destination.Count,
-		destination.ExceptionCount,
-		destination.Duration,
+		targetName,
+		targetType,
+		reqInfo.Count,
+		reqInfo.ExceptionCount,
+		0, // access_err_count
+		reqInfo.Duration,
+		inputDate,
 	)
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("insert child map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
@@ -653,14 +658,18 @@ func (s *Storage) InsertChildMap(appName string, appType int32, inputTime int64,
 }
 
 // InsertUnknowParentMap ...
-func (s *Storage) InsertUnknowParentMap(appName string, appType int32, inputTime int64, unknowParent *metric.UnknowParent) error {
+func (s *Storage) InsertUnknowParentMap(targetName string, targetType int32, inputDate int64, unknowParent *metric.UnknowParent) error {
+
 	query := s.cql.Query(sql.InsertUnknowParentMap,
-		appName,
-		inputTime,
-		appType,
+		"UNKNOWN",
+		constant.UNKNOWN,
+		targetName,
+		targetType,
 		unknowParent.Count,
-		unknowParent.ExceptionCount,
 		unknowParent.Duration,
+		inputDate,
+		0,
+		0,
 	)
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("insert unknow parent map error", zap.String("error", err.Error()), zap.String("sql", query.String()))

@@ -2,7 +2,6 @@ package stats
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/imdevlab/tracing/collector/misc"
@@ -124,9 +123,9 @@ func (s *Stats) parentMapCounter(span *trace.TSpan) {
 	if span.ParentSpanId == -1 {
 		s.ServerMap.UnknowParent.Count++
 		s.ServerMap.UnknowParent.Duration += span.Elapsed
-		if span.GetErr() != 0 {
-			s.ServerMap.UnknowParent.ExceptionCount++
-		}
+		// if span.GetErr() != 0 {
+		// 	s.ServerMap.UnknowParent.ExceptionCount++
+		// }
 		return
 	}
 
@@ -178,7 +177,6 @@ func (s *Stats) childMapCounter(event *trace.TSpanEvent, isErr bool) {
 		// http&&dubbo做特殊处理
 		if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
 			ip, err := getip(destinationID)
-			log.Println(destinationID, ip, err)
 			if err == nil {
 				appName, ok := misc.AddrStore.Get(ip)
 				if ok {

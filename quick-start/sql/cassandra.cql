@@ -420,7 +420,8 @@ CREATE TABLE IF NOT EXISTS service_map (
     target_type         int,                -- 目标应用类型    
     req_count           int,                -- 请求次数
     err_count           int,                -- 错误次数
-    total_elapsed       int,                -- 总耗时
+    access_err_count    int,                -- code错误次数
+    duration            int,                -- 总耗时
     input_date          bigint,             -- 插入时间
     PRIMARY KEY (app_name, input_date, target_type, target_name)
 ) WITH gc_grace_seconds = 10800;
