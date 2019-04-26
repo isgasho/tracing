@@ -34,16 +34,6 @@ type JVMCPULoad struct {
 	System float64 `json:"system"`
 }
 
-// type TJvmGcType int64
-
-// const (
-// 	TJvmGcType_UNKNOWN  TJvmGcType = 0
-// 	TJvmGcType_SERIAL   TJvmGcType = 1
-// 	TJvmGcType_PARALLEL TJvmGcType = 2
-// 	TJvmGcType_CMS      TJvmGcType = 3
-// 	TJvmGcType_G1       TJvmGcType = 4
-// )
-
 // JVMGC ...
 type JVMGC struct {
 	Type                     pinpoint.TJvmGcType `json:"type"`
