@@ -2,7 +2,6 @@ package stats
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/imdevlab/tracing/collector/misc"
@@ -17,19 +16,21 @@ type Stats struct {
 	MethodStats     *metric.MethodStats     // 接口计算统计
 	SQLStats        *metric.SQLStats        // sql语句计算统计
 	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
-	ServerMap       *metric.SrvMapStats     // 服务拓扑图
-	RespCodes       map[int]struct{}
+	RespCodes       map[int]struct{}        //
+	SrvMap          *metric.SrvMap          // 服务拓扑图
+	// ServerMap       *metric.SrvMapStats     // 服务拓扑图
 }
 
 // NewStats ....
-func NewStats() *Stats {
+func NewStats(respCodes map[int]struct{}) *Stats {
 	return &Stats{
 		APIStats:        metric.NewAPIStats(),
 		MethodStats:     metric.NewMethodStats(),
 		SQLStats:        metric.NewSQLStats(),
 		ExceptionsStats: metric.NewExceptionsStats(),
-		ServerMap:       metric.NewSrvMapStats(),
-		RespCodes:       make(map[int]struct{}),
+		// ServerMap:       metric.NewSrvMapStats(),
+		RespCodes: respCodes,
+		SrvMap:    metric.NewSrvMap(),
 	}
 }
 
@@ -122,28 +123,26 @@ func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
 
 // parentMapCounter 计算服务拓扑图
 func (s *Stats) parentMapCounter(span *trace.TSpan) {
-	// spanID 为-1的情况该服务就是父节点
+	// spanID 为-1的情况该服务就是父节点，请求者应该是没接入监控
 	if span.ParentSpanId == -1 {
-		s.ServerMap.UnknowParent.Count++
-		s.ServerMap.UnknowParent.Duration += span.Elapsed
-		// if span.GetErr() != 0 {
-		// 	s.ServerMap.UnknowParent.ExceptionCount++
-		// }
+		s.SrvMap.UnknowParent.TargetCount++
+		if span.GetErr() != 0 {
+			s.SrvMap.UnknowParent.TargetErrCount++
+		}
 		return
 	}
 
-	s.ServerMap.AppType = span.GetServiceType()
-	parent, ok := s.ServerMap.Parents[span.GetParentApplicationName()]
+	s.SrvMap.AppType = span.GetServiceType()
+	parent, ok := s.SrvMap.Parents[span.GetParentApplicationName()]
 	if !ok {
-		parent = metric.NewParentInfo()
+		parent = metric.NewParent()
 		parent.Type = span.GetParentApplicationType()
-		s.ServerMap.Parents[span.GetParentApplicationName()] = parent
+		s.SrvMap.Parents[span.GetParentApplicationName()] = parent
 	}
 
-	parent.Count++
-	parent.Duration += span.Elapsed
+	parent.TargetCount++
 	if span.GetErr() != 0 {
-		parent.ExceptionCount++
+		parent.TargetErrCount++
 	}
 }
 
@@ -159,64 +158,58 @@ func getip(destinationID string) (string, error) {
 }
 
 // 计算child拓扑图
-func (s *Stats) childMapCounter(event *trace.TSpanEvent, isErr bool) {
-	if event.ServiceType == constant.DUBBO_CONSUMER ||
-		event.ServiceType == constant.HTTP_CLIENT_4 ||
-		event.ServiceType == constant.MYSQL_EXECUTE_QUERY ||
-		event.ServiceType == constant.REDIS ||
-		event.ServiceType == constant.ORACLE_EXECUTE_QUERY ||
-		event.ServiceType == constant.MARIADB_EXECUTE_QUERY {
+// func (s *Stats) childMapCounter(event *trace.TSpanEvent, isErr bool) {
+// if event.ServiceType == constant.DUBBO_CONSUMER ||
+// 	event.ServiceType == constant.HTTP_CLIENT_4 ||
+// 	event.ServiceType == constant.MYSQL_EXECUTE_QUERY ||
+// 	event.ServiceType == constant.REDIS ||
+// 	event.ServiceType == constant.ORACLE_EXECUTE_QUERY ||
+// 	event.ServiceType == constant.MARIADB_EXECUTE_QUERY {
 
-		destinationID := event.GetDestinationId()
-		if len(destinationID) <= 0 {
-			return
-		}
-		child, ok := s.ServerMap.Childs[event.ServiceType]
-		if !ok {
-			child = metric.NewChild()
-			s.ServerMap.Childs[event.ServiceType] = child
-		}
+// 	destinationID := event.GetDestinationId()
+// 	if len(destinationID) <= 0 {
+// 		return
+// 	}
+// 	child, ok := s.ServerMap.Childs[event.ServiceType]
+// 	if !ok {
+// 		child = metric.NewChild()
+// 		s.ServerMap.Childs[event.ServiceType] = child
+// 	}
 
-		// http&&dubbo做特殊处理
-		if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
-			ip, err := getip(destinationID)
-			if err == nil {
-				appName, ok := misc.AddrStore.Get(ip)
-				if ok {
-					destinationID = appName
-				}
-			}
-			log.Println("code获取", len(event.GetAnnotations()))
-		}
+// 	// http&&dubbo做特殊处理
+// 	if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
+// 		ip, err := getip(destinationID)
+// 		if err == nil {
+// 			appName, ok := misc.AddrStore.Get(ip)
+// 			if ok {
+// 				destinationID = appName
+// 			}
+// 		}
+// 	}
 
-		if event.ServiceType == constant.HTTP_CLIENT_4 {
-			for _, annotation := range event.GetAnnotations() {
-				if annotation.GetKey() == constant.HTTP_STATUS_CODE {
-					log.Println(annotation.Value.GetIntValue())
-				}
-			}
-		}
+// 	destination, ok := child.Destinations[destinationID]
+// 	if !ok {
+// 		destination = metric.NewDestination()
+// 		child.Destinations[destinationID] = destination
+// 	}
 
-		// if event.ServiceType == constant.DUBBO_CONSUMER {
-		// 	for _, annotation := range event.GetAnnotations() {
-		// 		if annotation.GetKey() == constant.DUBBO_RESULT {
-		// 			log.Println("dubbo", annotation.Value.GetIntValue())
-		// 		}
-		// 	}
-		// }
+// 	if event.ServiceType == constant.HTTP_CLIENT_4 {
+// 		for _, annotation := range event.GetAnnotations() {
+// 			if annotation.GetKey() == constant.HTTP_STATUS_CODE {
+// 				if _, ok := s.RespCodes[int(annotation.Value.GetIntValue())]; !ok {
+// 					destination.AccessErrCount++
+// 				}
+// 			}
+// 		}
+// 	}
 
-		destination, ok := child.Destinations[destinationID]
-		if !ok {
-			destination = metric.NewDestination()
-			child.Destinations[destinationID] = destination
-		}
-		destination.Count++
-		if isErr {
-			destination.ExceptionCount++
-		}
-		destination.Duration += event.EndElapsed
-	}
-}
+// 	destination.Count++
+// 	if isErr {
+// 		destination.ExceptionCount++
+// 	}
+// 	destination.Duration += event.EndElapsed
+// }
+// }
 
 // apiCounter 计算api信息
 func (s *Stats) apiCounter(span *trace.TSpan) {
@@ -252,21 +245,76 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 	}
 }
 
+// 计算child拓扑图
+func (s *Stats) targetMapCounter(event *trace.TSpanEvent) {
+	if event.ServiceType == constant.DUBBO_CONSUMER ||
+		event.ServiceType == constant.HTTP_CLIENT_4 ||
+		event.ServiceType == constant.MYSQL_EXECUTE_QUERY ||
+		event.ServiceType == constant.REDIS ||
+		event.ServiceType == constant.ORACLE_EXECUTE_QUERY ||
+		event.ServiceType == constant.MARIADB_EXECUTE_QUERY {
+
+		destinationID := event.GetDestinationId()
+		if len(destinationID) <= 0 {
+			return
+		}
+
+		targets, ok := s.SrvMap.Targets[event.ServiceType]
+		if !ok {
+			targets = make(map[string]*metric.Target)
+			s.SrvMap.Targets[event.ServiceType] = targets
+		}
+
+		// http&&dubbo做特殊处理
+		if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
+			ip, err := getip(destinationID)
+			if err == nil {
+				appName, ok := misc.AddrStore.Get(ip)
+				if ok {
+					destinationID = appName
+				}
+			}
+		}
+
+		target, ok := targets[destinationID]
+		if !ok {
+			target = metric.NewTarget()
+			targets[destinationID] = target
+		}
+
+		if event.ServiceType == constant.HTTP_CLIENT_4 {
+			for _, annotation := range event.GetAnnotations() {
+				if annotation.GetKey() == constant.HTTP_STATUS_CODE {
+					if _, ok := s.RespCodes[int(annotation.Value.GetIntValue())]; !ok {
+						target.AccessErrCount++
+					}
+				}
+			}
+		}
+		target.AccessCount++
+		target.AccessDuration += event.EndElapsed
+	}
+}
+
 // counterEvents 计算method、SQL信息
 func (s *Stats) eventsCounter(span *trace.TSpan) {
 	if len(s.MethodStats.APIStr) == 0 {
 		s.MethodStats.APIStr = span.GetRPC()
 	}
+
 	for _, event := range span.GetSpanEventList() {
 		isErr := false
 		// 是否有异常抛出
 		if event.GetExceptionInfo() != nil {
 			isErr = true
 		}
+
 		// app后续服务拓扑图计算
-		s.childMapCounter(event, isErr)
+		s.targetMapCounter(event)
+
 		// 计算method
 		s.methodCount(event.GetApiId(), int(event.GetServiceType()), event.EndElapsed, isErr)
+
 		// 计算sql
 		annotations := event.GetAnnotations()
 		for _, annotation := range annotations {

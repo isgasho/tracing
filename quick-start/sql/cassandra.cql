@@ -341,58 +341,6 @@ CREATE TABLE IF NOT EXISTS system (
     metrics         blob,
     PRIMARY KEY (app_name, agent_id, input_date)
 ) WITH gc_grace_seconds = 10800;
- 
--- 父节点应用拓扑图，这里的父节点都是接入了监控的
-CREATE TABLE IF NOT EXISTS parent_map (
-    app_name            text,               -- 应用名
-    input_date          bigint,             -- 插入时间
-    service_type        int,                -- 应用类型
-    parent_name         text,               -- 父应用名
-    parent_type         int,                -- 父应用类型
-    req_recv_count      int,                -- 被请求次数
-    access_err_count    int,                -- 错误次数
-    exception_count     int,                -- 异常次数
-    duration            int,                -- 总耗时
-    PRIMARY KEY (app_name, input_date, parent_name)
-) WITH gc_grace_seconds = 10800;
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON parent_map (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
-
-
--- 子节点应用拓扑图，这里的子节点可能是数据库等信息
-CREATE TABLE IF NOT EXISTS child_map (
-    app_name            text,               -- 应用名
-    input_date          bigint,             -- 插入时间
-    service_type        int,                -- 应用类型
-    child_type          int,                -- 子应用类型
-    destinations        text,               -- 访问目标
-    req_send_count      int,                -- 请求次数
-    exception_count     int,                -- 异常次数
-    duration            int,                -- 总耗时
-    PRIMARY KEY (app_name, input_date, child_type, destinations)
-) WITH gc_grace_seconds = 10800;
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON child_map (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
-
-
--- 未知类型或者未接入监控的parent拓扑图
-CREATE TABLE IF NOT EXISTS unknow_parent_map (
-    app_name            text,               -- 应用名
-    input_date          bigint,             -- 插入时间
-    service_type        int,                -- 应用类型
-    req_recv_count      int,                -- 被请求次数
-    exception_count     int,                -- 异常次数
-    duration            int,                -- 总耗时
-    PRIMARY KEY (app_name, input_date)
-) WITH gc_grace_seconds = 10800;
-
-CREATE CUSTOM INDEX IF NOT EXISTS ON unknow_parent_map (input_date) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' 
-    WITH OPTIONS = {'mode': 'SPARSE'};
 
 
 -- api被应用调用统计表
@@ -413,25 +361,33 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date)
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 
+ 
+
+
 CREATE TABLE IF NOT EXISTS service_map (
-    app_name            text,               -- 当前应用名
-    service_type        int,                -- 当前应用类型
-    target_name         text,               -- 目标应用名  
-    target_type         int,                -- 目标应用类型    
-    req_count           int,                -- 请求次数
-    err_count           int,                -- 错误次数
-    access_err_count    int,                -- code错误次数
-    duration            int,                -- 总耗时
-    input_date          bigint,             -- 插入时间
-    PRIMARY KEY (app_name, target_name, input_date, target_type)
+    source_name                text,              -- 源应用名
+    source_type                int,               -- 源应用类型
+    target_name                text,              -- 目标应用名  
+    target_type                int,               -- 目标应用类型    
+
+    access_count               int,                -- 访问总数
+    access_err_count           int,                -- 访问错误数
+    access_duration            int,                -- 访问总耗时
+    
+    target_count               int,                -- 目标应用收到请求总数
+    target_err_count           int,                -- 目标应用内部异常数
+
+    input_date                 bigint,             -- 插入时间
+    PRIMARY KEY (source_name, target_name, input_date, target_type)
 ) WITH gc_grace_seconds = 10800;
+
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (target_name) 
-    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;    
+    USING 'org.apache.cassandra.index.sasi.SASIIndex';    
 
 -- CREATE TABLE IF NOT EXISTS runtime_stats (
 --     app_name                    text,

@@ -149,7 +149,7 @@ const (
 func init() {
 	ServiceType = make(map[int]string)
 
-	ServiceType[-9999] = "SERVERTYPE_UNKNOWN"
+	ServiceType[-9999] = "UNKNOWN"
 	// activemq.client
 	ServiceType[8310] = "ACTIVEMQ_CLIENT"
 	ServiceType[8311] = "ACTIVEMQ_CLIENT_INTERNAL"
