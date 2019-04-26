@@ -57,7 +57,7 @@ func newApp(name string, appType int32) *App {
 	}
 	// @TODO codes会从策略模版中去取
 	// 默认200
-	app.respCodes[200] = struct{}{}
+	app.respCodes[201] = struct{}{}
 
 	app.start()
 	return app
@@ -149,7 +149,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	// 查找时间点，不存在新申请, span统计的范围是分钟，所以这里直接用优化过后的spanTime
 	lstats, ok := a.points[spanTime]
 	if !ok {
-		lstats = stats.NewStats()
+		lstats = stats.NewStats(a.respCodes)
 		a.points[spanTime] = lstats
 	}
 
@@ -189,8 +189,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	// 查找时间点，不存在新申请
 	lstats, ok := a.points[spanChunkTime]
 	if !ok {
-		lstats = stats.NewStats()
-
+		lstats = stats.NewStats(a.respCodes)
 		a.points[spanChunkTime] = lstats
 	}
 
@@ -345,19 +344,19 @@ func (a *App) linkTrace() error {
 		gCollector.storage.InsertExceptionStats(a.name, inputDate, methodID, exceptions.Exceptions)
 	}
 
-	for parentName, parentInfo := range a.points[inputDate].ServerMap.Parents {
-		gCollector.storage.InsertParentMap(a.name, a.appType, inputDate, parentName, parentInfo)
+	for parentName, parent := range a.points[inputDate].SrvMap.Parents {
+		gCollector.storage.InsertParentMap(a.name, a.appType, inputDate, parentName, parent)
 	}
 
-	for childType, child := range a.points[inputDate].ServerMap.Childs {
-		for destinationStr, destination := range child.Destinations {
-			gCollector.storage.InsertChildMap(a.name, a.appType, inputDate, int32(childType), destinationStr, destination)
+	for childType, targets := range a.points[inputDate].SrvMap.Targets {
+		for targetName, target := range targets {
+			gCollector.storage.InsertTargetMap(a.name, a.appType, inputDate, int32(childType), targetName, target)
 		}
 	}
 
-	unknowParent := a.points[inputDate].ServerMap.UnknowParent
+	unknowParent := a.points[inputDate].SrvMap.UnknowParent
 	// 只有被调用才可以入库
-	if unknowParent.Count > 0 {
+	if unknowParent.TargetCount > 0 {
 		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, inputDate, unknowParent)
 	}
 

@@ -90,26 +90,57 @@ var InsertExceptionStats string = `INSERT INTO exception_stats (app_name, method
 	min_elapsed, count, service_type) VALUES (?,?,?,?,?,?,?,?,?);`
 
 // 父节点应用拓扑图入库
-var InsertParentMap string = `INSERT INTO parent_map (app_name, input_date,
-	 service_type, parent_name, parent_type, req_recv_count, access_err_count, exception_count, duration)
-	VALUES (?,?,?,?,?,?,?,?,?);`
+// var InsertParentMap string = `INSERT INTO parent_map (app_name, input_date,
+// 	 service_type, parent_name, parent_type, req_recv_count, access_err_count, exception_count, duration)
+// 	VALUES (?,?,?,?,?,?,?,?,?);`
 
-// 子节点应用拓扑入库
-// var InsertChildMap string = `INSERT INTO child_map (app_name, input_date, service_type, child_type, destinations, req_send_count, exception_count, duration)
-// 	VALUES (?,?,?,?,?,?,?,?);`
+var InsertParentMap string = `INSERT INTO service_map (
+	source_name, 
+	source_type,
 
-var InsertChildMap string = `INSERT INTO service_map (app_name, service_type, target_name, target_type, 
-	req_count, err_count, access_err_count, duration, input_date)
-VALUES (?,?,?,?,?,?,?,?,?);`
+	target_name,
+	target_type,
 
-// 未知父节点应用拓扑图入库
-// var InsertUnknowParentMap string = `INSERT INTO unknow_parent_map (app_name, input_date, service_type, req_recv_count, exception_count, duration)
-// 	VALUES (?,?,?,?,?,?);`
+	access_count,     
+	access_err_count, 
+	access_duration,  
 
-// 未知节点请求应用拓扑图入库
-var InsertUnknowParentMap string = `INSERT INTO service_map (app_name, service_type, 
-	target_name, target_type, req_count, duration, input_date, access_err_count, err_count)
-	VALUES (?,?,?,?,?,?,?,?,?);`
+	target_count,    
+	target_err_count,
+	input_date)
+   VALUES (?,?,?,?,?,?,?,?,?,?);`
+
+var InsertTargetMap string = `INSERT INTO service_map (
+	source_name, 
+	source_type,
+
+	target_name,
+	target_type,
+
+	access_count,     
+	access_err_count, 
+	access_duration,  
+
+	target_count,    
+	target_err_count,
+	input_date)
+   VALUES (?,?,?,?,?,?,?,?,?,?);`
+
+var InsertUnknowParentMap string = `INSERT INTO service_map (
+	source_name, 
+	source_type,
+
+	target_name,
+	target_type,
+
+	access_count,     
+	access_err_count, 
+	access_duration,  
+
+	target_count,    
+	target_err_count,
+	input_date)
+   VALUES (?,?,?,?,?,?,?,?,?,?);`
 
 // Api被调用统计信息
 var InsertAPICallStats string = `INSERT INTO api_call_stats (app_name, input_date, service_type, api_id, parent_name, req_recv_count, err_count, duration)

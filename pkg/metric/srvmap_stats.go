@@ -53,13 +53,14 @@ type Destination struct {
 	Duration       int32
 	Count          int
 	ExceptionCount int
+	AccessErrCount int
 }
 
 // UnknowParent 未接入监控的服务，只能抓到访问地址
 type UnknowParent struct {
-	Duration int32
-	Count    int
-	// ExceptionCount int
+	// Duration       int32
+	TargetCount    int
+	TargetErrCount int
 }
 
 // NewUnknowParent ...
