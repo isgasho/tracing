@@ -22,14 +22,14 @@ type Stats struct {
 }
 
 // NewStats ....
-func NewStats() *Stats {
+func NewStats(respCodes map[int]struct{}) *Stats {
 	return &Stats{
 		APIStats:        metric.NewAPIStats(),
 		MethodStats:     metric.NewMethodStats(),
 		SQLStats:        metric.NewSQLStats(),
 		ExceptionsStats: metric.NewExceptionsStats(),
 		ServerMap:       metric.NewSrvMapStats(),
-		RespCodes:       make(map[int]struct{}),
+		RespCodes:       respCodes,
 	}
 }
 

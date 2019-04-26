@@ -190,6 +190,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	lstats, ok := a.points[spanChunkTime]
 	if !ok {
 		lstats = stats.NewStats()
+
 		a.points[spanChunkTime] = lstats
 	}
 
