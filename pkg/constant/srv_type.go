@@ -3,7 +3,8 @@ package constant
 var ServiceType map[int]string
 
 const (
-	ACTIVEMQ_CLIENT int16 = 8310
+	SERVERTYPE_UNKNOWN       = -9999
+	ACTIVEMQ_CLIENT    int16 = 8310
 
 	ACTIVEMQ_CLIENT_INTERNAL int16 = 8311
 
@@ -148,6 +149,7 @@ const (
 func init() {
 	ServiceType = make(map[int]string)
 
+	ServiceType[-9999] = "SERVERTYPE_UNKNOWN"
 	// activemq.client
 	ServiceType[8310] = "ACTIVEMQ_CLIENT"
 	ServiceType[8311] = "ACTIVEMQ_CLIENT_INTERNAL"

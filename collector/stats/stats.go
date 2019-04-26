@@ -2,6 +2,7 @@ package stats
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/imdevlab/tracing/collector/misc"
@@ -17,6 +18,7 @@ type Stats struct {
 	SQLStats        *metric.SQLStats        // sql语句计算统计
 	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
 	ServerMap       *metric.SrvMapStats     // 服务拓扑图
+	RespCodes       map[int]struct{}
 }
 
 // NewStats ....
@@ -27,6 +29,7 @@ func NewStats() *Stats {
 		SQLStats:        metric.NewSQLStats(),
 		ExceptionsStats: metric.NewExceptionsStats(),
 		ServerMap:       metric.NewSrvMapStats(),
+		RespCodes:       make(map[int]struct{}),
 	}
 }
 
@@ -183,7 +186,24 @@ func (s *Stats) childMapCounter(event *trace.TSpanEvent, isErr bool) {
 					destinationID = appName
 				}
 			}
+			log.Println("code获取", len(event.GetAnnotations()))
 		}
+
+		if event.ServiceType == constant.HTTP_CLIENT_4 {
+			for _, annotation := range event.GetAnnotations() {
+				if annotation.GetKey() == constant.HTTP_STATUS_CODE {
+					log.Println(annotation.Value.GetIntValue())
+				}
+			}
+		}
+
+		// if event.ServiceType == constant.DUBBO_CONSUMER {
+		// 	for _, annotation := range event.GetAnnotations() {
+		// 		if annotation.GetKey() == constant.DUBBO_RESULT {
+		// 			log.Println("dubbo", annotation.Value.GetIntValue())
+		// 		}
+		// 	}
+		// }
 
 		destination, ok := child.Destinations[destinationID]
 		if !ok {

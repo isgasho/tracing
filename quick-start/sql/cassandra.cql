@@ -423,12 +423,15 @@ CREATE TABLE IF NOT EXISTS service_map (
     access_err_count    int,                -- code错误次数
     duration            int,                -- 总耗时
     input_date          bigint,             -- 插入时间
-    PRIMARY KEY (app_name, input_date, target_type, target_name)
+    PRIMARY KEY (app_name, target_name, input_date, target_type)
 ) WITH gc_grace_seconds = 10800;
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
+
+CREATE CUSTOM INDEX IF NOT EXISTS ON service_map (target_name) 
+    USING 'org.apache.cassandra.index.sasi.SASIIndex' ;    
 
 -- CREATE TABLE IF NOT EXISTS runtime_stats (
 --     app_name                    text,

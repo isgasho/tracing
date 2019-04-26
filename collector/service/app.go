@@ -38,6 +38,7 @@ type App struct {
 	points     map[int64]*stats.Stats         // 计算点集合
 	apiCallKey int64                          // API被调用计算当前计算key
 	apiCall    map[int64]*metric.APICallStats // API被调用
+	respCodes  map[int]struct{}               // 响应code结合，用来标注合法响应code
 }
 
 func newApp(name string, appType int32) *App {
@@ -52,7 +53,12 @@ func newApp(name string, appType int32) *App {
 		apis:       make(map[string]struct{}),
 		points:     make(map[int64]*stats.Stats),
 		apiCall:    make(map[int64]*metric.APICallStats),
+		respCodes:  make(map[int]struct{}),
 	}
+	// @TODO codes会从策略模版中去取
+	// 默认200
+	app.respCodes[200] = struct{}{}
+
 	app.start()
 	return app
 }
