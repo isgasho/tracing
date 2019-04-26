@@ -60,5 +60,5 @@ type JVMGC struct {
 	JvmPoolOldGenUsed        float64             `json:"-"`
 	JvmPoolSurvivorSpaceUsed float64             `json:"-"`
 	JvmPoolPermGenUsed       float64             `json:"JvmPoolPermGenUsed"`
-	JvmPoolMetaspaceUsed     float64             `json:"-"`
+	JvmPoolMetaspaceUsed     float64             `json:"JvmPoolMetaspaceUsed"`
 }
