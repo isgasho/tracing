@@ -109,7 +109,7 @@ export default {
         }
     }],
     series: [ {
-        name: '',
+        name: '错误率',
         type: 'line',
         stack: '总量',
         smooth: true,

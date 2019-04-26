@@ -70,7 +70,7 @@ export default {
   },
   mounted() {
     request({
-            url: '/apm/web/appNames',
+            url: '/web/appNames',
             method: 'GET',
             params: {
             }

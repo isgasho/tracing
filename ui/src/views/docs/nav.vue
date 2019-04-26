@@ -90,10 +90,10 @@ export default {
         location.reload()
     },
     goHome() {
-        window.location.href = window.location.origin + '/apm/ui/list'
+        window.location.href = window.location.origin + '/ui/'
     },
     selectItem(i) {
-      this.$router.push('/apm/ui/docs/'+ i)
+      this.$router.push('/ui/docs/'+ i)
     },
     genPrev() {
         var index = 0

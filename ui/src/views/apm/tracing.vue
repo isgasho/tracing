@@ -337,7 +337,7 @@ export default {
     queryTraces() {
       this.$Loading.start();
       request({
-          url: '/apm/web/queryTraces',
+          url: '/web/queryTraces',
           method: 'GET',
           params: {
             app_name: this.$store.state.apm.appName,
@@ -425,7 +425,7 @@ export default {
       this.$Loading.start();
       // 查询trace详情
       request({
-          url: '/apm/web/trace',
+          url: '/web/trace',
           method: 'GET',
           params: {
             trace_id : t.traceId
@@ -450,7 +450,7 @@ export default {
     },
     apiList() {
        request({
-          url: '/apm/web/appApis',
+          url: '/web/appApis',
           method: 'GET',
           params: {
               app_name: this.$store.state.apm.appName,
@@ -464,7 +464,7 @@ export default {
       this.$Loading.start();
       // 加载当前APP的dashbord数据
       request({
-          url: '/apm/web/runtimeDashByUnixTime',
+          url: '/web/runtimeDashByUnixTime',
           method: 'GET',
           params: {
             app_name: this.$store.state.apm.appName,
@@ -570,7 +570,7 @@ export default {
   }
 
   .ivu-modal-header {
-    padding-top: 0px;
+    padding-top: 0px !important;
   }
   .ivu-modal-body {
     padding: 0;

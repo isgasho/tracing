@@ -16,7 +16,7 @@ export default {
     var subToken = this.$route.query.subToken 
     // 获取用户信息s
     request({
-        url: '/apm/web/login',
+        url: '/web/login',
         method: 'POST', 
         params: {
             subToken: subToken,
@@ -31,7 +31,7 @@ export default {
               Cookies.remove('lastPath')
                this.$router.push({ path: opath })
             } else {
-              this.$router.push('/apm/ui/list')
+              this.$router.push('/ui/dashboard')
             }
            
         })

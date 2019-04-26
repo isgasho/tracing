@@ -106,13 +106,17 @@ export default {
   },
   methods: {
       initDash() {
+        var appName = this.$store.state.apm.appName
+        if (appName == '') {
+            return 
+        }
         this.$Loading.start();
         // 加载当前APP的dashbord数据
         request({
-            url: '/apm/web/appDash',
+            url: '/web/appDash',
             method: 'GET',
             params: {
-                app_name: this.$store.state.apm.appName,
+                app_name: appName,
                 start: JSON.parse(this.$store.state.apm.selDate)[0],
                 end: JSON.parse(this.$store.state.apm.selDate)[1],
             }
@@ -128,12 +132,13 @@ export default {
         }).catch(error => {
           this.$Loading.error();
         })
+        
 
         request({
-            url: '/apm/web/agentList',
+            url: '/web/agentList',
             method: 'GET',
             params: {
-                app_name: this.$store.state.apm.appName
+                app_name: appName
             }
         }).then(res => {   
             this.agentList = res.data.data

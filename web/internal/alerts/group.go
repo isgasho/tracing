@@ -43,7 +43,7 @@ func CreateGroup(c echo.Context) error {
 	q1 := misc.Cql.Query(`INSERT INTO  alerts_group (id,name,owner,channel,users,update_date) VALUES (uuid(),?,?,?,?,?)`, name, li.ID, channel, users, time.Now().Unix())
 	err = q1.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q1.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -88,7 +88,7 @@ func EditGroup(c echo.Context) error {
 		name, channel, users, time.Now().Unix(), id, li.ID)
 	err = q1.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q1.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -120,7 +120,7 @@ func DeleteGroup(c echo.Context) error {
 		id, li.ID)
 	err := q1.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q1.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,

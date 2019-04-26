@@ -19,7 +19,7 @@ func (web *Web) setUser(c echo.Context) error {
 	q := misc.Cql.Query(`UPDATE  account SET app_show=?,app_names=? WHERE id=?`, appShow, appNameS, li.ID)
 	err := q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -45,7 +45,7 @@ func (web *Web) getAppSetting(c echo.Context) error {
 	q := misc.Cql.Query(`SELECT app_show,app_names from  account  WHERE id=?`, li.ID)
 	err := q.Scan(&appShow, &appNames)
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,

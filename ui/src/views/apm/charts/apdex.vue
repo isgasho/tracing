@@ -117,7 +117,7 @@ export default {
               gridIndex: 1
           }],
           series: [{
-              name: '数值',
+              name: 'apdex',
               type: 'line',
               smooth: true,
               symbol: 'circle',

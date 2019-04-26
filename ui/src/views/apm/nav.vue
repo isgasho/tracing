@@ -71,6 +71,27 @@ export default {
                         return date && date.valueOf() > Date.now() + 86400000
         },
           shortcuts: [
+            {
+                  text: '1m',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 60 * 1000),d];
+                  }
+              },
+            {
+                  text: '5m',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 300 * 1000),d];
+                  }
+              },
+            {
+                  text: '10m',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 600 * 1000),d];
+                  }
+              },
              {
                   text: '30m',
                   value () {
@@ -105,20 +126,6 @@ export default {
                     var d = new Date()
                       return [new Date(d.getTime() - 3600 * 1000 * 24),d];
                   }
-              },
-              {
-                  text: '3d',
-                  value () {
-                     var d = new Date()
-                      return [new Date(d.getTime() - 3600 * 1000 * 24*3),d];
-                  }
-              },
-              {
-                  text: '7d',
-                  value () {
-                      var d = new Date()
-                      return [new Date(d.getTime() - 3600 * 1000 * 24*7),d];
-                  }
               }
           ]
       }
@@ -151,7 +158,7 @@ export default {
       }
     },
     selectItem(i) {
-      this.$router.push('/apm/ui/' + i)
+      this.$router.push('/ui/apm/' + i)
     },
     initItem() {
        this.appNames = [this.$store.state.apm.appName]
@@ -166,16 +173,21 @@ export default {
         this.selItem = this.path.split('/')[3]
         // 加载app名列表
          request({
-            url: '/apm/web/appNamesWithSetting',
+            url: '/web/appNamesWithSetting',
             method: 'GET',
             params: {
             }
         }).then(res => {   
-            this.appNames = res.data.data 
+          this.appNames = res.data.data 
+          if (this.$store.state.apm.appName=='') {
+            // 若没有选择应用，则自动选择第一个应用
+            this.selAppName(this.appNames[0])
+          }
+          
         })
     }
   },
-  mounted() {
+  created() {
       this.initItem()
   }
 }

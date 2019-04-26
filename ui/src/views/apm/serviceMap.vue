@@ -1,13 +1,12 @@
 <template>
-  <div>
-      <topology :graphData="JSON.parse(data)" style=' width:100%; min-height: 90vh;max-height:200vh'></topology>
+  <div style="width: 100%;max-width:100%">
+     <topology style="width:calc(100vw - 180px);height:calc(100vh - 100px)"></topology>
   </div>   
 </template>
 
 <script>
 import request from '@/utils/request' 
 import topology from './charts/topology'
-let $ = window.go.GraphObject.make
 export default {
   name: 'serviceMap',
   components: {topology},
@@ -17,25 +16,37 @@ export default {
     }
   },
   watch: {
+    "$store.state.apm.selDate"() {
+        this.initServiceMap()
+    },
+    "$store.state.apm.appName"() {
+        this.initServiceMap()
+    }
   },
   computed: {
  
   },
   methods: {
+    initServiceMap() {
+      this.$Loading.start();
+        request({
+            url: '/apm/web/appServiceMap',
+            method: 'GET',
+            params: {
+              app_name: this.$store.state.apm.appName,
+              start: JSON.parse(this.$store.state.apm.selDate)[0],
+              end: JSON.parse(this.$store.state.apm.selDate)[1],
+            }
+        }).then(res => {
+          this.data = res.data.data
+          this.$Loading.finish();
+        }).catch(error => {
+            this.$Loading.error();
+          })
+      }
   },
   mounted() {
-    this.$Loading.start();
-    request({
-        url: '/apm/web/serviceMap',
-        method: 'GET',
-        params: {
-        }
-    }).then(res => {
-      this.data = res.data.data
-      this.$Loading.finish();
-    }).catch(error => {
-        this.$Loading.error();
-      })
+    this.initServiceMap()
   }
 }
 </script>

@@ -107,7 +107,7 @@ export default {
   methods: {
       confirmDeleteGroup(id) {
           request({
-                url: '/apm/web/deleteGroup',
+                url: '/web/deleteGroup',
                 method: 'POST',
                 params: {
                     id: id
@@ -130,7 +130,7 @@ export default {
       submitHandleGroup() {
           if (this.handleType == 'create') {
             request({
-                url: '/apm/web/createGroup',
+                url: '/web/createGroup',
                 method: 'POST',
                 params: {
                     name: this.tempGroup.name,
@@ -153,7 +153,7 @@ export default {
             })
           } else {
             request({
-                url: '/apm/web/editGroup',
+                url: '/web/editGroup',
                 method: 'POST',
                 params: {
                     id : this.tempGroup.id,
@@ -191,7 +191,7 @@ export default {
       },
       loadGroups() {
         request({
-            url: '/apm/web/queryGroups',
+            url: '/web/queryGroups',
             method: 'GET',
             params: {
             }
@@ -205,7 +205,7 @@ export default {
   },
   mounted() {
     request({
-        url: '/apm/web/userList',
+        url: '/web/userList',
         method: 'GET',
         params: {
         }

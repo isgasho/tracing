@@ -53,7 +53,7 @@ const user = {
     // 登出
     Logout({ commit, state }) {
       return request({
-        url: '/apm/web/logout',
+        url: '/web/logout',
         method: 'post',
         params:{
           token : state.token

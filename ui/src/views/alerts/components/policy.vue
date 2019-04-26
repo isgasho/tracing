@@ -65,7 +65,7 @@ export default {
   methods: {
       beforeShow() {
           request({
-                    url: '/apm/web/queryPolicy',
+                    url: '/web/queryPolicy',
                     method: 'GET',
                     params: {
                         id: this.policyID

@@ -57,7 +57,7 @@ func CreatePolicy(c echo.Context) error {
 	q := misc.Cql.Query(`INSERT INTO  alerts_policy (id,name,owner,alerts,update_date) VALUES (uuid(),?,?,?,?)`, policy.Name, li.ID, policy.Alerts, time.Now().Unix())
 	err = q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -111,7 +111,7 @@ func EditPolicy(c echo.Context) error {
 	q := misc.Cql.Query(`UPDATE  alerts_policy SET name=?,alerts=?,update_date=? WHERE id=? and owner=? IF EXISTS`, policy.Name, policy.Alerts, now, policy.ID, owner)
 	err = q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -127,7 +127,7 @@ func EditPolicy(c echo.Context) error {
 		q1 := misc.Cql.Query(`UPDATE alerts_app SET update_date=? WHERE name=? and owner=?`, now, appName, appOwner)
 		err = q1.Exec()
 		if err != nil {
-			g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+			g.L.Warn("access database error", zap.Error(err), zap.String("query", q1.String()))
 			return c.JSON(http.StatusOK, g.Result{
 				Status:  http.StatusInternalServerError,
 				ErrCode: g.DatabaseC,
@@ -198,7 +198,7 @@ func QueryPolicy(c echo.Context) error {
 	q := misc.Cql.Query(`SELECT id,name,owner,alerts,update_date FROM alerts_policy WHERE id=?`, pid)
 	err := q.Scan(&id, &name, &owner, &alerts, &updateDate)
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -235,7 +235,7 @@ func DeletePolicy(c echo.Context) error {
 		id, li.ID)
 	err := q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -251,7 +251,7 @@ func DeletePolicy(c echo.Context) error {
 		q1 := misc.Cql.Query(`UPDATE alerts_app SET policy_id=?,update_date=? WHERE name=? and owner=?`, "", time.Now().Unix(), appName, owner)
 		err = q1.Exec()
 		if err != nil {
-			g.L.Info("access database error", zap.Error(err), zap.String("query", q1.String()))
+			g.L.Warn("access database error", zap.Error(err), zap.String("query", q1.String()))
 			return c.JSON(http.StatusOK, g.Result{
 				Status:  http.StatusInternalServerError,
 				ErrCode: g.DatabaseC,

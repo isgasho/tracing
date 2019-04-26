@@ -130,7 +130,7 @@ export default {
       this.$Loading.start();
       // 加载当前APP的dashbord数据
       request({
-          url: '/apm/web/runtimeDash',
+          url: '/web/runtimeDash',
           method: 'GET',
           params: {
             app_name: this.$store.state.apm.appName,
@@ -154,11 +154,15 @@ export default {
       })
     },
     initAgents() {
+      var appName = this.$store.state.apm.appName
+      if (appName == '') {
+        return 
+      }
       request({
-            url: '/apm/web/agentList',
+            url: '/web/agentList',
             method: 'GET',
             params: {
-                app_name: this.$store.state.apm.appName
+                app_name: appName
             }
         }).then(res => {   
             this.agents = res.data.data

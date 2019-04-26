@@ -95,14 +95,14 @@ export default {
       gotoApp(app) {
           this.$store.dispatch('setAPPID', app.id)
           this.$store.dispatch('setAPPName', app.name)
-          this.$router.push("/apm/ui/dashboard")
+          this.$router.push("/ui/apm")
       }
   },
   mounted() {
       this.$Loading.start();
       // 加载APPS
        request({
-        url: '/apm/web/appListWithSetting',
+        url: '/web/appListWithSetting',
         method: 'GET',
         params: {
           

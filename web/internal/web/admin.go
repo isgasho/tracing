@@ -15,7 +15,7 @@ func (web *Web) initSuperAdmin() {
 	q := misc.Cql.Query(`UPDATE  admin  SET priv=? WHERE id=?`, "super_admin", "13269")
 	err := q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 	}
 }
 
@@ -101,7 +101,7 @@ func (web *Web) setAdmin(c echo.Context) error {
 	q := misc.Cql.Query(`INSERT INTO admin (id,priv) VALUES (?,?)`, userID, g.PRIV_ADMIN)
 	err := q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -130,7 +130,7 @@ func (web *Web) cancelAdmin(c echo.Context) error {
 	q := misc.Cql.Query(`DELETE FROM admin WHERE id=?`, userID)
 	err := q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,

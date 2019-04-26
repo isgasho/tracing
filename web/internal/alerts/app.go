@@ -70,7 +70,7 @@ func CreateApp(c echo.Context) error {
 	q := misc.Cql.Query(`INSERT INTO  alerts_app (name,owner,policy_id,channel,users,update_date,api_alerts) VALUES (?,?,?,?,?,?,?)`, appName, li.ID, policy, channel, users, time.Now().Unix(), apiAlerts)
 	err = q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -136,7 +136,7 @@ func EditApp(c echo.Context) error {
 	q := misc.Cql.Query(`UPDATE alerts_app SET policy_id=?,channel=?,users=?,update_date=?,api_alerts=? WHERE name=? and owner=? IF EXISTS`, policy, channel, users, time.Now().Unix(), apiAlerts, appName, owner)
 	err = q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,
@@ -189,7 +189,7 @@ func DeleteApp(c echo.Context) error {
 		name, li.ID)
 	err = q.Exec()
 	if err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return c.JSON(http.StatusOK, g.Result{
 			Status:  http.StatusInternalServerError,
 			ErrCode: g.DatabaseC,

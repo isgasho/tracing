@@ -133,7 +133,7 @@ export default {
      initStats() {
        this.$Loading.start();
        request({
-            url: '/apm/web/appMethods',
+            url: '/web/appMethods',
             method: 'GET',
             params: {
                 app_name: this.$store.state.apm.appName,

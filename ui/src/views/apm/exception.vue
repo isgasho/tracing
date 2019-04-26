@@ -104,7 +104,7 @@ export default {
       this.$Loading.start();
       // 加载当前APP的dashbord数据
       request({
-          url: '/apm/web/exceptionDash',
+          url: '/web/exceptionDash',
           method: 'GET',
           params: {
             app_name: this.$store.state.apm.appName,
@@ -171,7 +171,7 @@ export default {
      initStats() {
        this.$Loading.start();
        request({
-            url: '/apm/web/appException',
+            url: '/web/appException',
             method: 'GET',
             params: {
                 app_name: this.$store.state.apm.appName,

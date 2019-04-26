@@ -32,7 +32,7 @@ export default {
   },
   methods: {
     selectItem(i) {
-      this.$router.push('/apm/ui/alerts/' + i)
+      this.$router.push('/ui/alerts/' + i)
     },
     initItem() {
         this.appNames = [this.$store.state.apm.appName]

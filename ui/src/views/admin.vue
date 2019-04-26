@@ -69,7 +69,7 @@ export default {
                                         click: () => {
                                             if (t == '设为管理') {
                                                  request({
-                                                    url: '/apm/web/setAdmin',
+                                                    url: '/web/setAdmin',
                                                     method: 'POST',
                                                     params: {
                                                         user_id: params.row.id
@@ -83,7 +83,7 @@ export default {
                                                 })
                                             } else if (t == '取消管理') {
                                                 request({
-                                                    url: '/apm/web/cancelAdmin',
+                                                    url: '/web/cancelAdmin',
                                                     method: 'POST',
                                                     params: {
                                                         user_id: params.row.id
@@ -126,7 +126,7 @@ export default {
   },
   mounted() {
     request({
-        url: '/apm/web/manageUserList',
+        url: '/web/manageUserList',
         method: 'GET',
         params: {
         }

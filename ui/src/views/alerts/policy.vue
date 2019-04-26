@@ -224,7 +224,7 @@ export default {
       },
       confirmDeletePolicy(id) {
          request({
-                url: '/apm/web/deletePolicy',
+                url: '/web/deletePolicy',
                 method: 'POST',
                 params: {
                     id: id
@@ -247,7 +247,7 @@ export default {
       submitHandlePolicy() {
         if (this.handleType == 'create') {
           request({
-              url: '/apm/web/createPolicy',
+              url: '/web/createPolicy',
               method: 'POST',
               params: {
                 policy: JSON.stringify(this.tempPolicy)
@@ -265,7 +265,7 @@ export default {
           })
         } else {
           request({
-              url: '/apm/web/editPolicy',
+              url: '/web/editPolicy',
               method: 'POST',
               params: {
                 policy: JSON.stringify(this.tempPolicy)
@@ -299,7 +299,7 @@ export default {
       loadPolicys() {
         this.$Loading.start();
         request({
-              url: '/apm/web/queryPolicies',
+              url: '/web/queryPolicies',
               method: 'GET',
               params: {
               }

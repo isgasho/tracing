@@ -88,7 +88,7 @@ func queryAgents(app string) ([]*Agent, error) {
 	}
 
 	if err := iter.Close(); err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return nil, err
 	}
 
@@ -219,7 +219,7 @@ func dashData(appName, agentID string, start, end int64) (*RuntimeResult, error)
 	}
 
 	if err := iter.Close(); err != nil {
-		g.L.Info("access database error", zap.Error(err), zap.String("query", q.String()))
+		g.L.Warn("access database error", zap.Error(err), zap.String("query", q.String()))
 		return nil, err
 	}
 

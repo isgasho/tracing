@@ -8,24 +8,26 @@
                     <div style="color:white;font-weight:bold;margin-left:35px;">传化监控平台</div>
                 </a>
             </li>
+            <li class="product ng-scope system not-active">
+                <router-link to="/ui/dashboard">
+                    <a>监控大盘</a>
+                </router-link >
+            </li>
             <li class="product ng-scope apm not-active hover-cursor">
-                <router-link to="/apm/ui/list">
-                    <a>应用监控APM</a>
+                <router-link to="/ui/apm">
+                    <a>应用监控</a>
                 </router-link >
             </li>
             <li class="product ng-scope browser not-active" @click="todoTip()">
                 业务监控
             </li>
-            <!-- <li class="product ng-scope system not-active">
-                系统监控
-            </li> -->
             <li class="product ng-scope alerts not-active hover-cursor">
-                <router-link to="/apm/ui/alerts">
+                <router-link to="/ui/alerts">
                     <a>告警平台</a>
                 </router-link >
             </li> 
             <li class="product ng-scope infrastructure not-active hover-cursor">
-                <router-link to="/apm/ui/docs">
+                <router-link to="/ui/docs">
                     <a>帮助文档</a>
                 </router-link >
             </li>
@@ -121,10 +123,10 @@ export default {
         }
     },
     goSetting() {
-        this.$router.push('/apm/ui/person')
+        this.$router.push('/ui/user/setting')
     },
     goAdmin() {
-        this.$router.push('/apm/ui/admin')
+        this.$router.push('/ui/admin')
     },
     switchProduct() {
         this.isOpen = !this.isOpen
@@ -325,21 +327,17 @@ export default {
 //     opacity: 0;
 //     z-index: 1093;
 // }
-.product-switcher.open .apm {
-    z-index: 1107;
-    box-shadow: none; 
-    left: 188px;
-}
-.product-switcher.open .browser {
-    z-index: 1106;
-    box-shadow: none;
-    left: 373px;
-}
 .product-switcher.open .system {
     z-index: 1105;
     box-shadow: none;
-    left: 558px;
+    left: 188px;
 }
+.product-switcher.open .apm {
+    z-index: 1107;
+    box-shadow: none; 
+    left: 373px;
+}
+
 .product-switcher.open .alerts {
     z-index: 1104;
     box-shadow: none;
@@ -352,11 +350,18 @@ export default {
     // left: 928px;
     left: 743px;
 }
-.product-switcher.open .plugins {
-    z-index: 1102;
+
+.product-switcher.open .browser {
+    z-index: 1106;
     box-shadow: none;
-    left: 1100px;
+    left: 928px;
 }
+
+// .product-switcher.open .plugins {
+//     z-index: 1102;
+//     box-shadow: none;
+//     left: 1100px;
+// }
 
 
 

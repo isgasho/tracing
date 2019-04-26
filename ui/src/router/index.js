@@ -16,50 +16,50 @@ export default new Router({
       component: Nav,
       // redirect: '/apm/ui/list',
       children: [
-        { path: '/apm/ui/list', meta: '应用监控',bg: '#39c',component: () => import('@/views/apm/list')},
-        { path: '/apm/ui/admin', meta:'管理面板', bg: '#39c',component: () => import('@/views/admin')},
-        { path: '/apm/ui/person', meta:'个人设置', bg: '#39c',component: () => import('@/views/personSetting')},
+        { path: '/ui/dashboard', meta: '监控大盘',bg: '#00B6D8',component: () => import('@/views/dashboard/index')},
+        { path: '/ui/admin', meta:'管理面板', bg: '#39c',component: () => import('@/views/admin')},
+        { path: '/ui/user/setting', meta:'个人设置', bg: '#39c',component: () => import('@/views/user/setting')},
         { 
-          path: '/apm/ui/index', 
+          path: '/ui/apm', 
           component: ApmNav,
-          redirect: '/apm/ui/dashboard',
+          redirect: '/ui/apm/dashboard',
           meta: '应用监控',
           children: [
-            { path: '/apm/ui/dashboard',     meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/dashboard')},
-            { path: '/apm/ui/tracing',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/tracing')},
-            { path: '/apm/ui/runtime',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/runtime')},
-            { path: '/apm/ui/system',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/system')},
-            { path: '/apm/ui/thread',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/thread')},
-            { path: '/apm/ui/memory',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/memory')},
-            { path: '/apm/ui/database',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/database')},
-            { path: '/apm/ui/api', meta: '应用监控',bg: '#39c',  component: () => import('@/views/apm/api')},
-            { path: '/apm/ui/exception',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/exception')},
-            { path: '/apm/ui/method',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/method')},
-            { path: '/apm/ui/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')}
+            { path: '/ui/apm/dashboard',     meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/dashboard')},
+            { path: '/ui/apm/tracing',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/tracing')},
+            { path: '/ui/apm/runtime',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/runtime')},
+            { path: '/ui/apm/system',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/system')},
+            { path: '/ui/apm/thread',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/thread')},
+            { path: '/ui/apm/memory',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/memory')},
+            { path: '/ui/apm/database',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/database')},
+            { path: '/ui/apm/api', meta: '应用监控',bg: '#39c',  component: () => import('@/views/apm/api')},
+            { path: '/ui/apm/exception',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/exception')},
+            { path: '/ui/apm/method',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/method')},
+            { path: '/ui/apm/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')}
           ]
         },
         { 
-          path: '/apm/ui/alerts', 
+          path: '/ui/alerts', 
           component: AlertsNav,
-          redirect: '/apm/ui/alerts/appList',
+          redirect: '/ui/alerts/appList',
           meta: '应用监控',
           children: [
-            { path: '/apm/ui/alerts/appList',meta: '告警平台',bg:'#b286bc', component: () => import('@/views/alerts/appList')},
-            { path: '/apm/ui/alerts/policy',meta: '告警平台', bg:'#b286bc',component: () => import('@/views/alerts/policy')},
-            { path: '/apm/ui/alerts/group',meta: '告警平台', bg:'#b286bc',component: () => import('@/views/alerts/group')},
-            { path: '/apm/ui/alerts/alertsNotify',meta: '告警平台',bg:'#b286bc', component: () => import('@/views/alerts/alertsNotify')}
+            { path: '/ui/alerts/appList',meta: '告警平台',bg:'#b286bc', component: () => import('@/views/alerts/appList')},
+            { path: '/ui/alerts/policy',meta: '告警平台', bg:'#b286bc',component: () => import('@/views/alerts/policy')},
+            { path: '/ui/alerts/group',meta: '告警平台', bg:'#b286bc',component: () => import('@/views/alerts/group')},
+            { path: '/ui/alerts/alertsNotify',meta: '告警平台',bg:'#b286bc', component: () => import('@/views/alerts/alertsNotify')}
           ]
         },
       ]
     },
     { path: '/', component: () => import('@/views/index')},
-    { path: '/apm/ui/callback', component: () => import('@/views/login/callback')},
+    { path: '/ui/callback', component: () => import('@/views/login/callback')},
 
     //doc 
     { 
-      path: '/apm/ui/docs',
+      path: '/ui/docs',
       component: DocNav,
-      redirect: '/apm/ui/docs/about',
+      redirect: '/ui/docs/about',
       children: [
         { path: 'about', component: () => import('@/views/docs/pages/about')},
 

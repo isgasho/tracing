@@ -54,7 +54,7 @@ export default {
   methods: {
       setPerson() {
           request({
-            url: '/apm/web/setPerson',
+            url: '/web/setPerson',
             method: 'POST',
             params: {
                app_names : JSON.stringify(this.formItem.select),
@@ -71,7 +71,7 @@ export default {
   },
   mounted() {
       request({
-            url: '/apm/web/appNames',
+            url: '/web/appNames',
             method: 'GET',
             params: {
             }
@@ -79,7 +79,7 @@ export default {
             this.appNames = res.data.data 
         })
         request({
-            url: '/apm/web/getAppSetting',
+            url: '/web/getAppSetting',
             method: 'GET',
             params: {
             }
@@ -98,7 +98,7 @@ export default {
 </style>
 
 <style lang="less" scoped> 
-@import "../theme/gvar.less";
+@import "../../theme/gvar.less";
 
 
 </style>

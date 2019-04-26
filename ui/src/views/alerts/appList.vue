@@ -330,7 +330,7 @@ export default {
       },
       apiList(app) {
         request({
-            url: '/apm/web/appApis',
+            url: '/web/appApis',
             method: 'GET',
             params: {
                 app_name: app,
@@ -351,7 +351,7 @@ export default {
       },
       confirmDeleteApp() {
           request({
-            url: '/apm/web/deleteAppAlert',
+            url: '/web/deleteAppAlert',
             method: 'POST',
             params: {
                 name: this.tempApp.name
@@ -368,7 +368,7 @@ export default {
       submitHandleApp() {
           if (this.handleAppType =='create') {
               request({
-                    url: '/apm/web/createAppAlert',
+                    url: '/web/createAppAlert',
                     method: 'POST',
                     params: {
                         app_name: this.tempApp.name,
@@ -386,7 +386,7 @@ export default {
                 })
           } else {
               request({
-                    url: '/apm/web/editAppAlert',
+                    url: '/web/editAppAlert',
                     method: 'POST',
                     params: {
                         app_name: this.tempApp.name,
@@ -429,7 +429,7 @@ export default {
       loadApps() {
         this.$Loading.start();
         request({
-            url: '/apm/web/alertsAppList',
+            url: '/web/alertsAppList',
             method: 'GET',
             params: {
                 type: this.appSetting,
@@ -455,7 +455,7 @@ export default {
       this.loadApps()
       // 加载app名列表
          request({
-            url: '/apm/web/appNames',
+            url: '/web/appNames',
             method: 'GET',
             params: {
             }
@@ -464,7 +464,7 @@ export default {
         })
 
         request({
-            url: '/apm/web/userList',
+            url: '/web/userList',
             method: 'GET',
             params: {
             }
@@ -473,7 +473,7 @@ export default {
         })
 
         request({
-              url: '/apm/web/queryPolicies',
+              url: '/web/queryPolicies',
               method: 'GET',
               params: {
               }

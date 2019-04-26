@@ -80,7 +80,7 @@ export default {
       this.$Loading.start();
       // 加载当前APP的dashbord数据
       request({
-          url: '/apm/web/apiDash',
+          url: '/web/apiDash',
           method: 'GET',
           params: {
               app_name: this.$store.state.apm.appName,
@@ -199,7 +199,7 @@ export default {
     apiDetail(api) {
       this.$Loading.start();
       request({
-            url: '/apm/web/apiDetail',
+            url: '/web/apiDetail',
             method: 'GET',
             params: {
                 app_name: this.$store.state.apm.appName,
@@ -220,7 +220,7 @@ export default {
     initStats() {
        this.$Loading.start();
        request({
-            url: '/apm/web/apiStats',
+            url: '/web/apiStats',
             method: 'GET',
             params: {
                 app_name: this.$store.state.apm.appName,

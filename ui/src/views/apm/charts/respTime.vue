@@ -106,7 +106,7 @@ export default {
             }
         }],
         series: [{
-            name: '',
+            name: '平均耗时',
             type: 'line',
             smooth: true,
             lineStyle: {
