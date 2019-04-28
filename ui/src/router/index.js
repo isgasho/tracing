@@ -12,13 +12,17 @@ export default new Router({
   mode: 'history',
   routes: [
     { 
-      path: '/apm/ui', 
+      path: '/ui', 
       component: Nav,
-      // redirect: '/apm/ui/list',
+      redirect: '/ui/dashboard',
       children: [
+        // 首页大盘
         { path: '/ui/dashboard', meta: '监控大盘',bg: '#00B6D8',component: () => import('@/views/dashboard/index')},
-        { path: '/ui/admin', meta:'管理面板', bg: '#39c',component: () => import('@/views/admin')},
+        // 管理员页面
+        { path: '/ui/admin', meta:'管理面板', bg: '#39c',component: () => import('@/views/user/admin')},
+        // 用户个人设置
         { path: '/ui/user/setting', meta:'个人设置', bg: '#39c',component: () => import('@/views/user/setting')},
+        // 应用监控
         { 
           path: '/ui/apm', 
           component: ApmNav,
@@ -38,6 +42,7 @@ export default new Router({
             { path: '/ui/apm/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')}
           ]
         },
+        // 告警平台
         { 
           path: '/ui/alerts', 
           component: AlertsNav,
@@ -55,7 +60,7 @@ export default new Router({
     { path: '/', component: () => import('@/views/index')},
     { path: '/ui/callback', component: () => import('@/views/login/callback')},
 
-    //doc 
+    //帮助文档
     { 
       path: '/ui/docs',
       component: DocNav,
@@ -66,47 +71,7 @@ export default new Router({
         { path: 'install', component: () => import('@/views/docs/pages/install')}
       ]
     },
-    { path: '/404', component: () => import('@/views/errorPage/page404')},
+    { path: '/404', component: () => import('@/views/misc/page404')},
     { path: '*', redirect: '/404'}
   ]
 })
-
-
-
-export const routerMap = [
-  // { path: '/404', component: () => import('@/views/errorPage/404'), hidden: true },
-  { path: '/', component: () => import('@/views/template'), hidden: true },
-  // {
-  //   path: '/infra',
-  //   component: Layout,
-  //   redirect: '/infra/service', 
-  //   alwaysShow: true, // will always show the root menu
-  //   meta: { title: 'Infra',icon: 'component'},
-  //   children: [{
-  //     path: 'service',
-  //     component: () => import('@/views/infra/service'),
-  //     name: 'service',
-  //     meta: {
-  //       title: 'Service'
-  //     }
-  //   }, 
-  //   {
-  //     path: 'application',
-  //     component: () => import('@/views/infra/application'),
-  //     name: 'application',
-  //     meta: {
-  //       title: 'Application'
-  //     }
-  //   },
-  //   {
-  //     path: 'server',
-  //     component: () => import('@/views/infra/server'),
-  //     name: 'server',
-  //     meta: {
-  //       title: 'Cloud Server'
-  //     }
-  //   }
-  // ]
-  // },
-  { path: '*', redirect: '/404', hidden: true }
-]

@@ -4,6 +4,7 @@ package app
 import (
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gocql/gocql"
@@ -81,11 +82,13 @@ func ListWithSetting(c echo.Context) error {
 	li := session.GetLoginInfo(c)
 	appShow, appNames := UserSetting(li.ID)
 
-	stats := make([]*Stat, 0)
+	// 获取最近X分钟
+	startI, _ := strconv.ParseInt(c.FormValue("start"), 10, 64)
 
 	now := time.Now()
-	// 取过去6分钟的数据
-	start := now.Unix() - 30*60
+	start := now.Unix() - startI*60
+
+	stats := make([]*Stat, 0)
 
 	statsMap := make(map[string]*Stat)
 	var q *gocql.Query

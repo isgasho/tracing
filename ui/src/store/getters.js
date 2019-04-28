@@ -3,7 +3,11 @@ const getters = {
   //misc
   service: state => state.misc.service,
 
-  selDate: state => state.misc.selDate,
+  selDate: state => state.apm.selDate,
+  dashSelDate: state => state.apm.dashSelDate,
+  dashNav: state => state.apm.dashNav,
+
+
   appid: state => state.apm.appid,
 
   //user

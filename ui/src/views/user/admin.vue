@@ -145,7 +145,7 @@ export default {
 </style>
 
 <style lang="less" scoped> 
-@import "../theme/gvar.less";
+@import "../../theme/gvar.less";
 .margin-left-20 {
   color: @text-light-color
 }

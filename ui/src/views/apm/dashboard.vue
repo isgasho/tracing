@@ -127,7 +127,6 @@ export default {
             this.errorList = res.data.data.error_list
             this.apdexList = res.data.data.apdex_list
 
-            console.log(res.data.data)
             this.$Loading.finish();
         }).catch(error => {
           this.$Loading.error();
@@ -142,7 +141,6 @@ export default {
             }
         }).then(res => {   
             this.agentList = res.data.data
-            console.log(this.agentList)
         })
       }
   },

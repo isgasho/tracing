@@ -130,6 +130,13 @@ export default {
     },
     switchProduct() {
         this.isOpen = !this.isOpen
+        // 自动关闭
+        if (this.isOpen) {
+            var _this = this
+            setTimeout(function() {
+                _this.isOpen = false
+            },4000)
+        }
     },
     logout() {
       this.$store.dispatch('Logout').then(() => {
@@ -188,19 +195,6 @@ export default {
     background-color: #474747;
     // box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
-// .nav::before {
-//     content: '';
-//     position: absolute;
-//     display: block;
-//     top: 0;
-//     left: 0;
-//     right: 0;
-//     margin: 0;
-//     padding: 0;
-//     height: 6px;
-//     background-color: #F2BC56;
-//     z-index: 1019;
-// }
 
 
 

@@ -1,4 +1,5 @@
 <template>
+  <!-- 此页面是模版文件，用于快速搭建其他页面 -->
   <div class="app-container">
       <div>{{hello}} {{world}}</div>
       <div>
@@ -68,7 +69,7 @@ export default {
 </style>
 
 <style lang="less" scoped> 
-@import "../theme/gvar.less";
+@import "../../theme/gvar.less";
 
 
 </style>

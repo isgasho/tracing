@@ -1,29 +1,22 @@
 <template>
   <div class="errPage-container">
-    404
+      <div class="pic-404">
+        <img class="pic-404__parent" src="@/assets/404_images/404.png" alt="404">
+        <img class="pic-404__child left" src="@/assets/404_images/404_cloud.png" alt="404">
+        <img class="pic-404__child mid" src="@/assets/404_images/404_cloud.png" alt="404">
+        <img class="pic-404__child right" src="@/assets/404_images/404_cloud.png" alt="404">
+      </div>
   </div>
 </template>
 
 <script>
-import errGif from '@/assets/401_images/401.gif'
-
 export default {
   name: 'page404',
   data() {
     return {
-      errGif: errGif + '?' + +new Date(),
-      ewizardClap: 'https://wpimg.wallstcn.com/007ef517-bafd-4066-aae4-6883632d9646',
-      dialogVisible: false
     }
   },
   methods: {
-    back() {
-      if (this.$route.query.noGoBack) {
-        this.$router.push({ path: '/' })
-      } else {
-        this.$router.go(-1)
-      }
-    } 
   }
 }
 </script>
