@@ -17,6 +17,11 @@ type Config struct {
 		Addrs []string // mq地址
 		Topic string   // 主题
 	}
+
+	App struct {
+		LoadInterval int
+	}
+
 	DB struct {
 		Cluster  []string
 		Keyspace string
@@ -24,8 +29,7 @@ type Config struct {
 	}
 
 	Analyze struct {
-		Interval     int
-		LoadInterval int
+		Interval int
 	}
 }
 

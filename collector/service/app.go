@@ -57,7 +57,7 @@ func newApp(name string, appType int32) *App {
 	}
 	// @TODO codes会从策略模版中去取
 	// 默认200
-	app.respCodes[201] = struct{}{}
+	app.respCodes[200] = struct{}{}
 
 	app.start()
 	return app
@@ -357,7 +357,7 @@ func (a *App) linkTrace() error {
 
 	unknowParent := a.points[inputDate].SrvMap.UnknowParent
 	// 只有被调用才可以入库
-	if unknowParent.TargetCount > 0 {
+	if unknowParent.AccessCount > 0 {
 		gCollector.storage.InsertUnknowParentMap(a.name, a.appType, inputDate, unknowParent)
 	}
 

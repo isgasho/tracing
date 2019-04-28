@@ -123,10 +123,8 @@ func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
 func (s *Stats) parentMapCounter(span *trace.TSpan) {
 	// spanID 为-1的情况该服务就是父节点，请求者应该是没接入监控
 	if span.ParentSpanId == -1 {
-		s.SrvMap.UnknowParent.TargetCount++
-		if span.GetErr() != 0 {
-			s.SrvMap.UnknowParent.TargetErrCount++
-		}
+		s.SrvMap.UnknowParent.AccessCount++
+		s.SrvMap.UnknowParent.AccessDuration += span.GetElapsed()
 		return
 	}
 

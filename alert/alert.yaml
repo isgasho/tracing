@@ -16,6 +16,9 @@ db:
     keyspace: "tracing_v1_datacenter"
     numconns: 100
 
+app:
+    loadinterval: 5 
+
 analyze:
     # 定时任务间隔
     interval: 5 
