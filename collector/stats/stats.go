@@ -33,7 +33,7 @@ func NewStats(respCodes map[int]struct{}) *Stats {
 }
 
 // SpanCounter 计算
-func (s *Stats) SpanCounter(span *trace.TSpan, apiCall *metric.APICallStats) error {
+func (s *Stats) SpanCounter(span *trace.TSpan, apiMap *metric.APIMap) error {
 	// 计算API信息
 	{
 		s.apiCounter(span)
@@ -41,7 +41,7 @@ func (s *Stats) SpanCounter(span *trace.TSpan, apiCall *metric.APICallStats) err
 
 	// 计算API被哪些服务调用
 	{
-		apiCallCounter(apiCall, span)
+		apiMapCounter(apiMap, span)
 	}
 
 	// 计算服务拓扑图
@@ -58,7 +58,7 @@ func (s *Stats) SpanCounter(span *trace.TSpan, apiCall *metric.APICallStats) err
 }
 
 // SpanChunkCounter counter 计算
-func (s *Stats) SpanChunkCounter(spanChunk *trace.TSpanChunk, apiCall *metric.APICallStats) error {
+func (s *Stats) SpanChunkCounter(spanChunk *trace.TSpanChunk) error {
 	// 计算method、sql、exceptions
 	{
 		s.eventsCounterSpanChunk(spanChunk)
@@ -94,28 +94,28 @@ func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk) {
 	}
 }
 
-// apiCallCounter 接口被哪些服务调用计算
-func apiCallCounter(apiCall *metric.APICallStats, span *trace.TSpan) {
+// apiMapCounter 接口被哪些服务调用计算
+func apiMapCounter(apiMap *metric.APIMap, span *trace.TSpan) {
 	// spanID 为-1的情况该服务就是父节点，查不到被谁调用，这里可以考虑能不能抓到请求者到IP
 	if span.ParentSpanId == -1 {
 		return
 	}
 
-	api, ok := apiCall.APIS[span.GetApiId()]
+	api, ok := apiMap.APIS[span.GetApiId()]
 	if !ok {
 		api = metric.NewAPI()
-		apiCall.APIS[span.GetApiId()] = api
+		apiMap.APIS[span.GetApiId()] = api
 	}
-	parent, ok := api.Parents[span.GetParentApplicationName()]
+	apiInfo, ok := api.Parents[span.GetParentApplicationName()]
 	if !ok {
-		parent = metric.NewParentInfo()
-		parent.Type = span.GetParentApplicationType()
-		api.Parents[span.GetParentApplicationName()] = parent
+		apiInfo = metric.NewAPIMapInfo()
+		apiInfo.Type = span.GetParentApplicationType()
+		api.Parents[span.GetParentApplicationName()] = apiInfo
 	}
-	parent.Count++
-	parent.Duration += span.Elapsed
+	apiInfo.AccessCount++
+	apiInfo.AccessDuration += span.Elapsed
 	if span.GetErr() != 0 {
-		parent.ExceptionCount++
+		apiInfo.AccessErrCount++
 	}
 }
 

@@ -24,21 +24,21 @@ import (
 // App 单个服务信息
 type App struct {
 	sync.RWMutex
-	appType    int32                          // 服务类型
-	taskID     int64                          // 定时任务ID
-	name       string                         // 服务名称
-	agents     map[string]*Agent              // agent集合
-	stopC      chan bool                      // 停止通道
-	tickerC    chan bool                      // 定时任务通道
-	spanC      chan *trace.TSpan              // span类型通道
-	spanChunkC chan *trace.TSpanChunk         // span chunk类型通道
-	statC      chan *pinpoint.TAgentStat      // jvm状态类型通道
-	apis       map[string]struct{}            // 接口信息
-	orderlyKey stats.OrderlyKey               // 排序打点
-	points     map[int64]*stats.Stats         // 计算点集合
-	apiCallKey int64                          // API被调用计算当前计算key
-	apiCall    map[int64]*metric.APICallStats // API被调用
-	respCodes  map[int]struct{}               // 响应code结合，用来标注合法响应code
+	appType    int32                     // 服务类型
+	taskID     int64                     // 定时任务ID
+	name       string                    // 服务名称
+	agents     map[string]*Agent         // agent集合
+	stopC      chan bool                 // 停止通道
+	tickerC    chan bool                 // 定时任务通道
+	spanC      chan *trace.TSpan         // span类型通道
+	spanChunkC chan *trace.TSpanChunk    // span chunk类型通道
+	statC      chan *pinpoint.TAgentStat // jvm状态类型通道
+	apis       map[string]struct{}       // 接口信息
+	orderlyKey stats.OrderlyKey          // 排序打点
+	points     map[int64]*stats.Stats    // 计算点集合
+	apiMapKey  int64                     // API被调用计算当前计算key
+	apiMap     map[int64]*metric.APIMap  // API被调用
+	respCodes  map[int]struct{}          // 响应code结合，用来标注合法响应code
 }
 
 func newApp(name string, appType int32) *App {
@@ -52,7 +52,7 @@ func newApp(name string, appType int32) *App {
 		statC:      make(chan *pinpoint.TAgentStat, 200),
 		apis:       make(map[string]struct{}),
 		points:     make(map[int64]*stats.Stats),
-		apiCall:    make(map[int64]*metric.APICallStats),
+		apiMap:     make(map[int64]*metric.APIMap),
 		respCodes:  make(map[int]struct{}),
 	}
 	// @TODO codes会从策略模版中去取
@@ -100,7 +100,7 @@ func (a *App) stats() {
 				// 链路统计信息计算
 				a.linkTrace()
 				// 被调用统计
-				a.reportCall()
+				a.reportAPIMap()
 			}
 			break
 		case span, ok := <-a.spanC:
@@ -154,22 +154,22 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	}
 
 	// api被调用需要将nowSecond加上一个时间范围
-	if a.apiCallKey == 0 {
-		a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
+	if a.apiMapKey == 0 {
+		a.apiMapKey = spanTime + misc.Conf.Stats.APICallRange
 	} else {
 		// 需要更新计算下标key
-		if spanTime > a.apiCallKey {
-			a.apiCallKey = spanTime + misc.Conf.Stats.APICallRange
+		if spanTime > a.apiMapKey {
+			a.apiMapKey = spanTime + misc.Conf.Stats.APICallRange
 		}
 	}
 	// 获取Apicall计算节点
-	apiCall, ok := a.apiCall[a.apiCallKey]
+	apiMap, ok := a.apiMap[a.apiMapKey]
 	if !ok {
-		apiCall = metric.NewAPICallStats()
-		a.apiCall[a.apiCallKey] = apiCall
+		apiMap = metric.NewAPIMap()
+		a.apiMap[a.apiMapKey] = apiMap
 	}
 
-	lstats.SpanCounter(span, apiCall)
+	lstats.SpanCounter(span, apiMap)
 
 	return nil
 }
@@ -194,24 +194,7 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 		a.points[spanChunkTime] = lstats
 	}
 
-	// 计算服务拓扑图，api被调用需要将nowSecond加上一个时间范围
-	if a.apiCallKey == 0 {
-		a.apiCallKey = spanChunkTime + misc.Conf.Stats.APICallRange
-	} else {
-		// 需要更新计算下标key
-		if spanChunkTime > a.apiCallKey {
-			a.apiCallKey = spanChunkTime + misc.Conf.Stats.APICallRange
-		}
-	}
-
-	// 获取Apicall计算节点
-	apiCall, ok := a.apiCall[a.apiCallKey]
-	if !ok {
-		apiCall = metric.NewAPICallStats()
-		a.apiCall[a.apiCallKey] = apiCall
-	}
-
-	lstats.SpanChunkCounter(spanChunk, apiCall)
+	lstats.SpanChunkCounter(spanChunk)
 
 	return nil
 }
@@ -366,12 +349,12 @@ func (a *App) linkTrace() error {
 	return nil
 }
 
-// reportCall api被调用情况
-func (a *App) reportCall() error {
+// reportAPIMap api被调用情况
+func (a *App) reportAPIMap() error {
 	// 清空之前节点
 	a.orderlyKey = a.orderlyKey[:0]
 	// 赋值
-	for key := range a.apiCall {
+	for key := range a.apiMap {
 		a.orderlyKey = append(a.orderlyKey, key)
 	}
 	// 排序
@@ -387,14 +370,14 @@ func (a *App) reportCall() error {
 		return nil
 	}
 
-	for apiID, apiInfo := range a.apiCall[inputDate].APIS {
+	for apiID, apiInfo := range a.apiMap[inputDate].APIS {
 		for parentName, parentInfo := range apiInfo.Parents {
-			gCollector.storage.InsertAPICallStats(a.name, a.appType, inputDate, apiID, parentName, parentInfo)
+			gCollector.storage.InsertAPIMapStats(a.name, a.appType, inputDate, apiID, parentName, parentInfo)
 		}
 	}
 
 	// 上报打点信息并删除该时间点信息
-	delete(a.apiCall, inputDate)
+	delete(a.apiMap, inputDate)
 
 	return nil
 }

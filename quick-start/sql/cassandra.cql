@@ -341,22 +341,26 @@ CREATE TABLE IF NOT EXISTS system (
     metrics         blob,
     PRIMARY KEY (app_name, agent_id, input_date)
 ) WITH gc_grace_seconds = 10800;
-
+ 
 
 -- api被应用调用统计表
-CREATE TABLE IF NOT EXISTS api_call_stats (
-    app_name            text,               -- 应用名
-    input_date          bigint,             -- 插入时间
-    service_type        int,                -- 应用类型
-    api_id              int,                -- api id
-    parent_name         text,               -- 访问者/父节点名称
-    req_recv_count      int,                -- 被请求次数
-    err_count           int,                -- 错误次数
-    duration            int,                -- 总耗时
-    PRIMARY KEY (app_name, input_date, api_id, parent_name)
+CREATE TABLE IF NOT EXISTS api_map (
+    source_name                text,              -- 源应用名
+    source_type                int,               -- 源应用类型
+    
+    target_name                text,              -- 目标应用名  
+    target_type                int,               -- 目标应用类型   
+
+    access_count               int,                -- 访问总数
+    access_err_count           int,                -- 访问错误数
+    access_duration            int,                -- 访问总耗时
+    
+    api_id                     int,                -- api id
+    input_date                 bigint,             -- 插入时间
+    PRIMARY KEY (target_name, input_date, api_id, source_name)
 ) WITH gc_grace_seconds = 10800;
 
-CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date) 
+CREATE CUSTOM INDEX IF NOT EXISTS ON api_map (input_date) 
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
@@ -422,12 +426,12 @@ TRUNCATE TABLE app_sqls           ;
 
 TRUNCATE TABLE app_strs         ;
 TRUNCATE TABLE apps             ;
-TRUNCATE TABLE api_call_stats           ;
+TRUNCATE TABLE api_map           ;
 TRUNCATE TABLE exception_stats  ;
 TRUNCATE TABLE runtime_stats    ;
 TRUNCATE TABLE unknow_parent_map;
 
-TRUNCATE TABLE api_call_stats ;
+TRUNCATE TABLE api_map ;
 
 TRUNCATE TABLE method_stats ;
 TRUNCATE TABLE parent_map  ;

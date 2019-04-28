@@ -702,19 +702,40 @@ func (s *Storage) InsertUnknowParentMap(targetName string, targetType int32, inp
 }
 
 // InsertAPICallStats Api被调用统计信息
-func (s *Storage) InsertAPICallStats(appName string, appType int32, inputTime int64, apiID int32, parentname string, parentInfo *metric.ParentInfo) error {
-	query := s.cql.Query(sql.InsertAPICallStats,
-		appName,
-		inputTime,
-		appType,
-		apiID,
+// func (s *Storage) InsertAPICallStats(appName string, appType int32, inputTime int64, apiID int32, parentname string, parentInfo *metric.ParentInfo) error {
+// 	query := s.cql.Query(sql.InsertAPICallStats,
+// 		appName,
+// 		inputTime,
+// 		appType,
+// 		apiID,
+// 		parentname,
+// 		parentInfo.Count,
+// 		parentInfo.ExceptionCount,
+// 		parentInfo.Duration,
+// 	)
+// 	if err := query.Exec(); err != nil {
+// 		s.logger.Warn("insert api call stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+// 		return err
+// 	}
+
+// 	return nil
+// }
+
+// InsertAPIMapStats Api被调用统计信息
+func (s *Storage) InsertAPIMapStats(appName string, appType int32, inputTime int64, apiID int32, parentname string, parentInfo *metric.APIMapInfo) error {
+	query := s.cql.Query(sql.InsertAPIMapStats,
 		parentname,
-		parentInfo.Count,
-		parentInfo.ExceptionCount,
-		parentInfo.Duration,
+		parentInfo.Type,
+		appName,
+		appType,
+		parentInfo.AccessCount,
+		parentInfo.AccessErrCount,
+		parentInfo.AccessDuration,
+		apiID,
+		inputTime,
 	)
 	if err := query.Exec(); err != nil {
-		s.logger.Warn("insert api call stats error", zap.String("error", err.Error()), zap.String("sql", query.String()))
+		s.logger.Warn("insert api map error", zap.String("error", err.Error()), zap.String("sql", query.String()))
 		return err
 	}
 
