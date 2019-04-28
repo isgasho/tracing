@@ -25,11 +25,11 @@ func (s *SQLStats) Store(sqlID int32, info *SQLInfo) {
 
 // SQLInfo 统计信息
 type SQLInfo struct {
-	TotalElapsed int32 // 总耗时
-	Count        int   // 发生次数
-	ErrCount     int   // 错误次数
-	MinElapsed   int32 // 最小耗时
-	MaxElapsed   int32 // 最大耗时
+	Duration    int32 // 总耗时
+	Count       int   // 发生次数
+	ErrCount    int   // 错误次数
+	MinDuration int32 // 最小耗时
+	MaxDuration int32 // 最大耗时
 }
 
 // NewSQLInfo ...
