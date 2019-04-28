@@ -18,9 +18,9 @@
           placeholder="选择时间"
           @on-change="selDate"
         >
-          <Option value="1">最近1分钟</Option>
-          <Option value="5">最近5分钟</Option>
-          <Option value="15">最近15分钟</Option>
+          <Option value="3">最近3分钟</Option>
+          <Option value="10">最近10分钟</Option>
+          <Option value="30">最近30分钟</Option>
           <Option value="60">最近1小时</Option>
           <Option value="360">最近6小时</Option>
           <Option value="1440">最近1天</Option>
@@ -31,8 +31,9 @@
           class="margin-left-10"
           size="small"
           v-show="showItem==1"
-        >显示错误</Checkbox>
-        <Checkbox v-model="topologyRealtime" size="small" v-show="showItem==1">实时刷新</Checkbox>
+          @on-change="setMapError" 
+        >仅显示错误</Checkbox>
+        <Checkbox v-model="topologyRealtime" size="small" v-show="showItem==1"  @on-change="setMapRefresh" >实时刷新</Checkbox>
         <Select
           class="select-app"
           v-model="topologyHighlighted"
@@ -146,9 +147,11 @@ export default {
       smallNodeSize: 35,
       lineLabelSize: 13,
       repulsion: 500,
-
+      mapLinkColor: '#12b5d0',
+      mapLinkErrorColor: '#ff0000',
       appNames: [],
       selApps: [],
+      mapRefreshTimerID: '',
 
       appLabels: [
         {
@@ -181,7 +184,7 @@ export default {
       selTopologyDate: this.$store.state.apm.dashSelDate,
       topologyError: false,
       topologyRealtime: false,
-      topologyHighlighted: ["UNKNOWN"],
+      topologyHighlighted: [],
 
       mapOption: {}
     };
@@ -189,8 +192,36 @@ export default {
   computed: {},
   beforeDestroy() {
     this.destroyChart();
+    clearInterval(this.mapRefreshTimerID);
   },
   methods: {
+    setMapRefresh(refresh) {
+        var _this = this
+        if (refresh) {
+            _this.initServiceMap()
+            _this.$Message.success('应用地图实时刷新！')
+
+            _this.mapRefreshTimerID = setInterval(function() {
+                _this.initServiceMap()
+                _this.$message.success('应用地图实时刷新！')
+            },10000)
+        } else {
+            clearInterval(this.mapRefreshTimerID);
+        }
+    },
+    setMapError(error) {
+        for (var i=0;i<this.mapOption.series[0].links.length;i++) {
+            if (!this.mapOption.series[0].links[i].error) {
+                if (error) {
+                    this.mapOption.series[0].links[i].lineStyle.normal.color = 'transparent'
+                } else {
+                    this.mapOption.series[0].links[i].lineStyle.normal.color = this.mapLinkColor
+                }
+            }
+        }
+
+        this.chart.setOption(this.mapOption)
+    },
     showAppList() {
         var apps = []
         if (this.selApps.length == 0) {
@@ -386,10 +417,11 @@ export default {
 
       this.calcSize(nodes);
       for (var i = 0; i < links.length; i++) {
-        var color = "#12b5d0";
+        var color = this.mapLinkColor;
         if (links[i].access_count > 0) {
           if (links[i].error_count / links[i].access_count > 0.2) {
-            color = "#ff0000";
+            links[i].error = true
+            color = this.mapLinkErrorColor;
           }
         }
 
@@ -400,7 +432,6 @@ export default {
             fontSize: this.lineLabelSize
           }
         };
-
         links[i].lineStyle = {
           normal: {
             color: color,
@@ -408,6 +439,13 @@ export default {
             curveness: 0
           }
         };
+
+        // 仅显示错误处理
+        if (this.topologyError) {
+            if (!links[i].error) {
+                links[i].lineStyle.normal.color = 'transparent'
+            }
+        }
       }
       var option = {
         animationDurationUpdate: 500,
