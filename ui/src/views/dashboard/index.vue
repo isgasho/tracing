@@ -54,6 +54,7 @@
         </Select>
 
         <Input
+          class="margin-left-10"
           v-model="mapErrorFilter"
           placeholder="自定义错误阈值 e.g. count>10,error>30,duration>300 "
           style="width: 350px;border:none;"
@@ -443,7 +444,7 @@ export default {
       }
     },
     gotoApp(app) {
-      this.$store.dispatch("setAPPID", app.id);
+    //   this.$store.dispatch("setAPPID", app.id);
       this.$store.dispatch("setAPPName", app.name);
       this.$router.push("/ui/apm");
     },
@@ -663,11 +664,17 @@ export default {
       
       this.chart.setOption(this.mapOption);
 
-      
+      var _this = this
       function nodeOnClick(params) {
-        console.log(params.name);
+         if (params.data.category == 0 && params.name != 'UNKNOWN') {
+            // 只有普通类型的应用才可以前往应用页面
+            _this.$store.dispatch("setAPPName", params.name);
+            _this.$router.push("/ui/apm");
+         } else {
+             _this.$Message.warning('非普通类型应用不可以前往应用详情页面')
+         }
       }
-      this.chart.on("click", nodeOnClick);
+      this.chart.on("dblclick", nodeOnClick);
       //'click'、'dblclick'、'mousedown'、'mousemove'、'mouseup'、'mouseover'、'mouseout'
     },
 
