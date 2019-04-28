@@ -14,7 +14,7 @@
       <span class="topology-filter">
         <Select
           v-model="selTopologyDate"
-          style="width:100px;margin-left:100px"
+          style="width:100px;margin-left:40px"
           placeholder="选择时间"
           @on-change="selDate"
         >
@@ -31,22 +31,35 @@
           class="margin-left-10"
           size="small"
           v-show="showItem==1"
-          @on-change="setMapError" 
+          @on-change="setMapError"
         >仅显示错误</Checkbox>
-        <Checkbox v-model="topologyRealtime" size="small" v-show="showItem==1"  @on-change="setMapRefresh" >实时刷新</Checkbox>
+        <Checkbox
+          v-model="topologyRealtime"
+          size="small"
+          v-show="showItem==1"
+          @on-change="setMapRefresh"
+        >实时刷新</Checkbox>
         <Select
           class="select-app"
           v-model="topologyHighlighted"
           filterable
           multiple
-          style="width:400px"
+          style="width:250px;border-right:.5px solid #aaa;padding-right:10px"
           placeholder="特定应用高亮显示"
-          :max-tag-count="2"
+          :max-tag-count="1"
           v-show="showItem==1"
           @on-change="mapHighlightChange"
         >
           <Option v-for="item in appNames" :value="item" :key="item">{{ item }}</Option>
         </Select>
+
+        <Input
+          v-model="mapErrorFilter"
+          placeholder="自定义错误阈值 e.g. count>10,error>30,duration>300 "
+          style="width: 350px;border:none;"
+          @on-blur="setMapErrorFilter"
+          @on-enter="setMapErrorFilter"
+        />
       </span>
 
       <span style="float:right;margin-right:-50px;">
@@ -75,7 +88,7 @@
           class="margin-left-10"
           :style="{background:tagColor(3)}"
         ></Tag>
-        <span class="font-size-10">高亮应用</span> -->
+        <span class="font-size-10">高亮应用</span>-->
       </span>
 
       <div
@@ -147,12 +160,13 @@ export default {
       smallNodeSize: 35,
       lineLabelSize: 13,
       repulsion: 500,
-      mapLinkColor: '#12b5d0',
-      mapLinkErrorColor: '#ff0000',
+      mapLinkColor: "#12b5d0",
+      mapLinkErrorColor: "#ff0000",
       appNames: [],
       selApps: [],
-      mapRefreshTimerID: '',
-
+      mapRefreshTimerID: "",
+      mapErrorFilter: "",
+      mapErrorFilterRes: {},
       appLabels: [
         {
           title: "应用名",
@@ -179,7 +193,7 @@ export default {
 
       totalApps: 3,
 
-      showItem:  this.$store.state.apm.dashNav,
+      showItem: this.$store.state.apm.dashNav,
 
       selTopologyDate: this.$store.state.apm.dashSelDate,
       topologyError: false,
@@ -195,53 +209,209 @@ export default {
     clearInterval(this.mapRefreshTimerID);
   },
   methods: {
-    setMapRefresh(refresh) {
-        var _this = this
-        if (refresh) {
-            _this.initServiceMap()
-            _this.$Message.success('应用地图实时刷新！')
+    // 应用地图，设置错误阈值
+    setMapErrorFilter() {
+      this.parseErrorFilter()
+      this.chart.setOption(this.mapOption)
+    },
+    parseErrorFilter() {
+      if (this.mapErrorFilter == '') {
+         this.mapErrorFilterRes = {}
+         for (var i = 0; i < this.mapOption.series[0].links.length; i++) {
+            var link = this.mapOption.series[0].links[i];
+            link.error = false
+            var color = this.mapLinkColor;
+            if (link.access_count > 0) {
+                if (link.error_count / link.access_count > 0.2) {
+                    link.error = true;
+                    color = this.mapLinkErrorColor;
+                }
+            }
 
-            _this.mapRefreshTimerID = setInterval(function() {
-                _this.initServiceMap()
-                _this.$message.success('应用地图实时刷新！')
-            },10000)
-        } else {
-            clearInterval(this.mapRefreshTimerID);
+            link.lineStyle.normal.color = color
+            // 仅显示错误处理
+            if (this.topologyError) {
+                if (link.error) {
+                    link.lineStyle.normal.color = "transparent";
+                }
+            }
         }
+          return 
+      }
+         // 解析设定字符串，格式：count<10 error>30 duration>300
+      var splited = [];
+      var filter = this.mapErrorFilter.trim();
+      var s = filter.split(",");
+      for (var i = 0; i < s.length; i++) {
+        splited.push(s[i]);
+      }
+
+      var temp = {};
+      for (var i = 0; i < splited.length; i++) {
+        var s = splited[i];
+        s = s.trim();
+        if (
+          s.indexOf("count") == 0 ||
+          s.indexOf("error") == 0 ||
+          s.indexOf("duration") == 0
+        ) {
+          var s1 = s.split("<");
+          if (s1.length == 2) {
+            // 判断是否是数字
+            var n = parseInt(s1[1]);
+            if (isNaN(n)) {
+              this.$Message.warning("输入的错误阈值字符串不合法2");
+              return;
+            }
+
+            temp[s1[0]] = {
+              compare: "<",
+              value: n
+            };
+            continue;
+          }
+
+          var s2 = s.split(">");
+          if (s2.length == 2) {
+            // 判断是否是数字
+            var n = parseInt(s2[1]);
+            if (isNaN(n)) {
+              this.$Message.warning("输入的错误阈值字符串不合法4");
+              return;
+            }
+
+            temp[s2[0]] = {
+              compare: ">",
+              value: n
+            };
+            continue;
+          }
+
+          this.$Message.warning("输入的错误阈值字符串不合法3");
+          return;
+        } else {
+          console.log(s);
+          this.$Message.warning("输入的错误阈值字符串不合法5");
+          return;
+        }
+      }
+      this.mapErrorFilterRes = temp;
+      console.log(this.mapErrorFilterRes);
+
+      // 根据设置好的条件，重新标示错误
+      for (var i = 0; i < this.mapOption.series[0].links.length; i++) {
+        var link = this.mapOption.series[0].links[i];
+
+        var countFilter = this.mapErrorFilterRes['count'];
+
+        var isError = false;
+        if (countFilter != undefined) {
+          if (countFilter.compare == ">") {
+            if (link.access_count >= countFilter.value) {
+              isError = true;
+            }
+          } else {
+            if (link.access_count < countFilter.value) {
+              isError = true;
+            }
+          }
+        }
+
+        if (!isError) {
+          var filter = this.mapErrorFilterRes['error'];
+          if (filter != undefined) {
+            if (filter.compare == ">") {
+                if (link.error_count >= filter.value) {
+                    isError = true;
+                }
+            } else {
+                if (link.error_count < filter.value) {
+                    isError = true;
+                }
+            }
+          }
+        }
+
+         if (!isError) {
+          var filter = this.mapErrorFilterRes['duration'];
+          if (filter != undefined) {
+            if (filter.compare == ">") {
+                if (link.avg >= filter.value) {
+                    isError = true;
+                }
+            } else {
+                if (link.avg < filter.value) {
+                    isError = true;
+                }
+            }
+          }
+        }
+
+
+        if (isError) {
+          link.error = true;
+          link.lineStyle.normal.color = this.mapLinkErrorColor;
+        } else {
+          link.error = false;
+          link.lineStyle.normal.color = this.mapLinkColor;
+          // 仅显示错误处理
+          if (this.topologyError) {
+            link.lineStyle.normal.color = "transparent";
+          }
+        }
+      }
+    },
+    // 设定后，每60秒刷新一次应用地图
+    setMapRefresh(refresh) {
+      var _this = this;
+      if (refresh) {
+        _this.initServiceMap();
+        _this.$Message.success("应用地图实时刷新！");
+
+        _this.mapRefreshTimerID = setInterval(function() {
+          _this.initServiceMap();
+          _this.$Message.success("应用地图实时刷新！");
+        }, 60000);
+      } else {
+        clearInterval(this.mapRefreshTimerID);
+      }
     },
     setMapError(error) {
-        for (var i=0;i<this.mapOption.series[0].links.length;i++) {
-            if (!this.mapOption.series[0].links[i].error) {
-                if (error) {
-                    this.mapOption.series[0].links[i].lineStyle.normal.color = 'transparent'
-                } else {
-                    this.mapOption.series[0].links[i].lineStyle.normal.color = this.mapLinkColor
-                }
-            }
-        }
-
-        this.chart.setOption(this.mapOption)
+      for (var i = 0; i < this.mapOption.series[0].links.length; i++) {
+        console.log(this.mapOption.series[0].links[i].source,this.mapOption.series[0].links[i].target,this.mapOption.series[0].links[i].error)
+        if (!this.mapOption.series[0].links[i].error) {
+          if (error) {
+            this.mapOption.series[0].links[i].lineStyle.normal.color =
+              "transparent";
+          } else {
+            this.mapOption.series[0].links[
+              i
+            ].lineStyle.normal.color = this.mapLinkColor;
+          }
+        } 
+      }
+      this.chart.setOption(this.mapOption);
     },
     showAppList() {
-        var apps = []
-        if (this.selApps.length == 0) {
-            apps =  this.appList
-        } else {
-            for (var i=0;i<this.appList.length;i++) {
-                for (var j=0;j<this.selApps.length;j++) {
-                    if (this.selApps[j] == this.appList[i].name) {
-                        apps.push(this.appList[i])
-                    }
-                }
+      var apps = [];
+      if (this.selApps.length == 0) {
+        apps = this.appList;
+      } else {
+        for (var i = 0; i < this.appList.length; i++) {
+          for (var j = 0; j < this.selApps.length; j++) {
+            if (this.selApps[j] == this.appList[i].name) {
+              apps.push(this.appList[i]);
             }
+          }
         }
+      }
 
-        return apps
+      return apps;
     },
     mapHighlightChange(v) {
       for (var i = 0; i < this.mapOption.series[0].data.length; i++) {
         var node = this.mapOption.series[0].data[i];
-        node.symbolSize = this.smallNodeSize
+        node.symbolSize = this.smallNodeSize;
         for (var j = 0; j < v.length; j++) {
           if (v[j] == node.name) {
             node.symbolSize = this.primaryNodeSize;
@@ -249,19 +419,19 @@ export default {
         }
       }
 
-      this.chart.setOption(this.mapOption)
+      this.chart.setOption(this.mapOption);
     },
     selDate() {
       this.$store.dispatch("setDashSelDate", this.selTopologyDate);
       this.initServiceMap();
-      this.initAppList()
+      this.initAppList();
     },
     navShow(v) {
       this.showItem = v;
       this.$store.dispatch("setDashNav", v);
-      if (v==1) {
-          console.log(this.chart)
-          this.chart.setOption(this.mapOption)
+      if (v == 1) {
+        console.log(this.chart);
+        this.chart.setOption(this.mapOption);
       }
     },
     rowClassName(row, index) {
@@ -413,18 +583,17 @@ export default {
             }
           };
         }
+
+        // // 高亮显示
+        for (var k = 0; k < this.topologyHighlighted.length; k++) {
+          if (this.topologyHighlighted[k] == nodes[j].name) {
+            nodes[j].symbolSize = this.primaryNodeSize;
+          }
+        }
       }
 
       this.calcSize(nodes);
       for (var i = 0; i < links.length; i++) {
-        var color = this.mapLinkColor;
-        if (links[i].access_count > 0) {
-          if (links[i].error_count / links[i].access_count > 0.2) {
-            links[i].error = true
-            color = this.mapLinkErrorColor;
-          }
-        }
-
         links[i].label = {
           normal: {
             show: true,
@@ -434,18 +603,10 @@ export default {
         };
         links[i].lineStyle = {
           normal: {
-            color: color,
             width: 1,
             curveness: 0
           }
         };
-
-        // 仅显示错误处理
-        if (this.topologyError) {
-            if (!links[i].error) {
-                links[i].lineStyle.normal.color = 'transparent'
-            }
-        }
       }
       var option = {
         animationDurationUpdate: 500,
@@ -494,11 +655,16 @@ export default {
           }
         ]
       };
-      this.chart.setOption(option);
       this.mapOption = option;
 
+      // 设置错误高亮显示
+      this.parseErrorFilter()
+      
+      this.chart.setOption(this.mapOption);
+
+      
       function nodeOnClick(params) {
-        console.log(params.name)
+        console.log(params.name);
       }
       this.chart.on("click", nodeOnClick);
       //'click'、'dblclick'、'mousedown'、'mousemove'、'mouseup'、'mouseover'、'mouseout'
@@ -511,7 +677,7 @@ export default {
         url: "/web/appListWithSetting",
         method: "GET",
         params: {
-            start: this.selTopologyDate
+          start: this.selTopologyDate
         }
       })
         .then(res => {
@@ -556,6 +722,11 @@ export default {
     background: transparent;
     border: none;
     // border-bottom: 1px solid white;
+    color: white;
+  }
+
+  input {
+    background: transparent;
     color: white;
   }
 }
