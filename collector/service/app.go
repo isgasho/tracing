@@ -289,7 +289,7 @@ func (a *App) linkTrace() error {
 			Desc:     apiStr,
 			Count:    apiInfo.Count,
 			Errcount: apiInfo.ErrCount,
-			Duration: apiInfo.TotalElapsed,
+			Duration: apiInfo.Duration,
 		}
 		apis.APIS[apiStr] = api
 	}
@@ -320,7 +320,7 @@ func (a *App) linkTrace() error {
 			ID:       sqlID,
 			Count:    sqlInfo.Count,
 			Errcount: sqlInfo.ErrCount,
-			Duration: sqlInfo.TotalElapsed,
+			Duration: sqlInfo.Duration,
 		}
 		sqls.SQLs[sqlID] = sql
 	}

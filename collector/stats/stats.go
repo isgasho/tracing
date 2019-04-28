@@ -18,7 +18,6 @@ type Stats struct {
 	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
 	RespCodes       map[int]struct{}        //
 	SrvMap          *metric.SrvMap          // 服务拓扑图
-	// ServerMap       *metric.SrvMapStats     // 服务拓扑图
 }
 
 // NewStats ....
@@ -28,9 +27,8 @@ func NewStats(respCodes map[int]struct{}) *Stats {
 		MethodStats:     metric.NewMethodStats(),
 		SQLStats:        metric.NewSQLStats(),
 		ExceptionsStats: metric.NewExceptionsStats(),
-		// ServerMap:       metric.NewSrvMapStats(),
-		RespCodes: respCodes,
-		SrvMap:    metric.NewSrvMap(),
+		RespCodes:       respCodes,
+		SrvMap:          metric.NewSrvMap(),
 	}
 }
 
@@ -157,60 +155,6 @@ func getip(destinationID string) (string, error) {
 	return strs[0], nil
 }
 
-// 计算child拓扑图
-// func (s *Stats) childMapCounter(event *trace.TSpanEvent, isErr bool) {
-// if event.ServiceType == constant.DUBBO_CONSUMER ||
-// 	event.ServiceType == constant.HTTP_CLIENT_4 ||
-// 	event.ServiceType == constant.MYSQL_EXECUTE_QUERY ||
-// 	event.ServiceType == constant.REDIS ||
-// 	event.ServiceType == constant.ORACLE_EXECUTE_QUERY ||
-// 	event.ServiceType == constant.MARIADB_EXECUTE_QUERY {
-
-// 	destinationID := event.GetDestinationId()
-// 	if len(destinationID) <= 0 {
-// 		return
-// 	}
-// 	child, ok := s.ServerMap.Childs[event.ServiceType]
-// 	if !ok {
-// 		child = metric.NewChild()
-// 		s.ServerMap.Childs[event.ServiceType] = child
-// 	}
-
-// 	// http&&dubbo做特殊处理
-// 	if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
-// 		ip, err := getip(destinationID)
-// 		if err == nil {
-// 			appName, ok := misc.AddrStore.Get(ip)
-// 			if ok {
-// 				destinationID = appName
-// 			}
-// 		}
-// 	}
-
-// 	destination, ok := child.Destinations[destinationID]
-// 	if !ok {
-// 		destination = metric.NewDestination()
-// 		child.Destinations[destinationID] = destination
-// 	}
-
-// 	if event.ServiceType == constant.HTTP_CLIENT_4 {
-// 		for _, annotation := range event.GetAnnotations() {
-// 			if annotation.GetKey() == constant.HTTP_STATUS_CODE {
-// 				if _, ok := s.RespCodes[int(annotation.Value.GetIntValue())]; !ok {
-// 					destination.AccessErrCount++
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	destination.Count++
-// 	if isErr {
-// 		destination.ExceptionCount++
-// 	}
-// 	destination.Duration += event.EndElapsed
-// }
-// }
-
 // apiCounter 计算api信息
 func (s *Stats) apiCounter(span *trace.TSpan) {
 	apiStr := span.GetRPC()
@@ -222,7 +166,7 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 		apiInfo = metric.NewAPIInfo()
 		s.APIStats.Store(apiStr, apiInfo)
 	}
-	apiInfo.TotalElapsed += span.Elapsed
+	apiInfo.Duration += span.Elapsed
 	apiInfo.Count++
 	// 耗时小于满意时间满意次数加1
 	if span.Elapsed < misc.Conf.Stats.SatisfactionTime {
@@ -232,12 +176,12 @@ func (s *Stats) apiCounter(span *trace.TSpan) {
 		apiInfo.TolerateCount++
 	}
 	// 当前时间大于最大时间，更新最大耗时
-	if span.Elapsed > apiInfo.MaxElapsed {
-		apiInfo.MaxElapsed = span.Elapsed
+	if span.Elapsed > apiInfo.MaxDuration {
+		apiInfo.MaxDuration = span.Elapsed
 	}
 	// 最小耗时为0或者小于最小耗时，更新最小耗时
-	if apiInfo.MinElapsed == 0 || apiInfo.MinElapsed > span.Elapsed {
-		apiInfo.MinElapsed = span.Elapsed
+	if apiInfo.MinDuration == 0 || apiInfo.MinDuration > span.Elapsed {
+		apiInfo.MinDuration = span.Elapsed
 	}
 	// 获取是否有错误
 	if span.GetErr() != 0 {
@@ -336,15 +280,15 @@ func (s *Stats) methodCount(apiID int32, srvType int, elapsed int32, isErr bool)
 		s.MethodStats.Store(apiID, methodInfo)
 	}
 
-	methodInfo.TotalElapsed += elapsed
+	methodInfo.Duration += elapsed
 	methodInfo.Count++
 
-	if elapsed > methodInfo.MaxElapsed {
-		methodInfo.MaxElapsed = elapsed
+	if elapsed > methodInfo.MaxDuration {
+		methodInfo.MaxDuration = elapsed
 	}
 
-	if methodInfo.MinElapsed == 0 || methodInfo.MinElapsed > elapsed {
-		methodInfo.MinElapsed = elapsed
+	if methodInfo.MinDuration == 0 || methodInfo.MinDuration > elapsed {
+		methodInfo.MinDuration = elapsed
 	}
 
 	// 是否有异常抛出
@@ -361,15 +305,15 @@ func (s *Stats) sqlCount(sqlID int32, elapsed int32, isErr bool) {
 		s.SQLStats.Store(sqlID, sqlInfo)
 	}
 
-	sqlInfo.TotalElapsed += elapsed
+	sqlInfo.Duration += elapsed
 	sqlInfo.Count++
 
-	if elapsed > sqlInfo.MaxElapsed {
-		sqlInfo.MaxElapsed = elapsed
+	if elapsed > sqlInfo.MaxDuration {
+		sqlInfo.MaxDuration = elapsed
 	}
 
-	if sqlInfo.MinElapsed == 0 || sqlInfo.MinElapsed > elapsed {
-		sqlInfo.MinElapsed = elapsed
+	if sqlInfo.MinDuration == 0 || sqlInfo.MinDuration > elapsed {
+		sqlInfo.MinDuration = elapsed
 	}
 
 	// 是否有异常抛出
@@ -398,15 +342,15 @@ func (s *Stats) exceptionCount(methodID int32, event *trace.TSpanEvent) {
 		apiEx.Exceptions[exInfo.GetIntValue()] = ex
 	}
 
-	ex.TotalElapsed += event.GetEndElapsed()
+	ex.Duration += event.GetEndElapsed()
 	ex.Type = int(event.GetServiceType())
 	ex.Count++
 
-	if event.GetEndElapsed() > ex.MaxElapsed {
-		ex.MaxElapsed = event.GetEndElapsed()
+	if event.GetEndElapsed() > ex.MaxDuration {
+		ex.MaxDuration = event.GetEndElapsed()
 	}
 
-	if ex.MinElapsed == 0 || ex.MinElapsed > event.GetEndElapsed() {
-		ex.MinElapsed = event.GetEndElapsed()
+	if ex.MinDuration == 0 || ex.MinDuration > event.GetEndElapsed() {
+		ex.MinDuration = event.GetEndElapsed()
 	}
 }

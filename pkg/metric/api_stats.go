@@ -25,11 +25,11 @@ func NewAPIStats() *APIStats {
 
 // APIInfo 统计信息
 type APIInfo struct {
-	TotalElapsed      int32 // 总耗时
+	Duration          int32 // 总耗时
 	Count             int   // 发生次数
 	ErrCount          int   // 错误次数
-	MinElapsed        int32 // 最小耗时
-	MaxElapsed        int32 // 最大耗时
+	MinDuration       int32 // 最小耗时
+	MaxDuration       int32 // 最大耗时
 	SatisfactionCount int   // 满意次数
 	TolerateCount     int   // 可容忍次数
 }
