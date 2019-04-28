@@ -360,10 +360,6 @@ CREATE CUSTOM INDEX IF NOT EXISTS ON api_call_stats (input_date)
     USING 'org.apache.cassandra.index.sasi.SASIIndex' 
     WITH OPTIONS = {'mode': 'SPARSE'};
 
-
- 
-
-
 CREATE TABLE IF NOT EXISTS service_map (
     source_name                text,              -- 源应用名
     source_type                int,               -- 源应用类型

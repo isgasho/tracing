@@ -681,17 +681,16 @@ func (s *Storage) InsertTargetMap(appName string,
 
 // InsertUnknowParentMap ...
 func (s *Storage) InsertUnknowParentMap(targetName string, targetType int32, inputDate int64, unknowParent *metric.UnknowParent) error {
-
 	query := s.cql.Query(sql.InsertUnknowParentMap,
 		"UNKNOWN",
 		constant.UNKNOWN,
 		targetName,
 		targetType,
+		unknowParent.AccessCount,
+		0,
+		unknowParent.AccessDuration,
 		0,
 		0,
-		0,
-		unknowParent.TargetCount,
-		unknowParent.TargetErrCount,
 		inputDate,
 	)
 	if err := query.Exec(); err != nil {

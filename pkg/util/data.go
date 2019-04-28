@@ -12,3 +12,14 @@ type Alert struct {
 	Keys     string  `json:"keys" cql:"keys"`
 	Value    float64 `json:"value" cql:"value"`
 }
+
+// ApiAlert ...
+type ApiAlert struct {
+	Api    string     `json:"api" cql:"api"`
+	Alerts []*AlertKV `json:"alerts" cql:"alerts"`
+}
+
+type AlertKV struct {
+	Key   string  `json:"key" cql:"key"`
+	Value float64 `json:"value" cql:"value"`
+}

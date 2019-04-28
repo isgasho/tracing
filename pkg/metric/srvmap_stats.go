@@ -58,9 +58,8 @@ type Destination struct {
 
 // UnknowParent 未接入监控的服务，只能抓到访问地址
 type UnknowParent struct {
-	// Duration       int32
-	TargetCount    int
-	TargetErrCount int
+	AccessCount    int   // 访问总数
+	AccessDuration int32 // 访问总耗时
 }
 
 // NewUnknowParent ...
