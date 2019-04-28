@@ -59,6 +59,7 @@
           style="width: 350px;border:none;"
           @on-blur="setMapErrorFilter"
           @on-enter="setMapErrorFilter"
+          v-show="showItem==1"
         />
       </span>
 
