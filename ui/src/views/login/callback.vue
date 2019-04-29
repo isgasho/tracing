@@ -37,7 +37,7 @@ export default {
         })
     }).catch(error => {
       console.log(error)
-      _this.$router.push({ path: '/ui' })
+      _this.$router.push({ path: '/' })
     })
   },
   destroyed() {

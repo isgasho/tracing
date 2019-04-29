@@ -5,7 +5,7 @@ const apm = {
     appid:  Cookies.get('apm-appid') || '',
     appName:  Cookies.get('apm-appName') || '', // 当前选择的APP name
     selDate:  getDate(), // APM内的日历
-    dashSelDate: Cookies.get('apm-dash-selDate') ||'5', // 首页过去X分钟选项
+    dashSelDate: Cookies.get('apm-dash-selDate') ||'10', // 首页过去X分钟选项
     dashNav:  Cookies.get('apm-dash-nav') || '1', // 首页显示应用地图还是应用列表
     errorFilterNav: Cookies.get('apm-error-filter-nav') || ''// 首页应用地图的错误过滤 
   },

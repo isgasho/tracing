@@ -2,7 +2,6 @@ package alerts
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -123,7 +122,6 @@ func EditPolicy(c echo.Context) error {
 	iter := misc.Cql.Query(`SELECT name,owner FROM alerts_app WHERE policy_id=?`, policy.ID).Iter()
 	var appName, appOwner string
 	for iter.Scan(&appName, &appOwner) {
-		fmt.Println(appName)
 		q1 := misc.Cql.Query(`UPDATE alerts_app SET update_date=? WHERE name=? and owner=?`, now, appName, appOwner)
 		err = q1.Exec()
 		if err != nil {

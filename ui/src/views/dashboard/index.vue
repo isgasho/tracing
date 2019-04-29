@@ -27,18 +27,17 @@
           <Option value="4320">最近3天</Option>
         </Select>
         <Checkbox
+          v-model="topologyRealtime"
+          size="small"
+          @on-change="setMapRefresh"
+        >实时刷新</Checkbox>
+        <Checkbox
           v-model="topologyError"
           class="margin-left-10"
           size="small"
           v-show="showItem==1"
           @on-change="setMapError"
         >仅显示错误</Checkbox>
-        <Checkbox
-          v-model="topologyRealtime"
-          size="small"
-          v-show="showItem==1"
-          @on-change="setMapRefresh"
-        >实时刷新</Checkbox>
         <Select
           class="select-app"
           v-model="topologyHighlighted"
@@ -56,7 +55,7 @@
         <Input
           class="margin-left-10"
           v-model="mapErrorFilter"
-          placeholder="自定义错误阈值 e.g. count>10,error>30,duration>300 "
+          placeholder="定义link错误阈值 e.g. count>10,error>30,duration>300 "
           style="width: 350px;border:none;"
           @on-blur="setMapErrorFilter"
           @on-enter="setMapErrorFilter"
@@ -202,7 +201,10 @@ export default {
       topologyRealtime: false,
       topologyHighlighted: [],
 
-      mapOption: {}
+      mapOption: {},
+
+      //预定义的node错误阈值
+      nodeError: 20
     };
   },
   computed: {},
@@ -300,7 +302,6 @@ export default {
         }
       }
       this.mapErrorFilterRes = temp;
-      console.log(this.mapErrorFilterRes);
 
       // 根据设置好的条件，重新标示错误
       for (var i = 0; i < this.mapOption.series[0].links.length; i++) {
@@ -373,11 +374,11 @@ export default {
     setMapRefresh(refresh) {
       var _this = this;
       if (refresh) {
-        _this.initServiceMap();
+        _this.initAll();
         _this.$Message.success("应用地图实时刷新！");
 
         _this.mapRefreshTimerID = setInterval(function() {
-          _this.initServiceMap();
+          _this.initAll();
           _this.$Message.success("应用地图实时刷新！");
         }, 60000);
       } else {
@@ -431,8 +432,7 @@ export default {
     },
     selDate() {
       this.$store.dispatch("setDashSelDate", this.selTopologyDate);
-      this.initServiceMap();
-      this.initAppList();
+      this.initAll()
     },
     navShow(v) {
       this.showItem = v;
@@ -564,14 +564,12 @@ export default {
           }
         };
         // node错误率超过一个值，则添加特殊显示
-        if (nodes[j].span_count > 0) {
-          if (nodes[j].error_count / nodes[j].span_count > 0.2) {
+        if (nodes[j].error  > 0.2) {
             nodes[j].label = {
-              normal: {
+                normal: {
                 color: "#ff0000"
-              }
+                }
             };
-          }
         }
 
         // 对于数据库/中间件node进行特殊展示
@@ -655,7 +653,12 @@ export default {
                 label: {
                   show: true,
                   formatter: function(item) {
-                    return item.data.name;
+                      if (item.data.error >  20) {
+                           return item.data.name + '\n' + item.data.count + '/' + item.data.error + '%';
+                      } else {
+                          return item.data.name
+                      }
+                   
                   }
                 }
               }
@@ -701,11 +704,68 @@ export default {
         .catch(error => {
           this.$Loading.error();
         });
+    },
+    
+    initAll() {
+        // 先加载service map
+        this.destroyChart();
+        this.$Loading.start();
+        request({
+            url: "/web/serviceMap",
+            method: "GET",
+            params: {
+            start: this.selTopologyDate
+            }
+        })
+        .then(res => {
+            // 后加载APPS
+            request({
+                url: "/web/appListWithSetting",
+                method: "GET",
+                params: {
+                    start: this.selTopologyDate
+                }
+            })
+            .then(res1 => {
+                this.appList = res1.data.data;
+
+                // 初始化应用地图
+                if (res.data.data.nodes.length == 0) {
+                    this.$Message.info({
+                        content: "没有查询到数据",
+                        duration: 3
+                    });
+                } else {
+                    // 更新应用地图中节点的自身异常 error_percent
+                    for (var i=0;i<this.appList.length;i++) {
+                        for (var j=0;j<res.data.data.nodes.length;j++) {
+                            var app = this.appList[i]
+                            var node = res.data.data.nodes[j]
+                              if (app.name == node.name) {
+                                  node.count = app.count
+                                  node.error = app.error_percent
+                              } 
+                        }
+                    }
+                    console.log(res.data.data.nodes)
+                    this.initChart(res.data.data.nodes, res.data.data.links);
+                    for (var i = 0; i < res.data.data.nodes.length; i++) {
+                        this.appNames.push(res.data.data.nodes[i].name);
+                    }
+                }
+                this.$Loading.finish();
+            })
+            .catch(error => {
+                this.$Loading.error();
+            });
+        })
+        .catch(error => {
+            this.$Loading.error();
+        });
     }
   },
   mounted() {
-    this.initServiceMap();
-    this.initAppList();
+    this.initAll()
   }
 };
 </script>

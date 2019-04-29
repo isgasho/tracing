@@ -66,8 +66,8 @@ func Dashboard(c echo.Context) error {
 	}
 
 	// 读取相应数据，按照时间填到对应的桶中
-	q := `SELECT total_elapsed,count,err_count,satisfaction,tolerate,input_date FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `
-	iter := misc.Cql.Query(q, appName, start.Unix(), end.Unix()).Iter()
+	q := misc.Cql.Query(`SELECT total_elapsed,count,err_count,satisfaction,tolerate,input_date FROM api_stats WHERE app_name = ? and input_date > ? and input_date < ? `, appName, start.Unix(), end.Unix())
+	iter := q.Iter()
 
 	// apps := make(map[string]*AppStat)
 	var count int

@@ -138,15 +138,15 @@ export default {
             this.switchID = setTimeout(function() {
                 _this.isOpen = false
                 _this.switchID = ''
-            },4000)
+            },8000)
         }
     },
     logout() {
       this.$store.dispatch('Logout').then(() => {
-        this.$router.push('/ui') // In order to re-instantiate the vue-router object to avoid bugs
+        this.$router.push('/') // In order to re-instantiate the vue-router object to avoid bugs
       }).catch(error => {
         // 登出错误，登陆数据已经清除，返回登陆页面 
-        this.$router.push('/ui')
+        this.$router.push('/')
       })
     },
   },

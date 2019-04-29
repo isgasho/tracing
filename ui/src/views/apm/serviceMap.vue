@@ -95,6 +95,7 @@ export default {
       var error = 0
       if (link.access_count > 0) {
         error = (link.error_count / link.access_count) * 100
+        error = error.toFixed(1);
       }
       return link.access_count + '/' + error + '%/' + link.avg + 'ms'
     },

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -70,7 +69,6 @@ func QueryAPPServiceMap(c echo.Context) error {
 	var sname string
 	var stype, accessCount, accessErr, accessDuration int
 	for iter.Scan(&sname, &stype, &accessCount, &accessErr, &accessDuration) {
-		fmt.Println(sname, stype, accessCount, accessErr, accessDuration)
 		// 我们需要为每个APP区别不同的unknow，否则不同app对应的unkown请求涞源都会合并，数据就会不正确
 		// 更新父节点信息
 		_, ok := nodeMap[sname]

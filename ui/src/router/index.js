@@ -12,7 +12,7 @@ export default new Router({
   mode: 'history',
   routes: [
     { 
-      path: '/ui/dashboard', 
+      path: '/ui', 
       component: Nav,
       redirect: '/ui/dashboard',
       children: [
@@ -58,7 +58,7 @@ export default new Router({
         },
       ]
     },
-    { path: '/ui', component: () => import('@/views/index')},
+    { path: '/', component: () => import('@/views/index')},
     { path: '/ui/callback', component: () => import('@/views/login/callback')},
 
     //帮助文档

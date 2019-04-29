@@ -2,7 +2,6 @@ package session
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"time"
@@ -128,8 +127,7 @@ func Logout(c echo.Context) error {
 	// 请求sso 注销token
 	body := "{'ssoToken':'" + token + "', 'clientNo':'1' }"
 	url := misc.Conf.Login.SsoLogout
-	b := requestToSso(body, url)
-	fmt.Println(string(b))
+	requestToSso(body, url)
 	return c.JSON(http.StatusOK, g.Result{
 		Status:  http.StatusOK,
 		Message: "退出登陆成功",

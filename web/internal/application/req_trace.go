@@ -112,7 +112,6 @@ func QueryTraces(c echo.Context) error {
 	}
 
 	iter := q.Iter()
-	fmt.Println(q.String())
 	var elapsed, isError int
 	var inputDate int64
 	var tid, agentID, remoteAddr string

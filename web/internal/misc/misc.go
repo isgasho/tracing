@@ -28,6 +28,7 @@ func StartEndDate(c echo.Context) (start time.Time, end time.Time, err error) {
 	if err != nil {
 		return
 	}
+
 	// utils.OnlyAlphaAndNum
 	return
 }
