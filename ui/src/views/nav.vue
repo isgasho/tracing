@@ -8,28 +8,20 @@
                     <div style="color:white;font-weight:bold;margin-left:35px;">传化监控平台</div>
                 </a>
             </li>
-            <li class="product ng-scope system not-active">
-                <router-link to="/ui/dashboard">
-                    <a>监控大盘</a>
-                </router-link >
+            <li class="product ng-scope system not-active hover-cursor" @click="gotoPage('/ui/dashboard')">
+                监控大盘
             </li>
-            <li class="product ng-scope apm not-active hover-cursor">
-                <router-link to="/ui/apm">
-                    <a>应用监控</a>
-                </router-link >
+            <li class="product ng-scope apm not-active hover-cursor" @click="gotoPage('/ui/apm')">
+                应用监控
             </li>
-            <li class="product ng-scope browser not-active" @click="todoTip()">
+            <li class="product ng-scope browser not-active hover-cursor" @click="gotoPage('')">
                 业务监控
             </li>
-            <li class="product ng-scope alerts not-active hover-cursor">
-                <router-link to="/ui/alerts">
-                    <a>告警平台</a>
-                </router-link >
+            <li class="product ng-scope alerts not-active hover-cursor" @click="gotoPage('/ui/alerts')">
+                告警平台
             </li> 
-            <li class="product ng-scope infrastructure not-active hover-cursor">
-                <router-link to="/ui/docs">
-                    <a>帮助文档</a>
-                </router-link >
+            <li class="product ng-scope infrastructure not-active hover-cursor" @click="gotoPage('/ui/docs')">
+                帮助文档
             </li>
         </ul>
         <span class="hover-cursor">
@@ -78,8 +70,15 @@ export default {
   mounted() {
   },
   methods: {
+    gotoPage(url) {
+        if (url == '') {
+            this.$Message.info('尚未开放，敬请期待')
+        } else {
+            this.$router.push(url)
+        }
+    },
     todoTip() {
-        this.$Message.info('尚未开放，敬请期待')
+        
     },
     getBG() {
         var p = window.location.pathname
@@ -138,7 +137,7 @@ export default {
             this.switchID = setTimeout(function() {
                 _this.isOpen = false
                 _this.switchID = ''
-            },8000)
+            },10000)
         }
     },
     logout() {

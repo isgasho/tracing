@@ -66,7 +66,7 @@
           </span> -->
 
         <div style="padding-left:10px;padding-right:10px" class="margin-top-20 margin-bottom-40">
-          <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="showTraceTable()" class="margin-top-15">
+          <Table :row-class-name="rowClassName"  :columns="traceLabels" :data="showTraceTable()" class="margin-top-15" @on-row-dblclick="showTrace">
               <template slot-scope="{ row }" slot="operation">
                     <Icon type="ios-eye" style="color: #777" @click="showTrace(row)"/>
               </template>
@@ -105,13 +105,13 @@
           <Col span="12" style="margin-top:-8px">
             <Row>
                 <Col span="8">
-                  <blueLineChart width="240px" height="130px" id="tracing-jvmcpu" titleFontSize="12" name2="jvm" name1="system" title="cpu" :timeline="timeline" :valueList2="jvmCpuList" :valueList1="systemCpuList" :group="chartGroup" :showXAxis="false"></blueLineChart>
+                  <blueLineChart width="240px" height="130px" id="tracing-jvmcpu" :titleFontSize="12" name2="jvm" name1="system" title="cpu" :timeline="timeline" :valueList2="jvmCpuList" :valueList1="systemCpuList" :group="chartGroup" :showXAxis="false"></blueLineChart>
                 </Col>
                  <Col span="8">
-                   <greenLineChart width="240px" height="130px" id="tracing-jvmheap" titleFontSize="12" title="heap" name1="heap max" name2="heap usage"  :timeline="timeline" :valueList1="heapMaxList" :valueList2="jvmHeapList"  :group="chartGroup" :showXAxis="false"></greenLineChart>
+                   <greenLineChart width="240px" height="130px" id="tracing-jvmheap" :titleFontSize="12" title="heap" name1="heap max" name2="heap usage"  :timeline="timeline" :valueList1="heapMaxList" :valueList2="jvmHeapList"  :group="chartGroup" :showXAxis="false"></greenLineChart>
                 </Col>
                 <Col span="8">
-                   <redLineChart width="240px" height="130px" id="tracing-fullgc" titleFontSize="12" title="fullgc"  name2="总耗时" :timeline="timeline" :valueList2="fullgcDurationList"  :group="chartGroup" :showXAxis="false"></redLineChart>
+                   <redLineChart width="240px" height="130px" id="tracing-fullgc" :titleFontSize="12" title="fullgc"  name2="总耗时" :timeline="timeline" :valueList2="fullgcDurationList"  :group="chartGroup" :showXAxis="false"></redLineChart>
                 </Col>
             </Row>
             
@@ -275,7 +275,9 @@ export default {
 
        timeline: [],
         jvmCpuList: [],
+        systemCpuList: [],
         jvmHeapList: [],
+        heapMaxList: [],
         fullgcDurationList: []
     }
   },
@@ -346,7 +348,7 @@ export default {
             max_elapsed: this.maxElapsed,
             limit: this.resultLimit,
             search_error: this.searchError,
-            search_trace_id: this.searchTraceID,
+            search_trace_id: this.searchTraceID.trim(),
             remote_addr: this.remoteAddr,
             start: JSON.parse(this.$store.state.apm.selDate)[0],
             end: JSON.parse(this.$store.state.apm.selDate)[1],

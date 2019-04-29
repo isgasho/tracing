@@ -55,7 +55,7 @@
                         <Select v-model="tempApp.policy" style="width:280px" placeholder="请选择.." filterable> 
                             <Option v-for="policy in policyList" :value="policy.id" :key="policy.id">{{ policy.name }}</Option>
                         </Select>
-                         <policy :policyID="tempApp.policy" policyName="view" class="hover-cursor font-size-12 margin-left-5 alerts-color-primary"></policy>
+                         <policy v-show="tempApp.policy != ''" :policyID="tempApp.policy" policyName="view" class="hover-cursor font-size-12 margin-left-5 alerts-color-primary"></policy>
                     </FormItem>
 
                     <FormItem label="告警通道">
@@ -367,41 +367,41 @@ export default {
       },
       submitHandleApp() {
           if (this.handleAppType =='create') {
-              request({
-                    url: '/web/createAppAlert',
-                    method: 'POST',
-                    params: {
-                        app_name: this.tempApp.name,
-                        policy: this.tempApp.policy,
-                        channel: this.tempApp.channel,
-                        users:  JSON.stringify(this.tempApp.users),
-                        api_alerts: JSON.stringify(this.tempApp.api_alerts)
-                    }
-                }).then(res => {   
-                    this.loadApps()
-                    this.$Message.success({
-                        content: '创建成功',
-                        duration: 3 
-                    })
+            request({
+                url: '/web/createAppAlert',
+                method: 'POST',
+                params: {
+                    app_name: this.tempApp.name,
+                    policy: this.tempApp.policy,
+                    channel: this.tempApp.channel,
+                    users:  JSON.stringify(this.tempApp.users),
+                    api_alerts: JSON.stringify(this.tempApp.api_alerts)
+                }
+            }).then(res => {   
+                this.loadApps()
+                this.$Message.success({
+                    content: '创建成功',
+                    duration: 3 
                 })
+            })
           } else {
-              request({
-                    url: '/web/editAppAlert',
-                    method: 'POST',
-                    params: {
-                        app_name: this.tempApp.name,
-                        policy: this.tempApp.policy,
-                        channel: this.tempApp.channel,
-                        users:  JSON.stringify(this.tempApp.users),
-                        api_alerts: JSON.stringify(this.tempApp.api_alerts)
-                    }
-                }).then(res => {   
-                    this.loadApps()
-                    this.$Message.success({
-                        content: '编辑成功',
-                        duration: 3 
-                    })
+            request({
+                url: '/web/editAppAlert',
+                method: 'POST',
+                params: {
+                    app_name: this.tempApp.name,
+                    policy: this.tempApp.policy,
+                    channel: this.tempApp.channel,
+                    users:  JSON.stringify(this.tempApp.users),
+                    api_alerts: JSON.stringify(this.tempApp.api_alerts)
+                }
+            }).then(res => {   
+                this.loadApps()
+                this.$Message.success({
+                    content: '编辑成功',
+                    duration: 3 
                 })
+            })
           }
       },
       cancelHandleApp() {
@@ -420,7 +420,7 @@ export default {
           this.handleAppVisible = true
           this.apis = []
           this.tempApp = {
-              policy :this.policyList[0].id,
+              policy : '',
               channel: 'mobile',
               users: [this.$store.state.user.id],
               api_alerts: []
@@ -487,17 +487,17 @@ export default {
 <style lang="less">
 @import "../../theme/alerts.less";
  input {
-                border-top:none !important;
-                border-left:none !important;
-                border-right:none !important;
-                border-radius: 0 !important
-              }
-  
-            .ivu-input:focus {
-                border-color: @primary-color;
-                outline: 0;
-                box-shadow: none;
-            }
+    border-top:none !important;
+    border-left:none !important;
+    border-right:none !important;
+    border-radius: 0 !important
+}
+
+.ivu-input:focus {
+    border-color: @primary-color;
+    outline: 0;
+    box-shadow: none;
+}
 </style>
 
 <style lang="less" scoped> 
