@@ -106,8 +106,12 @@ func (s *Web) Start() error {
 		//查询所有服务器名
 		e.GET("/web/agentList", app.QueryAgents, s.checkLogin)
 
+		// 应用拓扑图
 		e.GET("/web/appServiceMap", app.QueryAPPServiceMap, s.checkLogin)
+		// 应用地图
 		e.GET("/web/serviceMap", app.QueryServiceMap, s.checkLogin)
+		// API拓扑图
+		e.GET("/web/apiMap", app.QueryApiMap, s.checkLogin)
 
 		// 链路查询
 		e.GET("/web/queryTraces", app.QueryTraces, s.checkLogin)
