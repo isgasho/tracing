@@ -370,9 +370,9 @@ func (a *App) reportAPIMap() error {
 		return nil
 	}
 
-	for apiID, apiInfo := range a.apiMap[inputDate].APIS {
+	for apiStr, apiInfo := range a.apiMap[inputDate].APIS {
 		for parentName, parentInfo := range apiInfo.Parents {
-			gCollector.storage.InsertAPIMapStats(a.name, a.appType, inputDate, apiID, parentName, parentInfo)
+			gCollector.storage.InsertAPIMapStats(a.name, a.appType, inputDate, apiStr, parentName, parentInfo)
 		}
 	}
 

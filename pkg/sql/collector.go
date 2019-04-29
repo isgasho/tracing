@@ -147,7 +147,7 @@ var InsertUnknowParentMap string = `INSERT INTO service_map (
 // VALUES (?,?,?,?,?,?,?,?);`
 
 // Api被调用统计信息
-var InsertAPIMapStats string = `INSERT INTO api_map (source_name, source_type, target_name, target_type, access_count, access_err_count, access_duration, api_id, input_date)
+var InsertAPIMapStats string = `INSERT INTO api_map (source_name, source_type, target_name, target_type, access_count, access_err_count, access_duration, api, input_date)
 VALUES (?,?,?,?,?,?,?,?,?);`
 
 var LoadAgents string = `SELECT service_type, agent_id, start_time, ip FROM agents WHERE app_name=?;`

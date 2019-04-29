@@ -96,22 +96,36 @@ func (s *Stats) eventsCounterSpanChunk(spanChunk *trace.TSpanChunk) {
 
 // apiMapCounter 接口被哪些服务调用计算
 func apiMapCounter(apiMap *metric.APIMap, span *trace.TSpan) {
-	// spanID 为-1的情况该服务就是父节点，查不到被谁调用，这里可以考虑能不能抓到请求者到IP
-	if span.ParentSpanId == -1 {
+
+	apiStr := span.GetRPC()
+	if len(apiStr) <= 0 {
 		return
 	}
 
-	api, ok := apiMap.APIS[span.GetApiId()]
+	api, ok := apiMap.APIS[apiStr]
 	if !ok {
 		api = metric.NewAPI()
-		apiMap.APIS[span.GetApiId()] = api
+		apiMap.APIS[apiStr] = api
 	}
-	apiInfo, ok := api.Parents[span.GetParentApplicationName()]
+
+	var parentName string
+	var parentType int16
+	// spanID 为-1的情况该服务就是父节点，查不到被谁调用，这里可以考虑能不能抓到请求者到IP
+	if span.ParentSpanId == -1 {
+		parentName = "UNKNOWN"
+		parentType = constant.SERVERTYPE_UNKNOWN
+	} else {
+		parentName = span.GetParentApplicationName()
+		parentType = span.GetParentApplicationType()
+	}
+
+	apiInfo, ok := api.Parents[parentName]
 	if !ok {
 		apiInfo = metric.NewAPIMapInfo()
-		apiInfo.Type = span.GetParentApplicationType()
-		api.Parents[span.GetParentApplicationName()] = apiInfo
+		apiInfo.Type = parentType
+		api.Parents[parentName] = apiInfo
 	}
+
 	apiInfo.AccessCount++
 	apiInfo.AccessDuration += span.Elapsed
 	if span.GetErr() != 0 {

@@ -722,7 +722,7 @@ func (s *Storage) InsertUnknowParentMap(targetName string, targetType int32, inp
 // }
 
 // InsertAPIMapStats Api被调用统计信息
-func (s *Storage) InsertAPIMapStats(appName string, appType int32, inputTime int64, apiID int32, parentname string, parentInfo *metric.APIMapInfo) error {
+func (s *Storage) InsertAPIMapStats(appName string, appType int32, inputTime int64, apiStr string, parentname string, parentInfo *metric.APIMapInfo) error {
 	query := s.cql.Query(sql.InsertAPIMapStats,
 		parentname,
 		parentInfo.Type,
@@ -731,7 +731,7 @@ func (s *Storage) InsertAPIMapStats(appName string, appType int32, inputTime int
 		parentInfo.AccessCount,
 		parentInfo.AccessErrCount,
 		parentInfo.AccessDuration,
-		apiID,
+		apiStr,
 		inputTime,
 	)
 	if err := query.Exec(); err != nil {

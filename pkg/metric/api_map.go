@@ -2,13 +2,13 @@ package metric
 
 // APIMap api被调用情况
 type APIMap struct {
-	APIS map[int32]*API
+	APIS map[string]*API
 }
 
 // NewAPIMap ...
 func NewAPIMap() *APIMap {
 	return &APIMap{
-		APIS: make(map[int32]*API),
+		APIS: make(map[string]*API),
 	}
 }
 

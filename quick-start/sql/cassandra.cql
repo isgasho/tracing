@@ -355,9 +355,9 @@ CREATE TABLE IF NOT EXISTS api_map (
     access_err_count           int,                -- 访问错误数
     access_duration            int,                -- 访问总耗时
     
-    api_id                     int,                -- api id
+    api                        text,                -- api id
     input_date                 bigint,             -- 插入时间
-    PRIMARY KEY (target_name, input_date, api_id, source_name)
+    PRIMARY KEY (target_name, input_date, api, source_name)
 ) WITH gc_grace_seconds = 10800;
 
 CREATE CUSTOM INDEX IF NOT EXISTS ON api_map (input_date) 

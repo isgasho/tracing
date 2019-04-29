@@ -3,7 +3,7 @@ package constant
 var ServiceType map[int]string
 
 const (
-	SERVERTYPE_UNKNOWN       = -9999
+	SERVERTYPE_UNKNOWN int16 = -9999
 	ACTIVEMQ_CLIENT    int16 = 8310
 
 	ACTIVEMQ_CLIENT_INTERNAL int16 = 8311
