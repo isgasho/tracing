@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container" style="height:100%;">
       <Row>
           <Col span="22" offset="1">
             <div class="header font-size-18 no-border">

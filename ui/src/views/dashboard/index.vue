@@ -64,7 +64,7 @@
         />
       </span>
 
-      <span style="float:right;margin-right:-50px;">
+      <span style="float:right;margin-right:-50px;"   v-show="showItem==2">
         <span class="item">
           应用总数：
           <span class="count bg-second">{{appList.length}}</span>
@@ -167,7 +167,7 @@ export default {
       appNames: [],
       selApps: [],
       mapRefreshTimerID: "",
-      mapErrorFilter: "",
+      mapErrorFilter:  this.$store.state.apm.errorFilterNav,
       mapErrorFilterRes: {},
       appLabels: [
         {
@@ -238,6 +238,8 @@ export default {
                 }
             }
         }
+
+        this.$store.dispatch("setErrorFilterNav", "");
           return 
       }
          // 解析设定字符串，格式：count<10 error>30 duration>300
@@ -361,6 +363,10 @@ export default {
             link.lineStyle.normal.color = "transparent";
           }
         }
+
+
+        // 提交到store
+        this.$store.dispatch("setErrorFilterNav", this.mapErrorFilter);
       }
     },
     // 设定后，每60秒刷新一次应用地图
@@ -674,7 +680,7 @@ export default {
              _this.$Message.warning('非普通类型应用不可以前往应用详情页面')
          }
       }
-      this.chart.on("dblclick", nodeOnClick);
+      this.chart.on("click", nodeOnClick);
       //'click'、'dblclick'、'mousedown'、'mousemove'、'mouseup'、'mouseover'、'mouseout'
     },
 

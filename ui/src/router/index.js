@@ -12,7 +12,7 @@ export default new Router({
   mode: 'history',
   routes: [
     { 
-      path: '/ui', 
+      path: '/ui/dashboard', 
       component: Nav,
       redirect: '/ui/dashboard',
       children: [
@@ -33,13 +33,14 @@ export default new Router({
             { path: '/ui/apm/tracing',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/tracing')},
             { path: '/ui/apm/runtime',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/runtime')},
             { path: '/ui/apm/system',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/system')},
-            { path: '/ui/apm/thread',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/thread')},
+            { path: '/ui/apm/jvm',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/jvm')},
             { path: '/ui/apm/memory',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/memory')},
             { path: '/ui/apm/database',  meta: '应用监控',bg: '#39c', component: () => import('@/views/apm/database')},
             { path: '/ui/apm/api', meta: '应用监控',bg: '#39c',  component: () => import('@/views/apm/api')},
             { path: '/ui/apm/exception',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/exception')},
             { path: '/ui/apm/method',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/method')},
-            { path: '/ui/apm/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')}
+            { path: '/ui/apm/serviceMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/serviceMap')},
+            { path: '/ui/apm/apiMap',  meta: '应用监控', bg: '#39c',component: () => import('@/views/apm/apiMap')}
           ]
         },
         // 告警平台
@@ -57,7 +58,7 @@ export default new Router({
         },
       ]
     },
-    { path: '/', component: () => import('@/views/index')},
+    { path: '/ui', component: () => import('@/views/index')},
     { path: '/ui/callback', component: () => import('@/views/login/callback')},
 
     //帮助文档
@@ -67,6 +68,7 @@ export default new Router({
       redirect: '/ui/docs/about',
       children: [
         { path: 'about', component: () => import('@/views/docs/pages/about')},
+        { path: 'tech', component: () => import('@/views/docs/pages/tech')},
 
         { path: 'install', component: () => import('@/views/docs/pages/install')}
       ]

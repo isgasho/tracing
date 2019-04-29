@@ -2,11 +2,9 @@
   <div>
     <span style="float:right;margin-right:20px">
         <Tag style="width:30px;height:15px;border:none" :style="{background:tagColor(0)}"></Tag>
-        <span class="font-size-10">普通应用</span> 
-        <Tag style="width:30px;height:15px;border:none" class="margin-left-10" :style="{background:tagColor(1)}"></Tag>
-        <span class="font-size-10">数据库/中间件</span> 
+        <span class="font-size-10">来源应用</span> 
          <Tag style="width:30px;height:15px;border:none" class="margin-left-10" :style="{background:tagColor(3)}"></Tag>
-        <span class="font-size-10">当前应用</span> 
+        <span class="font-size-10">当前应用接口</span> 
     </span>
 
     <div :id="id" class="app-service-map" style="width:calc(100vw - 180px);height:calc(100vh - 100px)"></div>
@@ -70,7 +68,7 @@ export default {
       this.destroyChart()
       this.$Loading.start();
         request({ 
-            url: '/web/appServiceMap',
+            url: '/web/apiMap',
             method: 'GET',
             params: {
               app_name: this.$store.state.apm.appName,
@@ -85,6 +83,7 @@ export default {
                 duration: 3 
               })
           } else {
+            console.log(res.data.data)
             this.initChart(res.data.data.nodes,res.data.data.links)
           }
         }).catch(error => {
@@ -161,33 +160,17 @@ export default {
           }
         }
 
-        // 对当前node进行特殊标示
-        if (nodes[j].name == this.$store.state.apm.appName) {
-             nodes[j].symbolSize = this.primaryNodeSize;
-             nodes[j].itemStyle = {
-              normal: {
-                color:   new echarts.graphic.LinearGradient(0, 0, 1, 0, [{
+        // 当前应用接口
+        if (nodes[j].category == 2) {
+          nodes[j].itemStyle = {
+                normal: {
+                   color:   new echarts.graphic.LinearGradient(0, 0, 1, 0, [{
                     offset: 0,
                     color: '#157eff'
                 }, {
                     offset: 1,
                     color: '#35c2ff'
                 }]),
-              }
-            };     
-        }
-
-         // 对于数据库/中间件node进行特殊展示
-        if (nodes[j].category == 1) {
-          nodes[j].itemStyle = {
-                normal: {
-                  color: new echarts.graphic.LinearGradient(0, 0, 1, 0, [{
-                      offset: 0,
-                      color: '#ffb402'
-                  }, {
-                      offset: 1,
-                      color: '#ffdc84'
-                  }]),
                 }
               }; 
         } 
@@ -227,7 +210,7 @@ export default {
             force: {
               repulsion: 2000,
               edgeLength: this.lineLength
-              // layoutAnimation: false
+            //   layoutAnimation: false
             },
             name: "应用",
             roam: true,

@@ -36,7 +36,7 @@
               </span>
             </div>
             <Row class="margin-top-5">
-              <Col :xs="{span:24}" :sm="{span:24}" :md="{span: 18, offset: 3}" :lg="{ span: 18, offset: 3}">
+              <Col :xs="{span:24}" :sm="{span:24}" :md="{span: 18, offset: 1}" :lg="{ span: 18, offset: 1}">
                 <!-- 渲染页面title -->
                 <router-view class="page-title" />
                 <!-- 渲染页面内容 -->
@@ -144,14 +144,14 @@ export default {
     initItem() {
       this.path = window.location.pathname
 
-      this.items = ['introduce','about','deploy','install']
+      this.items = ['introduce','about','tech','deploy','install']
 
-      this.level = {introduce: 1,'about':2, deploy:1,install:2}
+      this.level = {introduce: 1,'about':2,'tech':2, deploy:1,install:2}
 
-      this.names = {introduce: this.$t('pageName.introduce'),'about': this.$t('pageName.about'),
+      this.names = {introduce: this.$t('pageName.introduce'),'about': this.$t('pageName.about'),'tech': this.$t('pageName.tech'),
       deploy: this.$t('pageName.deploy'),install:this.$t('pageName.install')}
 
-      this.selItem = this.path.split('/')[4]
+      this.selItem = this.path.split('/')[3]
 
       this.genPrev()
       this.genNext() 

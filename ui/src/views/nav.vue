@@ -67,7 +67,8 @@ export default {
   },
   data () {
     return {
-        isOpen:false
+        isOpen:false,
+        switchID: ''
     }
   }, 
   watch: {
@@ -133,17 +134,19 @@ export default {
         // 自动关闭
         if (this.isOpen) {
             var _this = this
-            setTimeout(function() {
+            clearTimeout(this.switchID)
+            this.switchID = setTimeout(function() {
                 _this.isOpen = false
+                _this.switchID = ''
             },4000)
         }
     },
     logout() {
       this.$store.dispatch('Logout').then(() => {
-        this.$router.push('/') // In order to re-instantiate the vue-router object to avoid bugs
+        this.$router.push('/ui') // In order to re-instantiate the vue-router object to avoid bugs
       }).catch(error => {
-        // 登出错误，登陆数据已经清除，返回登陆页面
-        this.$router.push('/')
+        // 登出错误，登陆数据已经清除，返回登陆页面 
+        this.$router.push('/ui')
       })
     },
   },

@@ -72,13 +72,6 @@ export default {
         },
           shortcuts: [
             {
-                  text: '1m',
-                  value () {
-                    var d = new Date()
-                      return [new Date(d.getTime() - 60 * 1000),d];
-                  }
-              },
-            {
                   text: '5m',
                   value () {
                     var d = new Date()
@@ -126,7 +119,21 @@ export default {
                     var d = new Date()
                       return [new Date(d.getTime() - 3600 * 1000 * 24),d];
                   }
-              }
+              },
+              {
+                  text: '3d',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 3*3600 * 1000 * 24),d];
+                  }
+              },
+              {
+                  text: '7d',
+                  value () {
+                    var d = new Date()
+                      return [new Date(d.getTime() - 7*3600 * 1000 * 24),d];
+                  }
+              },
           ]
       }
     }
@@ -163,11 +170,11 @@ export default {
     initItem() {
        this.appNames = [this.$store.state.apm.appName]
         this.path = window.location.pathname
-        this.items = ['monitoring','dashboard','tracing','serviceMap','runtime','stats','api','database','method','exception','profiling','thread','memory']
-        this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2, runtime:2,system:2, profiling:1,thread:2,memory:2,stats:1,database:2,api:2,exception:2,method:2}
+        this.items = ['monitoring','dashboard','tracing','serviceMap','apiMap','runtime','stats','api','database','method','exception','profiling','jvm']
+        this.level = {monitoring: 1,'dashboard':2, tracing:2,serviceMap:2,apiMap:2, runtime:2,system:2, stats:1,database:2,api:2,exception:2,method:2,profiling:1,jvm:2,}
         this.names = {monitoring: '监控','dashboard': "应用总览",
-            tracing: '链路跟踪',serviceMap:'应用拓扑',  
-            runtime: '应用运行时', system:'基础设施',profiling: '在线诊断', thread:'线程剖析', memory: '内存剖析',
+            tracing: '链路跟踪',serviceMap:'应用拓扑', apiMap:'API拓扑', 
+            runtime: '应用运行时', system:'基础设施',profiling: '在线诊断', jvm:'JVM实时剖析', 
             stats: '数据统计', 
             database:'数据库', api:'请求接口', exception:'错误异常',method:'关键事务'}
         this.selItem = this.path.split('/')[3]

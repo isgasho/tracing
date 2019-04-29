@@ -6,7 +6,8 @@ const apm = {
     appName:  Cookies.get('apm-appName') || '', // 当前选择的APP name
     selDate:  getDate(), // APM内的日历
     dashSelDate: Cookies.get('apm-dash-selDate') ||'5', // 首页过去X分钟选项
-    dashNav:  Cookies.get('apm-dash-nav') || '1' // 首页显示应用地图还是应用列表
+    dashNav:  Cookies.get('apm-dash-nav') || '1', // 首页显示应用地图还是应用列表
+    errorFilterNav: Cookies.get('apm-error-filter-nav') || ''// 首页应用地图的错误过滤 
   },
 
   mutations: {
@@ -29,6 +30,10 @@ const apm = {
     SET_DASH_NAV: (state, val) => {
       state.dashNav = val
       Cookies.set('apm-dash-nav', val)
+    },
+    SET_ERROR_FILTER_NAV: (state, val) => {
+      state.errorFilterNav = val
+      Cookies.set('apm-error-filter-nav', val)
     }
   },
 
@@ -47,7 +52,10 @@ const apm = {
     } ,
     setDashNav({ commit }, val) {
       commit('SET_DASH_NAV', val)
-    }   
+    } ,
+    setErrorFilterNav({ commit }, val) {
+      commit('SET_ERROR_FILTER_NAV', val)
+    }     
   }
 }
 

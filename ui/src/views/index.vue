@@ -77,8 +77,8 @@ export default {
   },
   methods: {
       gotoApmAdmin() {
-        let host = config.dev.host + ":" + config.dev.port
-        let url = "http://sitetest.tf56.com/openssoWeb/opensso/login?clientNo=1" + "&redirectUrl=http://" + host + "/ui/callback"
+        // let host = config.dev.host + ":" + config.dev.port
+        let url = "http://sitetest.tf56.com/openssoWeb/opensso/login?clientNo=1" + "&redirectUrl=" + window.location.origin + "/ui/callback"
         window.location.href = url
       }
   },

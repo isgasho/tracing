@@ -1,6 +1,6 @@
 <template>
   <span>
-        <Tooltip placement="bottom" max-width="400">
+        <Tooltip placement="bottom" max-width="400" :transfer="true">
         {{alert.label}}
         <div slot="content" style="padding: 15px 15px">
         <div class="alert-setting">
