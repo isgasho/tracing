@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/imdevlab/tracing/collector/misc"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/network"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift"
@@ -33,12 +32,9 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 					logger.Warn("msgpack Unmarshal", zap.String("error", err.Error()))
 					return err
 				}
-				// 检查内存中是否存在app信息，不存在存入数据库中
-				if !gCollector.apps.isAppExist(agentInfo.AppName) {
-					if err := gCollector.storage.AppNameStore(agentInfo.AppName); err != nil {
-						logger.Warn("insert apps error", zap.String("error", err.Error()))
-						return err
-					}
+				if err := gCollector.storage.AppNameStore(agentInfo.AppName); err != nil {
+					logger.Warn("insert apps error", zap.String("error", err.Error()))
+					return err
 				}
 
 				if err := gCollector.storage.AgentStore(agentInfo, true); err != nil {
@@ -46,13 +42,10 @@ func pinpointPacket(conn net.Conn, tracePack *network.TracePack, appname, agenti
 					return err
 				}
 
-				// 内存缓存Agent信息
-				gCollector.apps.storeAgent(agentInfo.AppName, agentInfo.AgentID, agentInfo.StartTimestamp, agentInfo.ServiceType)
-				misc.AddrStore.Add(agentInfo.AppName, agentInfo.IP4S)
-
 				*appname = agentInfo.AppName
 				*agentid = agentInfo.AgentID
 				*initName = true
+
 				logger.Info("Online", zap.String("appName", agentInfo.AppName), zap.String("agentID", agentInfo.AgentID))
 				// 注册信息原样返回
 				if _, err := conn.Write(tracePack.Encode()); err != nil {

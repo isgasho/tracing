@@ -50,6 +50,10 @@ type Config struct {
 		RuntimeRange     int64 // Runtime延迟计算时间
 	}
 
+	Apps struct {
+		LoadInterval int64 // 加载app时间间隔
+	}
+
 	MQ struct {
 		Addrs []string // mq地址
 		Topic string   // 主题
@@ -67,7 +71,6 @@ var Conf *Config
 // InitConfig ...
 func InitConfig(path string) {
 	conf := &Config{}
-	initAddrStore()
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		log.Fatal("InitConfig:ioutil.ReadFile", err)

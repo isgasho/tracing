@@ -10,12 +10,12 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/imdevlab/tracing/collector/misc"
-	"github.com/imdevlab/tracing/collector/stats"
 	"github.com/imdevlab/tracing/pkg/alert"
 	"github.com/imdevlab/tracing/pkg/constant"
 	"github.com/imdevlab/tracing/pkg/metric"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/pinpoint"
 	"github.com/imdevlab/tracing/pkg/pinpoint/thrift/trace"
+	"github.com/imdevlab/tracing/pkg/util"
 )
 
 // 服务统计数据只实时计算1分钟的点，不做任何滑动窗口
@@ -27,34 +27,46 @@ type App struct {
 	appType    int32                     // 服务类型
 	taskID     int64                     // 定时任务ID
 	name       string                    // 服务名称
-	agents     map[string]*Agent         // agent集合
+	orderKeys  OrderlyKeys               // 排序打点
+	agents     map[string]*util.Agent    // agent集合
+	apis       map[string]struct{}       // 接口信息
+	points     map[int64]*Stats          // 计算点集合
+	apiMapKey  int64                     // API被调用计算当前计算key
+	apiMap     map[int64]*metric.APIMap  // API被调用
 	stopC      chan bool                 // 停止通道
 	tickerC    chan bool                 // 定时任务通道
 	spanC      chan *trace.TSpan         // span类型通道
 	spanChunkC chan *trace.TSpanChunk    // span chunk类型通道
 	statC      chan *pinpoint.TAgentStat // jvm状态类型通道
-	apis       map[string]struct{}       // 接口信息
-	orderlyKey stats.OrderlyKey          // 排序打点
-	points     map[int64]*stats.Stats    // 计算点集合
-	apiMapKey  int64                     // API被调用计算当前计算key
-	apiMap     map[int64]*metric.APIMap  // API被调用
-	respCodes  map[int]struct{}          // 响应code结合，用来标注合法响应code
+
+	APIStats        *metric.APIStats        // api计算统计
+	MethodStats     *metric.MethodStats     // 接口计算统计
+	SQLStats        *metric.SQLStats        // sql语句计算统计
+	ExceptionsStats *metric.ExceptionsStats // 异常计算统计
+	respCodes       map[int]struct{}        //
+	SrvMap          *metric.SrvMap          // 服务拓扑图
 }
 
-func newApp(name string, appType int32) *App {
+func newApp(name string) *App {
 	app := &App{
-		appType:    appType,
+		// appType:    appType,
 		name:       name,
-		agents:     make(map[string]*Agent),
+		agents:     make(map[string]*util.Agent),
 		stopC:      make(chan bool, 1),
 		tickerC:    make(chan bool, 10),
 		spanC:      make(chan *trace.TSpan, 200),
 		spanChunkC: make(chan *trace.TSpanChunk, 200),
 		statC:      make(chan *pinpoint.TAgentStat, 200),
 		apis:       make(map[string]struct{}),
-		points:     make(map[int64]*stats.Stats),
+		points:     make(map[int64]*Stats),
 		apiMap:     make(map[int64]*metric.APIMap),
 		respCodes:  make(map[int]struct{}),
+
+		APIStats:        metric.NewAPIStats(),
+		MethodStats:     metric.NewMethodStats(),
+		SQLStats:        metric.NewSQLStats(),
+		ExceptionsStats: metric.NewExceptionsStats(),
+		SrvMap:          metric.NewSrvMap(),
 	}
 	// @TODO codes会从策略模版中去取
 	// 默认200
@@ -76,40 +88,17 @@ func (a *App) isExist(agentid string) bool {
 }
 
 // storeAgent 保存agent
-func (a *App) storeAgent(agentid string, startTime int64) {
+func (a *App) storeAgent(agentID string, isLive bool) {
 	a.RLock()
-	agent, ok := a.agents[agentid]
+	agent, ok := a.agents[agentID]
 	a.RUnlock()
-	if ok {
-		return
+	if !ok {
+		agent = util.NewAgent()
+		a.Lock()
+		a.agents[agentID] = agent
+		a.Unlock()
 	}
-
-	agent = newAgent(agentid, startTime)
-	a.Lock()
-	a.agents[agentid] = agent
-	a.Unlock()
-
-	return
-}
-
-// storeAgent 保存agent
-func (a *App) storeAgentnew(agentid string, startTime int64, isLive bool, hostName string) {
-	a.RLock()
-	agent, ok := a.agents[agentid]
-	a.RUnlock()
-	if ok {
-		agent.hostName = hostName
-		agent.isLive = isLive
-		return
-	}
-
-	agent = newAgent(agentid, startTime)
-	a.Lock()
-	agent.isLive = isLive
-	agent.hostName = hostName
-	a.agents[agentid] = agent
-	a.Unlock()
-
+	agent.IsLive = isLive
 	return
 }
 
@@ -169,10 +158,10 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 	spanTime := t.Unix() - int64(t.Second())
 
 	// 查找时间点，不存在新申请, span统计的范围是分钟，所以这里直接用优化过后的spanTime
-	lstats, ok := a.points[spanTime]
+	stats, ok := a.points[spanTime]
 	if !ok {
-		lstats = stats.NewStats(a.respCodes)
-		a.points[spanTime] = lstats
+		stats = NewStats(a.respCodes)
+		a.points[spanTime] = stats
 	}
 
 	// api被调用需要将nowSecond加上一个时间范围
@@ -191,7 +180,7 @@ func (a *App) statsSpan(span *trace.TSpan) error {
 		a.apiMap[a.apiMapKey] = apiMap
 	}
 
-	lstats.SpanCounter(span, apiMap)
+	stats.SpanCounter(span, apiMap)
 
 	return nil
 }
@@ -210,13 +199,13 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 	spanChunkTime := t.Unix() - int64(t.Second())
 
 	// 查找时间点，不存在新申请
-	lstats, ok := a.points[spanChunkTime]
+	stats, ok := a.points[spanChunkTime]
 	if !ok {
-		lstats = stats.NewStats(a.respCodes)
-		a.points[spanChunkTime] = lstats
+		stats = NewStats(a.respCodes)
+		a.points[spanChunkTime] = stats
 	}
 
-	lstats.SpanChunkCounter(spanChunk)
+	stats.SpanChunkCounter(spanChunk)
 
 	return nil
 }
@@ -277,22 +266,22 @@ func (a *App) recvAgentStat(appName, agentID string, agentStat *pinpoint.TAgentS
 // linkTrace 链路接口等计算上报
 func (a *App) linkTrace() error {
 	// 清空之前节点
-	a.orderlyKey = a.orderlyKey[:0]
+	a.orderKeys = a.orderKeys[:0]
 
 	// 赋值
 	for key := range a.points {
-		a.orderlyKey = append(a.orderlyKey, key)
+		a.orderKeys = append(a.orderKeys, key)
 	}
 
 	// 排序
-	sort.Sort(a.orderlyKey)
+	sort.Sort(a.orderKeys)
 
 	// 如果没有计算节点直接返回
-	if a.orderlyKey.Len() <= 0 {
+	if a.orderKeys.Len() <= 0 {
 		return nil
 	}
 
-	inputDate := a.orderlyKey[0]
+	inputDate := a.orderKeys[0]
 	now := time.Now().Unix()
 
 	if now < inputDate+misc.Conf.Stats.DeferTime {
@@ -387,19 +376,19 @@ func (a *App) linkTrace() error {
 // reportAPIMap api被调用情况
 func (a *App) reportAPIMap() error {
 	// 清空之前节点
-	a.orderlyKey = a.orderlyKey[:0]
+	a.orderKeys = a.orderKeys[:0]
 	// 赋值
 	for key := range a.apiMap {
-		a.orderlyKey = append(a.orderlyKey, key)
+		a.orderKeys = append(a.orderKeys, key)
 	}
 	// 排序
-	sort.Sort(a.orderlyKey)
+	sort.Sort(a.orderKeys)
 	// 如果没有计算节点直接返回
-	if a.orderlyKey.Len() <= 0 {
+	if a.orderKeys.Len() <= 0 {
 		return nil
 	}
 
-	inputDate := a.orderlyKey[0]
+	inputDate := a.orderKeys[0]
 	now := time.Now().Unix()
 	if now < inputDate+misc.Conf.Stats.DeferTime {
 		return nil

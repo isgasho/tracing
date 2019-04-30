@@ -1,4 +1,4 @@
-package stats
+package service
 
 import (
 	"fmt"
@@ -225,7 +225,13 @@ func (s *Stats) targetMapCounter(event *trace.TSpanEvent) {
 		if event.ServiceType == constant.HTTP_CLIENT_4 || event.ServiceType == constant.DUBBO_CONSUMER {
 			ip, err := getip(destinationID)
 			if err == nil {
-				appName, ok := misc.AddrStore.Get(ip)
+				appName, ok := gCollector.apps.getNameByIP(ip)
+				if ok {
+					destinationID = appName
+				}
+				// 如果不是IP可以再找一下host相关，如果还是找不到那么就使用destinationID
+			} else {
+				appName, ok := gCollector.apps.getNameByHost(destinationID)
 				if ok {
 					destinationID = appName
 				}

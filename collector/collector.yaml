@@ -23,6 +23,10 @@ etcd:
   ttl: 10
   reportdir: "/collecotr"
 
+apps:
+  # 加载app时间间隔
+  loadinterval: 30
+
 storage:
     cluster:
         - "10.77.0.130:9042"

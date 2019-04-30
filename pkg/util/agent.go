@@ -1,7 +1,7 @@
 package util
 
-// AgentInfo ...
-type AgentInfo struct {
+// Agent ...
+type Agent struct {
 	AppName      string `db:"app_name" json:"applicationName"  msg:"applicationName"`
 	AgentID      string `db:"agent_id" json:"agentId"  msg:"agentId"`
 	Type         int32  `db:"ser_type" json:"serviceType"  msg:"serviceType"`
@@ -16,7 +16,7 @@ type AgentInfo struct {
 	OperatingEnv int32  `db:"operating_env" json:"operating_env" msg:"operating_env"`
 }
 
-// NewAgentInfo ...
-func NewAgentInfo() *AgentInfo {
-	return &AgentInfo{}
+// NewAgent ...
+func NewAgent() *Agent {
+	return &Agent{}
 }

@@ -432,6 +432,7 @@ TRUNCATE TABLE runtime_stats    ;
 TRUNCATE TABLE unknow_parent_map;
 
 TRUNCATE TABLE api_map ;
+TRUNCATE TABLE service_map ;
 
 TRUNCATE TABLE method_stats ;
 TRUNCATE TABLE parent_map  ;

@@ -27,7 +27,7 @@ var logger *zap.Logger
 // Collector 采集服务
 type Collector struct {
 	etcd    *Etcd            // 服务上报
-	apps    *AppStore        // app集合
+	apps    *Apps            // app集合
 	ticker  *ticker.Tickers  // 定时器
 	storage *storage.Storage // 存储
 	mq      *mq.Nats         // 消息队列
@@ -41,7 +41,7 @@ func New(l *zap.Logger) *Collector {
 	logger = l
 	gCollector = &Collector{
 		etcd:    newEtcd(),
-		apps:    newAppStore(),
+		apps:    newApps(),
 		ticker:  ticker.NewTickers(misc.Conf.Ticker.Num, misc.Conf.Ticker.Interval, logger),
 		storage: storage.NewStorage(logger),
 		mq:      mq.NewNats(logger),
@@ -205,12 +205,12 @@ func tcpClient(conn net.Conn) {
 		if conn != nil {
 			conn.Close()
 		}
-		close(quitC)
-		app, ok := gCollector.apps.getApp(appname)
-		if ok {
-			app.close()
-		}
 
+		close(quitC)
+		// app, ok := gCollector.apps.getApp(appname)
+		// if ok {
+		// 	app.close()
+		// }
 		if err := gCollector.storage.UpdateAgentState(appname, agentid, false); err != nil {
 			logger.Warn("update agent state Store", zap.String("error", err.Error()))
 		}
