@@ -4,7 +4,6 @@ common:
   admintoken: "tracing.dev"
 
 agent:
-  tracingaddr: "127.0.0.1:8081"
   keepliveinterval: 3
   useenv: false
   env: "APM_TEST"
@@ -14,6 +13,7 @@ agent:
 etcd:
   addrs:
       - "127.0.0.1:2379"
+      # 测试环境
       # - "10.7.24.191:2379"
       # - "10.7.24.192:2379"
   timeout: 10

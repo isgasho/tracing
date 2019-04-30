@@ -120,10 +120,9 @@ func (t *Ticker) addTask(id int64, channel chan bool) {
 
 func (t *Ticker) removeTask(id int64) {
 	t.Lock()
-	if task, ok := t.tasks[id]; ok {
-		close(task.channel)
+	if _, ok := t.tasks[id]; ok {
+		delete(t.tasks, id)
 	}
-	delete(t.tasks, id)
 	t.Unlock()
 }
 

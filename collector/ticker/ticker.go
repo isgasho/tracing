@@ -69,6 +69,18 @@ func (t *Tickers) AddTask(id int64, channel chan bool) {
 	t.tickers[key].addTask(id, channel)
 }
 
+// RemoveTask 添加任务
+func (t *Tickers) RemoveTask(id int64) {
+	// id 通过hash计算出来key
+	key, err := t.hash.Get(fmt.Sprintf("%d", id))
+	if err != nil {
+		logger.Warn("hash get", zap.String("error", err.Error()))
+		return
+	}
+	// 加入任务
+	t.tickers[key].removeTask(id)
+}
+
 // Ticker 定时器
 type Ticker struct {
 	sync.RWMutex
@@ -103,6 +115,14 @@ func (t *Ticker) start(deferTime int) {
 func (t *Ticker) addTask(id int64, channel chan bool) {
 	t.Lock()
 	t.tasks[id] = newTask(id, channel)
+	t.Unlock()
+}
+
+func (t *Ticker) removeTask(id int64) {
+	t.Lock()
+	if _, ok := t.tasks[id]; ok {
+		delete(t.tasks, id)
+	}
 	t.Unlock()
 }
 

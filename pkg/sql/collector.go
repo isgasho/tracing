@@ -12,7 +12,7 @@ var InsertAgent string = `INSERT INTO agents (app_name, agent_id, service_type,
 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`
 
 // 更新agent 在线信息
-var UpdateAgentState string = `UPDATE agents  SET is_live=? WHERE app_name =? AND agent_id =?;`
+var UpdateAgentState string = `UPDATE agents  SET is_live=?, end_time=? WHERE app_name =? AND agent_id =?;`
 
 // agent info 信息入库
 var InsertAgentInfo string = `INSERT INTO agents (app_name, agent_id, start_time, agent_info) 
@@ -150,7 +150,7 @@ var InsertUnknowParentMap string = `INSERT INTO service_map (
 var InsertAPIMapStats string = `INSERT INTO api_map (source_name, source_type, target_name, target_type, access_count, access_err_count, access_duration, api, input_date)
 VALUES (?,?,?,?,?,?,?,?,?);`
 
-var LoadAgents string = `SELECT service_type, agent_id, start_time, ip FROM agents WHERE app_name=?;`
+var LoadAgents string = `SELECT service_type, agent_id, start_time, ip, is_live, host_name FROM agents WHERE app_name=?;`
 var LoadApps string = `SELECT app_name FROM apps ;`
 
 // //  InsertRuntimeStats ...

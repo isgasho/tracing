@@ -1,4 +1,4 @@
-CREATE KEYSPACE tracing_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '1'}  
+CREATE KEYSPACE tracing_v1_datacenter WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'}  
     AND durable_writes = true;
 
 USE tracing_v1_datacenter;

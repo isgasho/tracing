@@ -206,6 +206,10 @@ func tcpClient(conn net.Conn) {
 			conn.Close()
 		}
 		close(quitC)
+		app, ok := gCollector.apps.getApp(appname)
+		if ok {
+			app.close()
+		}
 
 		if err := gCollector.storage.UpdateAgentState(appname, agentid, false); err != nil {
 			logger.Warn("update agent state Store", zap.String("error", err.Error()))
@@ -235,10 +239,7 @@ func tcpClient(conn net.Conn) {
 				}
 				break
 			case constant.TypeOfSystem:
-				// if err := v.dealSystem(packet); err != nil {
-				// 	logger.Warn("dealSystem", zap.String("error", err.Error()))
-				// 	return
-				// }
+
 				log.Println("TypeOfSystem")
 				break
 			}

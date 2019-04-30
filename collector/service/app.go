@@ -46,6 +46,7 @@ func newApp(name string, appType int32) *App {
 		appType:    appType,
 		name:       name,
 		agents:     make(map[string]*Agent),
+		stopC:      make(chan bool, 1),
 		tickerC:    make(chan bool, 10),
 		spanC:      make(chan *trace.TSpan, 200),
 		spanChunkC: make(chan *trace.TSpanChunk, 200),
@@ -85,6 +86,27 @@ func (a *App) storeAgent(agentid string, startTime int64) {
 
 	agent = newAgent(agentid, startTime)
 	a.Lock()
+	a.agents[agentid] = agent
+	a.Unlock()
+
+	return
+}
+
+// storeAgent 保存agent
+func (a *App) storeAgentnew(agentid string, startTime int64, isLive bool, hostName string) {
+	a.RLock()
+	agent, ok := a.agents[agentid]
+	a.RUnlock()
+	if ok {
+		agent.hostName = hostName
+		agent.isLive = isLive
+		return
+	}
+
+	agent = newAgent(agentid, startTime)
+	a.Lock()
+	agent.isLive = isLive
+	agent.hostName = hostName
 	a.agents[agentid] = agent
 	a.Unlock()
 
@@ -207,6 +229,19 @@ func (a *App) start() {
 	gCollector.ticker.AddTask(a.taskID, a.tickerC)
 	// 启动计算模块
 	go a.stats()
+}
+
+// close 退出
+func (a *App) close() {
+	// 获取任务ID
+	logger.Info("app close", zap.String("name", a.name), zap.Int64("taskID", a.taskID))
+
+	gCollector.ticker.RemoveTask(a.taskID)
+	close(a.tickerC)
+	close(a.stopC)
+	close(a.spanC)
+	close(a.spanChunkC)
+	close(a.statC)
 }
 
 // apiIsExist 检查api是否缓存

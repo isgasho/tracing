@@ -24,6 +24,7 @@ func (a *AppStore) start() error {
 		logger.Warn("loadApps", zap.String("error", err.Error()))
 		return err
 	}
+
 	go func() {
 		for {
 			time.Sleep(1 * time.Second)
@@ -48,18 +49,20 @@ func (a *AppStore) loadApps() error {
 		}
 	}()
 
-	// @TODO 这里未来要做hash过滤，不属于该collector节点App信息不需要保存，以节省资源
 	var appName string
 	for appsIter.Scan(&appName) {
 		var appType int32
 		var agentID, ip string
 		var startTime int64
+		var isLive bool
+		var hostName string
 
 		agentsIter := cql.Query(sql.LoadAgents, appName).Iter()
-		for agentsIter.Scan(&appType, &agentID, &startTime, &ip) {
-			gCollector.apps.storeAgent(appName, agentID, startTime, appType)
+		for agentsIter.Scan(&appType, &agentID, &startTime, &ip, &isLive, &hostName) {
+			gCollector.apps.storeAgentnew(appName, agentID, startTime, appType, isLive, hostName)
 			misc.AddrStore.Add(appName, ip)
 		}
+
 		if err := agentsIter.Close(); err != nil {
 			logger.Warn("close apps iter error:", zap.Error(err))
 		}
@@ -91,6 +94,20 @@ func (a *AppStore) storeAgent(name string, id string, startTime int64, appType i
 	}
 	app.appType = appType
 	app.storeAgent(id, startTime)
+}
+
+func (a *AppStore) storeAgentnew(name string, id string, startTime int64, appType int32, isLive bool, hostName string) {
+	a.RLock()
+	app, ok := a.apps[name]
+	a.RUnlock()
+	if !ok {
+		app = newApp(name, appType)
+		a.Lock()
+		a.apps[name] = app
+		a.Unlock()
+	}
+	app.appType = appType
+	app.storeAgentnew(id, startTime, isLive, hostName)
 }
 
 // isExist agent是否存在

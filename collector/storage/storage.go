@@ -109,12 +109,18 @@ func (s *Storage) AgentStore(agentInfo *network.AgentInfo, islive bool) error {
 
 // UpdateAgentState agent在线状态更新
 func (s *Storage) UpdateAgentState(appname string, agentid string, islive bool) error {
+	var entTime int64
+	if !islive {
+		entTime = time.Now().Unix() * 1000
+	}
 	query := s.cql.Query(
 		sql.UpdateAgentState,
 		islive,
+		entTime,
 		appname,
 		agentid,
 	)
+
 	if err := query.Exec(); err != nil {
 		s.logger.Warn("update agent state error", zap.String("SQL", query.String()), zap.String("error", err.Error()))
 		return err
