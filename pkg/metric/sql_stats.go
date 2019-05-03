@@ -1,7 +1,10 @@
 package metric
 
+import "sync"
+
 // SQLStats 接口计算统计
 type SQLStats struct {
+	sync.RWMutex
 	SQLs map[int32]*SQLInfo
 }
 
@@ -14,13 +17,17 @@ func NewSQLStats() *SQLStats {
 
 // Get 获取sql信息
 func (s *SQLStats) Get(sqlID int32) (*SQLInfo, bool) {
+	s.RLock()
 	info, ok := s.SQLs[sqlID]
+	s.RUnlock()
 	return info, ok
 }
 
 // Store 存储sql信息
 func (s *SQLStats) Store(sqlID int32, info *SQLInfo) {
+	s.Lock()
 	s.SQLs[sqlID] = info
+	s.Unlock()
 }
 
 // SQLInfo 统计信息

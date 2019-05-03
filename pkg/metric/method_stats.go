@@ -1,7 +1,10 @@
 package metric
 
+import "sync"
+
 // MethodStats 接口计算统计
 type MethodStats struct {
+	sync.RWMutex
 	APIStr  string                // 触发api接口的method
 	Methods map[int32]*MethodInfo // method信息
 }
@@ -15,13 +18,17 @@ func NewMethodStats() *MethodStats {
 
 // Get 获取medthod信息
 func (m *MethodStats) Get(apiID int32) (*MethodInfo, bool) {
+	m.RLock()
 	info, ok := m.Methods[apiID]
+	m.RUnlock()
 	return info, ok
 }
 
 // Store 存储method信息
 func (m *MethodStats) Store(apiID int32, info *MethodInfo) {
+	m.Lock()
 	m.Methods[apiID] = info
+	m.Unlock()
 }
 
 // MethodInfo 统计信息
