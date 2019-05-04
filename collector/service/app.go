@@ -71,8 +71,6 @@ func newApp(name string) *App {
 	// @TODO codes会从策略模版中去取
 	// 默认200
 	app.respCodes[200] = struct{}{}
-
-	app.start()
 	return app
 }
 
@@ -104,6 +102,13 @@ func (a *App) storeAgent(agentID string, isLive bool) {
 
 // stats 计算模块
 func (a *App) stats() {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error("app stats", zap.Any("msg", err), zap.String("name", a.name))
+			return
+		}
+	}()
+
 	for {
 		select {
 		case _, ok := <-a.tickerC:
@@ -211,6 +216,13 @@ func (a *App) statsSpanChunk(spanChunk *trace.TSpanChunk) error {
 }
 
 func (a *App) start() {
+	defer func() {
+		if err := recover(); err != nil {
+			logger.Error("app start", zap.Any("msg", err))
+			return
+		}
+	}()
+
 	// 获取任务ID
 	a.taskID = gCollector.ticker.NewID()
 	logger.Info("app start", zap.String("name", a.name), zap.Int64("taskID", a.taskID))
@@ -285,6 +297,12 @@ func (a *App) linkTrace() error {
 	now := time.Now().Unix()
 
 	if now < inputDate+misc.Conf.Stats.DeferTime {
+		return nil
+	}
+
+	// 防止这个点就没有数据，导致程序崩溃
+	if a.points[inputDate].SrvMap == nil {
+		logger.Warn("srv map is nil", zap.Int64("time", inputDate))
 		return nil
 	}
 

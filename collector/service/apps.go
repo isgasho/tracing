@@ -76,20 +76,24 @@ func (a *Apps) loadApps(cql *gocql.Session) error {
 
 // isExist app是否存在
 func (a *Apps) storeIPandHost(appName, ip, host string) bool {
-	// a.Lock()
+	a.Lock()
 	a.ips[ip] = appName
 	a.hosts[ip] = appName
-	// a.Unlock()
+	a.Unlock()
 	return true
 }
 
 func (a *Apps) getNameByIP(ip string) (string, bool) {
+	a.RLock()
 	name, ok := a.ips[ip]
+	a.RUnlock()
 	return name, ok
 }
 
 func (a *Apps) getNameByHost(host string) (string, bool) {
+	a.RLock()
 	name, ok := a.hosts[host]
+	a.RUnlock()
 	return name, ok
 }
 
